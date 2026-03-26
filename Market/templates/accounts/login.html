@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تسجيل الدخول - سوق{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-b from-page-bg to-[#EDE8E1] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <a href="{% url 'store:home' %}" class="inline-block">
+                <span class="font-headline text-4xl font-bold text-text-primary">سوق</span>
+            </a>
+            <p class="mt-2 text-text-secondary">
+                {% if otp_sent %}
+                    تم إرسال رمز التحقق
+                {% else %}
+                    مرحباً بعودتك!
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Login Form -->
+        <div class="bg-surface rounded-2xl border border-border-sand p-8 shadow-lg">
+            <h1 class="font-headline text-2xl font-bold text-text-primary text-center mb-6">
+                {% if otp_sent %}
+                    تحقق من رمز التأكيد
+                {% else %}
+                    تسجيل الدخول
+                {% endif %}
+            </h1>
+
+            {% if messages %}
+            {% for message in messages %}
+            <div class="mb-4 p-3 rounded-lg {% if message.tags == 'error' %}bg-rose-light text-rose{% elif message.tags == 'success' %}bg-sage-mint text-sage{% else %}bg-status-blue-light text-status-blue{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            {% if otp_sent %}
+            <!-- Step 2: OTP Verification -->
+            <form method="post" data-validate>
+                {% csrf_token %}
+                <input type="hidden" name="otp_sent" value="true">
+                
+                <!-- OTP Info -->
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 mx-auto bg-sage-light rounded-full flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <p class="text-text-secondary text-sm">
+                        تم إرسال رمز التحقق إلى بريدك الإلكتروني
+                    </p>
+                    {% if user_email %}
+                    <p class="text-text-primary font-medium mt-1">{{ user_email }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="space-y-4">
+                    <!-- OTP Input -->
+                    <div>
+                        <label for="code_verification" class="block text-sm text-text-secondary mb-2">رمز التحقق</label>
+                        <input 
+                            type="text" 
+                            name="code_verification" 
+                            id="code_verification" 
+                            required 
+                            maxlength="6"
+                            pattern="[0-9]{6}"
+                            class="w-full px-4 py-4 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-center text-2xl font-mono tracking-widest" 
+                            placeholder="000000"
+                            autocomplete="one-time-code"
+                            inputmode="numeric"
+                        >
+                        <p class="text-xs text-text-placeholder mt-2 text-center">أدخل الرمز المكون من 6 أرقام</p>
+                    </div>
+
+                    <button type="submit" class="w-full btn-primary py-3 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                        تأكيد الدخول
+                    </button>
+
+                    <!-- Resend OTP -->
+                    <div class="text-center">
+                        <p class="text-text-secondary text-sm mb-2">لم تستلم الرمز؟</p>
+                        <button type="button" id="resendBtn" onclick="resendOTP()" class="text-sage font-medium hover:text-sage-dark transition-colors">
+                            إعادة إرسال الرمز
+                        </button>
+                        <span id="resendTimer" class="text-text-placeholder text-sm hidden">
+                            إعادة الإرسال خلال <span id="timerCount">60</span> ثانية
+                        </span>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Back to Login -->
+            <div class="mt-6 text-center">
+                <a href="{% url 'store:login' %}" class="inline-flex items-center gap-2 text-text-secondary hover:text-sage transition-colors">
+                    <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                    العودة لتسجيل الدخول
+                </a>
+            </div>
+
+            {% else %}
+            <!-- Step 1: Login Form -->
+            <form method="post" data-validate id="loginForm">
+                {% csrf_token %}
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="user" class="block text-sm text-text-secondary mb-2">اسم المستخدم أو البريد الإلكتروني</label>
+                        <input 
+                            type="text" 
+                            name="user" 
+                            id="user" 
+                            required 
+                            class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" 
+                            placeholder="أدخل اسم المستخدم أو البريد الإلكتروني"
+                            autocomplete="username"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm text-text-secondary mb-2">كلمة المرور</label>
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                name="password" 
+                                id="password" 
+                                required 
+                                class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" 
+                                placeholder="أدخل كلمة المرور"
+                                autocomplete="current-password"
+                            >
+                            <button type="button" onclick="togglePassword('password')" class="absolute left-3 top-1/2 -translate-y-1/2 text-text-placeholder hover:text-text-secondary transition-colors">
+                                <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="remember" class="w-4 h-4 rounded border-border-sand text-sage focus:ring-sage/20">
+                            <span class="text-sm text-text-secondary">تذكرني</span>
+                        </label>
+                        <a href="{% url 'store:forgot_password' %}" class="text-sm text-sage hover:text-sage-dark transition-colors">نسيت كلمة المرور؟</a>
+                    </div>
+
+                    <button type="submit" class="w-full btn-primary py-3 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors flex items-center justify-center gap-2">
+                        <span>تسجيل الدخول</span>
+                        <svg class="w-5 h-5 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-6 text-center">
+                <p class="text-text-secondary">
+                    ليس لديك حساب؟
+                    <a href="{% url 'store:register' %}" class="text-sage font-medium hover:text-sage-dark transition-colors">إنشاء حساب جديد</a>
+                </p>
+            </div>
+
+            <!-- Social Login -->
+            <div class="mt-8">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-border-sand"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-4 bg-surface text-text-placeholder">أو تسجيل الدخول بواسطة</span>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-2 gap-4">
+                    <a href="/accounts/google/login/" 
+                        class="flex items-center justify-center gap-2 px-4 py-3 bg-page-bg border border-border-sand rounded-xl text-text-secondary hover:bg-surface hover:border-sage transition-all">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                            
+                            Google
+                    </a>
+                    <button type="button" class="flex items-center justify-center gap-2 px-4 py-3 bg-page-bg border border-border-sand rounded-xl text-text-secondary hover:bg-surface hover:border-sage transition-all">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/>
+                        </svg>
+                        Facebook
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Back to Home -->
+        <div class="text-center mt-6">
+            <a href="{% url 'store:home' %}" class="inline-flex items-center gap-2 text-text-secondary hover:text-sage transition-colors">
+                <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+                العودة للرئيسية
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        const icon = input.nextElementSibling.querySelector('.eye-icon');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+            `;
+        } else {
+            input.type = 'password';
+            icon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            `;
+        }
+    }
+
+    // OTP Input auto-focus and formatting
+    const otpInput = document.getElementById('code_verification');
+    if (otpInput) {
+        // Only allow numbers
+        otpInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+        
+        // Auto-submit when 6 digits entered
+        otpInput.addEventListener('input', function(e) {
+            if (this.value.length === 6) {
+                this.form.submit();
+            }
+        });
+
+        // Focus on load
+        otpInput.focus();
+    }
+
+    // Resend OTP timer
+    let timerInterval;
+    let timeLeft = 60;
+
+    function resendOTP() {
+        // Here you would make an AJAX call to resend OTP
+        // For now, we'll just show the timer
+        
+        const resendBtn = document.getElementById('resendBtn');
+        const resendTimer = document.getElementById('resendTimer');
+        const timerCount = document.getElementById('timerCount');
+        
+        if (resendBtn && resendTimer) {
+            // Hide button, show timer
+            resendBtn.classList.add('hidden');
+            resendTimer.classList.remove('hidden');
+            
+            // Reset timer
+            timeLeft = 60;
+            timerCount.textContent = timeLeft;
+            
+            // Start countdown
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerCount.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    resendBtn.classList.remove('hidden');
+                    resendTimer.classList.add('hidden');
+                }
+            }, 1000);
+            
+            // Make AJAX call to resend OTP
+            // fetch('{% url "store:resend_otp" %}', { method: 'POST' });
+        }
+    }
+</script>
+{% endblock %}

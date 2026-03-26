@@ -1,0 +1,636 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}طلبات المتجر - سوق{% endblock %}
+
+{% block content %}
+<div class="bg-page-bg min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid lg:grid-cols-4 gap-8">
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-surface rounded-2xl border border-border-sand p-6 sticky top-24">
+                    <!-- Profile Header -->
+                    <div class="text-center mb-6">
+                        <div class="w-20 h-20 mx-auto bg-rose-light rounded-full flex items-center justify-center mb-4">
+                            <span class="text-rose font-bold text-2xl">{{ user.username|slice:":1"|upper }}</span>
+                        </div>
+                        <h2 class="font-semibold text-text-primary">{{ user.get_full_name|default:user.username }}</h2>
+                        <p class="text-sm text-text-secondary">{{ user.email }}</p>
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-rose-light text-rose mt-2">تاجر</span>
+                    </div>
+
+                    <!-- Navigation -->
+                    <nav class="space-y-1">
+                        <a href="{% url 'store:profile' %}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-page-bg hover:text-sage transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            الملف الشخصي
+                        </a>
+                        <a href="{% url 'store:merchant_dashboard' %}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-page-bg hover:text-sage transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            لوحة التحكم
+                        </a>
+                        <a href="{% url 'store:merchant_products' %}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-page-bg hover:text-sage transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                            منتجاتي
+                        </a>
+                        <a href="{% url 'store:merchant_orders' %}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl bg-sage-light text-sage font-medium">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            الطلبات
+                        </a>
+                        <a href="{% url 'store:product_create' %}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-page-bg hover:text-sage transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            إضافة منتج
+                        </a>
+                        <a href="{% url 'store:logout' %}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl text-rose hover:bg-rose-light transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            تسجيل الخروج
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lg:col-span-3">
+                <!-- Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h1 class="font-headline text-2xl font-bold text-text-primary">طلبات المتجر</h1>
+                        <p class="text-text-secondary text-sm mt-1">إدارة ومتابعة طلبات العملاء</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <form method="get" class="relative">
+                            <input type="text" name="search" value="{{ request.GET.search }}"
+                                placeholder="بحث برقم الطلب..."
+                                class="w-48 pl-4 pr-10 py-2 bg-surface border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm">
+                            <svg class="w-5 h-5 text-text-placeholder absolute right-3 top-1/2 -translate-y-1/2"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                    <div class="bg-surface rounded-xl border border-border-sand p-4 text-center">
+                        <p class="font-headline text-xl font-bold text-text-primary">{{ stats.total|default:"0" }}</p>
+                        <p class="text-xs text-text-secondary">إجمالي الطلبات</p>
+                    </div>
+                    <div class="bg-surface rounded-xl border border-border-sand p-4 text-center">
+                        <div class="w-8 h-8 mx-auto bg-taupe-light rounded-lg flex items-center justify-center mb-2">
+                            <svg class="w-4 h-4 text-taupe" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </div>
+                        <p class="font-headline text-xl font-bold text-taupe">{{ stats.to_pay|default:"0" }}</p>
+                        <p class="text-xs text-text-secondary">بانتظار الدفع</p>
+                    </div>
+                    <div class="bg-surface rounded-xl border border-border-sand p-4 text-center">
+                        <div
+                            class="w-8 h-8 mx-auto bg-status-blue-light rounded-lg flex items-center justify-center mb-2">
+                            <svg class="w-4 h-4 text-status-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                            </svg>
+                        </div>
+                        <p class="font-headline text-xl font-bold text-status-blue">{{ stats.to_ship|default:"0" }}</p>
+                        <p class="text-xs text-text-secondary">قابل للشحن</p>
+                    </div>
+                    <div class="bg-surface rounded-xl border border-border-sand p-4 text-center">
+                        <div class="w-8 h-8 mx-auto bg-rose-light rounded-lg flex items-center justify-center mb-2">
+                            <svg class="w-4 h-4 text-rose" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                            </svg>
+                        </div>
+                        <p class="font-headline text-xl font-bold text-rose">{{ stats.shipped|default:"0" }}</p>
+                        <p class="text-xs text-text-secondary">تم الشحن</p>
+                    </div>
+                    <div class="bg-surface rounded-xl border border-border-sand p-4 text-center">
+                        <div class="w-8 h-8 mx-auto bg-sage-mint rounded-lg flex items-center justify-center mb-2">
+                            <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <p class="font-headline text-xl font-bold text-sage">{{ stats.delivered|default:"0" }}</p>
+                        <p class="text-xs text-text-secondary">تم التوصيل</p>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="bg-surface rounded-2xl border border-border-sand p-4 mb-6">
+                    <form method="get" class="flex flex-col md:flex-row gap-4">
+                        <!-- Status Filter -->
+                        <select name="status"
+                            class="px-4 py-2.5 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm text-text-primary">
+                            <option value="">جميع الحالات</option>
+                            <option value="to_pay" {% if request.GET.status == 'to_pay' %}selected{% endif %}>بانتظار الدفع</option>
+
+                            <option value="to_ship" {% if request.GET.status == 'to_ship' %}selected{% endif %}>قابل للشحن
+                            </option>
+                            <option value="shipped" {% if request.GET.status == 'shipped' %}selected{% endif %}>تم الشحن
+                            </option>
+                            <option value="delivered" {% if request.GET.status == 'delivered' %}selected{% endif %}>تم
+                                التوصيل</option>
+                            <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>ملغي
+                            </option>
+                            <option value="returned" {% if request.GET.status == 'returned' %}selected{% endif %}>معاد
+                            </option>
+                        </select>
+
+                        <!-- Date From -->
+                        <input type="date" name="date_from" value="{{ request.GET.date_from }}"
+                            class="px-4 py-2.5 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm text-text-primary"
+                            placeholder="من تاريخ">
+
+                        <!-- Date To -->
+                        <input type="date" name="date_to" value="{{ request.GET.date_to }}"
+                            class="px-4 py-2.5 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm text-text-primary"
+                            placeholder="إلى تاريخ">
+
+                        <!-- Sort -->
+                        <select name="sort"
+                            class="px-4 py-2.5 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm text-text-primary">
+                            <option value="-created_at" {% if request.GET.sort == '-created_at' or not request.GET.sort %}selected{% endif %}>الأحدث</option>
+                            <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>الأقدم
+                            </option>
+                            <option value="-total_amount" {% if request.GET.sort == '-total_amount' %}selected{% endif %}> المبلغ (الأعلى)</option>
+                            <option value="total_amount" {% if request.GET.sort == 'total_amount' %}selected{% endif %}>  المبلغ (الأقل)</option>
+                        </select>
+
+                        <button type="submit"
+                            class="px-4 py-2.5 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors text-sm">
+                            تصفية
+                        </button>
+
+                        {% if request.GET.status or request.GET.date_from or request.GET.date_to or request.GET.search %}
+                        <a href="{% url 'store:merchant_orders' %}"
+                            class="px-4 py-2.5 border border-border-sand text-text-secondary rounded-xl font-medium hover:bg-page-bg transition-colors text-sm">
+                            مسح
+                        </a>
+                        {% endif %}
+                    </form>
+                </div>
+
+                <!-- Orders Table -->
+                <div class="bg-surface rounded-2xl border border-border-sand overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-page-bg">
+                                <tr>
+                                    <th
+                                        class="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
+                                        رقم الطلب</th>
+                                    <th
+                                        class="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
+                                        العميل</th>
+                                    <th
+                                        class="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
+                                        المنتجات</th>
+                                    <th
+                                        class="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
+                                        المبلغ</th>
+                                    <th
+                                        class="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
+                                        الحالة</th>
+                                    <th
+                                        class="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
+                                        التاريخ</th>
+                                    <th
+                                        class="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
+                                        إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-sand">
+                                {% for order in orders %}
+                                <tr class="hover:bg-page-bg/50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <a href="{% url 'store:merchant_order_detail' order.id %}"
+                                            class="text-sm font-medium text-sage hover:text-sage-dark transition-colors">
+                                            #{{ order.id }}
+                                        </a>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="w-8 h-8 bg-sage-light rounded-full flex items-center justify-center">
+                                                <span class="text-sage font-medium text-xs">{{
+                                                    order.user.username|slice:":1"|upper }}</span>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-text-primary">{{
+                                                    order.user.get_full_name|default:order.user.username }}</p>
+                                                <p class="text-xs text-text-secondary">{{ order.user.email }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-2">
+                                            {% for item in order.items.all|slice:":3" %}
+                                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}"
+                                                class="w-8 h-8 rounded-lg object-cover bg-[#F0EBE3]"
+                                                onerror="this.src='https://placehold.co/32x32/F0EBE3/5C8A6E?text=P'">
+                                            {% empty %}
+                                            <span class="text-xs text-text-secondary">--</span>
+                                            {% endfor %}
+                                            {% if order.items.count > 3 %}
+                                            <span class="text-xs text-text-secondary">+{{ order.items.count|add:"-3"
+                                                }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="font-price text-text-primary">{{ order.total_amount }} ر.س</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {% if order.current_status == 'to_pay' %}
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-taupe-light text-taupe">
+                                            <span class="w-1.5 h-1.5 bg-taupe rounded-full ml-1.5"></span>
+                                            بانتظار الدفع
+                                        </span>
+                                        {% elif order.current_status == 'to_ship' %}
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-status-blue-light text-status-blue">
+                                            <span class="w-1.5 h-1.5 bg-status-blue rounded-full ml-1.5"></span>
+                                            قابل للشحن
+                                        </span>
+                                        {% elif order.current_status == 'shipped' %}
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-rose-light text-rose">
+                                            <span class="w-1.5 h-1.5 bg-rose rounded-full ml-1.5"></span>
+                                            تم الشحن
+                                        </span>
+                                        {% elif order.current_status == 'delivered' %}
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-sage-mint text-sage">
+                                            <span class="w-1.5 h-1.5 bg-sage rounded-full ml-1.5"></span>
+                                            تم التوصيل
+                                        </span>
+                                        {% elif order.current_status == 'cancelled' %}
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-page-bg text-text-secondary">
+                                            <span class="w-1.5 h-1.5 bg-text-secondary rounded-full ml-1.5"></span>
+                                            ملغي
+                                        </span>
+                                        {% elif order.current_status == 'returned' %}
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-rose-light text-rose">
+                                            <span class="w-1.5 h-1.5 bg-rose rounded-full ml-1.5"></span>
+                                            معاد
+                                        </span>
+                                        {% else %}
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-page-bg text-text-secondary">
+                                            {{ order.current_status }}
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex flex-col">
+                                            <span class="text-sm text-text-primary">{{ order.created_at|date:"d M Y"
+                                                }}</span>
+                                            <span class="text-xs text-text-secondary">{{ order.created_at|date:"H:i"
+                                                }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-2">
+                                            <a href="{% url 'store:merchant_order_detail' order.id %}"
+                                                class="p-2 text-text-secondary hover:text-sage hover:bg-sage-light rounded-lg transition-colors"
+                                                title="عرض التفاصيل">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="1.5"
+                                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                            </a>
+                                            <button type="button"
+                                                onclick="openStatusModal('{{ order.id }}', '{{ order.current_status }}')"
+                                                class="p-2 text-text-secondary hover:text-status-blue hover:bg-status-blue-light rounded-lg transition-colors"
+                                                title="تحديث الحالة">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="1.5"
+                                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                </svg>
+                                            </button>
+                                            {% if order.tracking_number %}
+                                            <button type="button"
+                                                onclick="copyToClipboard('{{ order.tracking_number }}')"
+                                                class="p-2 text-text-secondary hover:text-taupe hover:bg-taupe-light rounded-lg transition-colors"
+                                                title="رقم التتبع: {{ order.tracking_number }}">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="1.5"
+                                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <!-- Empty State -->
+                                <tr>
+                                    <td colspan="7" class="px-6 py-12">
+                                        <div class="text-center">
+                                            <div
+                                                class="w-20 h-20 mx-auto bg-page-bg rounded-full flex items-center justify-center mb-4">
+                                                <svg class="w-10 h-10 text-text-placeholder" fill="none"
+                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="1.5"
+                                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                </svg>
+                                            </div>
+                                            <h3 class="font-headline text-lg font-semibold text-text-primary mb-2">لا
+                                                توجد طلبات</h3>
+                                            <p class="text-text-secondary text-sm">لم تستلم أي طلبات بعد. ستظهر هنا عند
+                                                قيام العملاء بشراء منتجاتك.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if orders.has_other_pages %}
+                    <div class="px-6 py-4 border-t border-border-sand flex items-center justify-between">
+                        <p class="text-sm text-text-secondary">
+                            عرض {{ orders.start_index }} - {{ orders.end_index }} من {{ orders.paginator.count }} طلب
+                        </p>
+                        <div class="flex items-center gap-2">
+                            {% if orders.has_previous %}
+                            <a href="?page={{ orders.previous_page_number }}&{{ request.GET.urlencode }}"
+                                class="px-3 py-1.5 text-sm text-text-secondary hover:bg-page-bg rounded-lg transition-colors">
+                                السابق
+                            </a>
+                            {% endif %}
+
+                            {% for num in orders.paginator.page_range %}
+                            {% if orders.number == num %}
+                            <span class="px-3 py-1.5 text-sm bg-sage text-white rounded-lg">{{ num }}</span>
+                            {% elif num > orders.number|add:'-3' and num < orders.number|add:'3' %} <a
+                                href="?page={{ num }}&{{ request.GET.urlencode }}"
+                                class="px-3 py-1.5 text-sm text-text-secondary hover:bg-page-bg rounded-lg transition-colors">
+                                {{ num }}</a>
+                                {% endif %}
+                                {% endfor %}
+
+                                {% if orders.has_next %}
+                                <a href="?page={{ orders.next_page_number }}&{{ request.GET.urlencode }}"
+                                    class="px-3 py-1.5 text-sm text-text-secondary hover:bg-page-bg rounded-lg transition-colors">
+                                    التالي
+                                </a>
+                                {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="mt-6 bg-surface rounded-2xl border border-border-sand p-6">
+                    <h3 class="font-semibold text-text-primary mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        آخر النشاطات
+                    </h3>
+                    <div class="space-y-4">
+                        {% for activity in recent_activities %}
+                        <div class="flex items-start gap-4 p-3 bg-page-bg rounded-xl">
+                            <div
+                                class="w-8 h-8 bg-sage-light rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm text-text-primary">{{ activity.message }}</p>
+                                <p class="text-xs text-text-secondary mt-1">{{ activity.time }}</p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="flex items-start gap-4 p-3 bg-page-bg rounded-xl">
+                            <div
+                                class="w-8 h-8 bg-sage-light rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm text-text-primary">طلب جديد #1001</p>
+                                <p class="text-xs text-text-secondary mt-1">منذ 5 دقائق</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 p-3 bg-page-bg rounded-xl">
+                            <div
+                                class="w-8 h-8 bg-status-blue-light rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-status-blue" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm text-text-primary">تم تحديث حالة الطلب #1000 إلى "تم الشحن"</p>
+                                <p class="text-xs text-text-secondary mt-1">منذ 30 دقيقة</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 p-3 bg-page-bg rounded-xl">
+                            <div
+                                class="w-8 h-8 bg-sage-mint rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm text-text-primary">تم توصيل الطلب #998</p>
+                                <p class="text-xs text-text-secondary mt-1">منذ ساعة</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div id="statusModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-surface rounded-2xl max-w-md w-full p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="font-headline text-lg font-semibold text-text-primary">تحديث حالة الطلب</h3>
+            <button type="button" onclick="closeStatusModal()"
+                class="p-2 text-text-secondary hover:text-text-primary hover:bg-page-bg rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form method="post" action="" id="statusForm">
+            {% csrf_token %}
+            <input type="hidden" name="order_id" id="modalOrderId">
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-text-secondary mb-2">الحالة الجديدة</label>
+                    <select name="new_status" id="modalStatus"
+                        class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all">
+                        <option value="to_pay">بانتظار الدفع</option>
+                        <option value="to_ship">قابل للشحن</option>
+                        <option value="shipped">تم الشحن</option>
+                        <option value="delivered">تم التوصيل</option>
+                        <option value="cancelled">ملغي</option>
+                        <option value="returned">معاد</option>
+                    </select>
+                </div>
+
+                <div id="trackingNumberField" class="hidden">
+                    <label class="block text-sm text-text-secondary mb-2">رقم التتبع</label>
+                    <input type="text" name="tracking_number"
+                        class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all"
+                        placeholder="أدخل رقم التتبع">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-text-secondary mb-2">ملاحظات (اختياري)</label>
+                    <textarea name="notes" rows="3"
+                        class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all resize-none"
+                        placeholder="أضف ملاحظات..."></textarea>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 mt-6">
+                <button type="button" onclick="closeStatusModal()"
+                    class="flex-1 px-4 py-2.5 border border-border-sand text-text-secondary rounded-xl font-medium hover:bg-page-bg transition-colors">
+                    إلغاء
+                </button>
+                <button type="submit"
+                    class="flex-1 px-4 py-2.5 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors">
+                    حفظ التغييرات
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Status Modal Functions
+    function openStatusModal(orderId, currentStatus) {
+        const modal = document.getElementById('statusModal');
+        const orderIdInput = document.getElementById('modalOrderId');
+        const statusSelect = document.getElementById('modalStatus');
+        const trackingField = document.getElementById('trackingNumberField');
+
+        orderIdInput.value = orderId;
+        statusSelect.value = currentStatus;
+
+        // Show tracking number field if shipped
+        if (currentStatus === 'shipped') {
+            trackingField.classList.remove('hidden');
+        } else {
+            trackingField.classList.add('hidden');
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeStatusModal() {
+        const modal = document.getElementById('statusModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    // Show/hide tracking number field based on status
+    document.getElementById('modalStatus')?.addEventListener('change', function () {
+        const trackingField = document.getElementById('trackingNumberField');
+        if (this.value === 'shipped') {
+            trackingField.classList.remove('hidden');
+        } else {
+            trackingField.classList.add('hidden');
+        }
+    });
+
+    // Copy to clipboard
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function () {
+            // Show toast notification
+            showToast('تم نسخ رقم التتبع', 'success');
+        });
+    }
+
+    // Toast notification
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-4 left-4 px-4 py-3 rounded-xl shadow-lg z-50 ${type === 'success' ? 'bg-sage text-white' : 'bg-text-primary text-white'}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+
+    // Close modal on outside click
+    document.getElementById('statusModal')?.addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeStatusModal();
+        }
+    });
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeStatusModal();
+        }
+    });
+</script>
+{% endblock %}

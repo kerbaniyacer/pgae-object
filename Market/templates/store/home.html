@@ -1,0 +1,379 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الرئيسية - سوق{% endblock %}
+
+{% block nav_home %}text-sage font-medium{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative bg-gradient-to-b from-page-bg to-[#EDE8E1] overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+            <!-- Hero Image (First on Mobile, Second on Desktop) -->
+            <div class="relative order-1 lg:order-2" data-animate>
+                <div class="relative z-10">
+                    <img src="{% static 'images/hero-product.png' %}" alt="Featured Product" class="w-full max-w-md mx-auto drop-shadow-2xl" onerror="this.src='https://placehold.co/500x500/F8F6F2/5C8A6E?text=Product'">
+                </div>
+                <!-- Decorative Elements -->
+                <div class="absolute top-10 right-10 w-20 h-20 bg-sage/10 rounded-full animate-pulse"></div>
+                <div class="absolute bottom-10 left-10 w-32 h-32 bg-rose/10 rounded-full animate-pulse delay-1000"></div>
+                <div class="absolute top-1/2 left-0 w-16 h-16 bg-taupe/10 rounded-full animate-pulse delay-500"></div>
+            </div>
+
+            <!-- Hero Content (Second on Mobile, First on Desktop) -->
+            <div class="text-center lg:text-right order-2 lg:order-1" data-animate>
+                <span class="inline-block px-4 py-1 bg-sage-light text-sage rounded-full text-sm font-medium mb-6">
+                    وصل حديثاً
+                </span>
+                <h1 class="font-headline text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary leading-tight mb-6">
+                    اكتشف أفضل
+                    <span class="text-sage">المنتجات</span>
+                    بأسعار لا تُقاوم
+                </h1>
+                <p class="text-lg text-text-secondary mb-8 max-w-lg mx-auto lg:mx-0">
+                    تسوق من مجموعة واسعة من المنتجات عالية الجودة. توصيل سريع وخدمة عملاء متميزة.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <a href="{% url 'store:products' %}" class="btn-primary px-8 py-4 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-all inline-flex items-center justify-center gap-2">
+                        تسوق الآن
+                        <svg class="w-5 h-5 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                    <a href="#featured" class="px-8 py-4 border-2 border-sage text-sage rounded-xl font-medium hover:bg-sage-light transition-all inline-flex items-center justify-center">
+                        عرض العروض
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wave Decoration -->
+    <div class="absolute bottom-0 left-0 right-0">
+        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full">
+            <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="#FDFBF8"/>
+        </svg>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="bg-surface py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div data-animate>
+                <p class="font-headline text-3xl font-bold text-sage">10K+</p>
+                <p class="text-text-secondary text-sm mt-1">منتج متوفر</p>
+            </div>
+            <div data-animate>
+                <p class="font-headline text-3xl font-bold text-sage">5K+</p>
+                <p class="text-text-secondary text-sm mt-1">عميل سعيد</p>
+            </div>
+            <div data-animate>
+                <p class="font-headline text-3xl font-bold text-sage">500+</p>
+                <p class="text-text-secondary text-sm mt-1">تاجر موثوق</p>
+            </div>
+            <div data-animate>
+                <p class="font-headline text-3xl font-bold text-sage">24/7</p>
+                <p class="text-text-secondary text-sm mt-1">دعم متواصل</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="py-16 bg-page-bg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12" data-animate>
+            <h2 class="font-headline text-3xl font-bold text-text-primary mb-4">تصفح حسب الفئة</h2>
+            <p class="text-text-secondary">اختر الفئة التي تناسب احتياجاتك</p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {% for category in categories %}
+            <a href="{% url 'store:products' %}?category={{ category.id }}" class="group relative bg-surface rounded-2xl p-6 text-center border border-border-sand hover:border-sage transition-all overflow-hidden" data-animate>
+                <div class="w-16 h-16 mx-auto mb-4 bg-sage-light rounded-xl flex items-center justify-center group-hover:bg-sage group-hover:text-white transition-all">
+                    <svg class="w-8 h-8 text-sage group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </div>
+                <h3 class="font-medium text-text-primary group-hover:text-sage transition-colors">{{ category.name }}</h3>
+                <p class="text-sm text-text-secondary mt-1">{{ category.products_count }} منتج</p>
+            </a>
+            {% empty %}
+            <!-- Placeholder Categories -->
+            <a href="{% url 'store:products' %}" class="group relative bg-surface rounded-2xl p-6 text-center border border-border-sand hover:border-sage transition-all">
+                <div class="w-16 h-16 mx-auto mb-4 bg-sage-light rounded-xl flex items-center justify-center group-hover:bg-sage transition-all">
+                    <svg class="w-8 h-8 text-sage group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <h3 class="font-medium text-text-primary">إلكترونيات</h3>
+                <p class="text-sm text-text-secondary mt-1">120 منتج</p>
+            </a>
+            <a href="{% url 'store:products' %}" class="group relative bg-surface rounded-2xl p-6 text-center border border-border-sand hover:border-rose transition-all">
+                <div class="w-16 h-16 mx-auto mb-4 bg-rose-light rounded-xl flex items-center justify-center group-hover:bg-rose transition-all">
+                    <svg class="w-8 h-8 text-rose group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                </div>
+                <h3 class="font-medium text-text-primary">أزياء</h3>
+                <p class="text-sm text-text-secondary mt-1">85 منتج</p>
+            </a>
+            <a href="{% url 'store:products' %}" class="group relative bg-surface rounded-2xl p-6 text-center border border-border-sand hover:border-taupe transition-all">
+                <div class="w-16 h-16 mx-auto mb-4 bg-taupe-light rounded-xl flex items-center justify-center group-hover:bg-taupe transition-all">
+                    <svg class="w-8 h-8 text-taupe group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                </div>
+                <h3 class="font-medium text-text-primary">المنزل</h3>
+                <p class="text-sm text-text-secondary mt-1">64 منتج</p>
+            </a>
+            <a href="{% url 'store:products' %}" class="group relative bg-surface rounded-2xl p-6 text-center border border-border-sand hover:border-status-blue transition-all">
+                <div class="w-16 h-16 mx-auto mb-4 bg-status-blue-light rounded-xl flex items-center justify-center group-hover:bg-status-blue transition-all">
+                    <svg class="w-8 h-8 text-status-blue group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h3 class="font-medium text-text-primary">الجمال</h3>
+                <p class="text-sm text-text-secondary mt-1">92 منتج</p>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products Section -->
+<section id="featured" class="py-16 bg-surface">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-12">
+            <div data-animate>
+                <h2 class="font-headline text-3xl font-bold text-text-primary mb-2">منتجات مميزة</h2>
+                <p class="text-text-secondary">اكتشف أفضل المنتجات المختارة لك</p>
+            </div>
+            <a href="{% url 'store:products' %}" class="hidden sm:flex items-center gap-2 text-sage hover:text-sage-dark transition-colors">
+                عرض الكل
+                <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for product in featured_products %}
+            <div class="product-card bg-page-bg rounded-2xl border border-border-sand overflow-hidden group" data-animate>
+                <!-- Product Image -->
+                <div class="relative aspect-square overflow-hidden bg-[#F0EBE3]">
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/400x400/F0EBE3/5C8A6E?text=Product'">
+
+                    <!-- Discount Badge -->
+                    {% if product.discount %}
+                    <span class="absolute top-3 right-3 px-2 py-1 bg-rose text-white text-xs font-medium rounded-lg">
+                        -{{ product.discount }}%
+                    </span>
+                    {% endif %}
+
+                    <!-- Wishlist Button -->
+                    <button onclick="Souq.toggleWishlist({id: '{{ product.id }}', name: '{{ product.name }}', price: {{ product.price }}, image: '{{ product.image.url }}'})" class="absolute top-3 left-3 w-8 h-8 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-rose hover:bg-rose hover:text-white transition-all opacity-0 group-hover:opacity-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                    </button>
+
+                    <!-- Quick Add to Cart -->
+                    <button onclick="Souq.addToCart({id: '{{ product.id }}', name: '{{ product.name }}', price: {{ product.price }}, image: '{{ product.image.url }}'})" class="absolute bottom-3 left-3 right-3 py-2 bg-sage text-white rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
+                        إضافة للسلة
+                    </button>
+                </div>
+
+                <!-- Product Info -->
+                <div class="p-4">
+                    <a href="{% url 'store:product_detail' product.pk %}">
+                        <h3 class="font-medium text-text-primary hover:text-sage transition-colors line-clamp-2">{{ product.name }}</h3>
+                    </a>
+
+                    <!-- Rating -->
+                    <div class="flex items-center gap-1 mt-2">
+                        {% for i in "12345" %}
+                        <svg class="w-4 h-4 text-taupe" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        {% endfor %}
+                        <span class="text-xs text-text-secondary mr-1">({{ product.reviews_count|default:"0" }})</span>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="flex items-center gap-2 mt-3">
+                        <span class="font-price text-lg font-semibold text-sage">{{ product.price }} ر.س</span>
+                        {% if product.old_price %}
+                        <span class="font-price text-sm text-text-placeholder line-through">{{ product.old_price }} ر.س</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <!-- Placeholder Products -->
+            {% for i in "1234" %}
+            <div class="product-card bg-page-bg rounded-2xl border border-border-sand overflow-hidden group">
+                <div class="relative aspect-square overflow-hidden bg-[#F0EBE3]">
+                    <img src="https://placehold.co/400x400/F0EBE3/5C8A6E?text=Product+{{ forloop.counter }}" alt="Product" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <span class="absolute top-3 right-3 px-2 py-1 bg-rose text-white text-xs font-medium rounded-lg">
+                        -20%
+                    </span>
+                    <button onclick="Souq.toggleWishlist({id: 'product-{{ forloop.counter }}', name: 'منتج {{ forloop.counter }}', price: 199, image: ''})" class="absolute top-3 left-3 w-8 h-8 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-rose hover:bg-rose hover:text-white transition-all opacity-0 group-hover:opacity-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                    </button>
+                    <button onclick="Souq.addToCart({id: 'product-{{ forloop.counter }}', name: 'منتج {{ forloop.counter }}', price: 199, image: ''})" class="absolute bottom-3 left-3 right-3 py-2 bg-sage text-white rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-all">
+                        إضافة للسلة
+                    </button>
+                </div>
+                <div class="p-4">
+                    <h3 class="font-medium text-text-primary">منتج مميز {{ forloop.counter }}</h3>
+                    <div class="flex items-center gap-1 mt-2">
+                        <svg class="w-4 h-4 text-taupe" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        <span class="text-xs text-text-secondary mr-1">(24)</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-3">
+                        <span class="font-price text-lg font-semibold text-sage">199 ر.س</span>
+                        <span class="font-price text-sm text-text-placeholder line-through">249 ر.س</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-8 sm:hidden">
+            <a href="{% url 'store:products' %}" class="inline-flex items-center gap-2 text-sage hover:text-sage-dark transition-colors">
+                عرض الكل
+                <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Offers Banner -->
+<section class="py-16 bg-page-bg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Offer 1 -->
+            <div class="relative bg-gradient-to-l from-sage to-sage-dark rounded-2xl overflow-hidden p-8 md:p-10 text-white" data-animate>
+                <div class="relative z-10">
+                    <span class="inline-block px-3 py-1 bg-white/20 rounded-full text-sm mb-4">عرض خاص</span>
+                    <h3 class="font-headline text-2xl md:text-3xl font-bold mb-2">خصم يصل إلى 50%</h3>
+                    <p class="text-white/80 mb-6">على جميع منتجات الإلكترونيات</p>
+                    <a href="{% url 'store:products' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-sage rounded-lg font-medium hover:bg-page-bg transition-colors">
+                        تسوق الآن
+                        <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                </div>
+                <div class="absolute left-0 bottom-0 w-40 h-40 bg-white/10 rounded-full -translate-x-1/2 translate-y-1/2"></div>
+                <div class="absolute right-10 top-10 w-20 h-20 bg-white/10 rounded-full"></div>
+            </div>
+
+            <!-- Offer 2 -->
+            <div class="relative bg-gradient-to-l from-rose to-[#B57A6A] rounded-2xl overflow-hidden p-8 md:p-10 text-white" data-animate>
+                <div class="relative z-10">
+                    <span class="inline-block px-3 py-1 bg-white/20 rounded-full text-sm mb-4">جديد</span>
+                    <h3 class="font-headline text-2xl md:text-3xl font-bold mb-2">توصيل مجاني</h3>
+                    <p class="text-white/80 mb-6">للطلبات فوق 200 ريال</p>
+                    <a href="{% url 'store:products' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-rose rounded-lg font-medium hover:bg-page-bg transition-colors">
+                        اكتشف المزيد
+                        <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                </div>
+                <div class="absolute left-0 bottom-0 w-40 h-40 bg-white/10 rounded-full -translate-x-1/2 translate-y-1/2"></div>
+                <div class="absolute right-10 top-10 w-20 h-20 bg-white/10 rounded-full"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Us Section -->
+<section class="py-16 bg-surface">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12" data-animate>
+            <h2 class="font-headline text-3xl font-bold text-text-primary mb-4">لماذا تختار سوق؟</h2>
+            <p class="text-text-secondary">نقدم لك أفضل تجربة تسوق ممكنة</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="text-center" data-animate>
+                <div class="w-16 h-16 mx-auto bg-sage-light rounded-2xl flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-text-primary text-lg mb-2">توصيل سريع</h3>
+                <p class="text-text-secondary text-sm">توصيل لجميع مناطق المملكة خلال 2-5 أيام عمل</p>
+            </div>
+
+            <div class="text-center" data-animate>
+                <div class="w-16 h-16 mx-auto bg-rose-light rounded-2xl flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-rose" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-text-primary text-lg mb-2">دفع آمن</h3>
+                <p class="text-text-secondary text-sm">جميع معاملاتك محمية بأحدث تقنيات الأمان</p>
+            </div>
+
+            <div class="text-center" data-animate>
+                <div class="w-16 h-16 mx-auto bg-taupe-light rounded-2xl flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-taupe" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-text-primary text-lg mb-2">استرجاع سهل</h3>
+                <p class="text-text-secondary text-sm">إمكانية الإرجاع والاستبدال خلال 14 يوم</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="py-16 bg-page-bg">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center" data-animate>
+        <h2 class="font-headline text-2xl font-bold text-text-primary mb-4">اشترك في نشرتنا البريدية</h2>
+        <p class="text-text-secondary mb-6">احصل على أحدث العروض والخصومات مباشرة في بريدك</p>
+
+        <form class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <input type="email" placeholder="أدخل بريدك الإلكتروني" class="flex-1 px-4 py-3 bg-surface border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all">
+            <button type="submit" class="btn-primary px-6 py-3 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors">
+                اشترك
+            </button>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script> 
+    // Initialize home page specific functionality
+    document.addEventListener('DOMContentLoaded', () => {
+        // Animate elements on scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.classList.add('fade-in');
+                    }, index * 100);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('[data-animate]').forEach(el => observer.observe(el));
+    });
+</script>
+{% endblock %}
