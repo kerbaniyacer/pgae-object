@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     # providers
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
+    'ckeditor',
+    'ckeditor_uploader',
 ]
 
 SITE_ID = 1
@@ -96,6 +98,8 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+CKEDITOR_UPLOAD_PATH = "uploads/"
+
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
@@ -142,7 +146,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+
 
 # Email Settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

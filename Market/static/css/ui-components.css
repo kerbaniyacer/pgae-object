@@ -1,0 +1,944 @@
+/* ============================================
+   UI Components Styles - متجر سوق
+   ============================================ */
+
+/* ============================================
+   1. Shiny Button Component - الزر اللامع
+   ============================================ */
+
+.shiny-btn {
+  position: relative;
+  padding: 14px 32px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+/* Primary Shiny Button - Sage Green */
+.shiny-btn-primary {
+  background: linear-gradient(135deg, #5C8A6E 0%, #4A7259 100%);
+  color: white;
+  box-shadow: 
+    0 4px 15px rgba(92, 138, 110, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.shiny-btn-primary:hover {
+  background: linear-gradient(135deg, #4A7259 0%, #3D5E4A 100%);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(92, 138, 110, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Secondary Shiny Button - Rose */
+.shiny-btn-secondary {
+  background: linear-gradient(135deg, #C9897A 0%, #B57A6A 100%);
+  color: white;
+  box-shadow: 
+    0 4px 15px rgba(201, 137, 122, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.shiny-btn-secondary:hover {
+  background: linear-gradient(135deg, #B57A6A 0%, #A06B5B 100%);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(201, 137, 122, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Outline Shiny Button */
+.shiny-btn-outline {
+  background: transparent;
+  color: #5C8A6E;
+  border: 2px solid #5C8A6E;
+  box-shadow: none;
+}
+
+.shiny-btn-outline:hover {
+  background: #5C8A6E;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(92, 138, 110, 0.4);
+}
+
+/* Shine Animation */
+.shiny-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.shiny-btn:hover::before {
+  left: 100%;
+}
+
+/* RTL Support for Shine */
+[dir="rtl"] .shiny-btn::before {
+  left: auto;
+  right: -100%;
+}
+
+[dir="rtl"] .shiny-btn:hover::before {
+  left: auto;
+  right: 100%;
+}
+
+/* Dark Mode Shiny Buttons */
+.dark .shiny-btn-primary {
+  box-shadow: 
+    0 4px 15px rgba(92, 138, 110, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.dark .shiny-btn-outline {
+  border-color: #7bb391;
+  color: #7bb391;
+}
+
+.dark .shiny-btn-outline:hover {
+  background: #5C8A6E;
+  color: white;
+}
+
+/* ============================================
+   2. Truck Loader Animation - أنيميشن الشاحنة
+   ============================================ */
+
+.truck-loader-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(248, 246, 242, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.truck-loader-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.dark .truck-loader-overlay {
+  background: rgba(26, 26, 26, 0.95);
+}
+
+.truck-wrapper {
+  --color: #5C8A6E;
+  position: relative;
+  width: 200px;
+  height: 120px;
+}
+
+/* Road */
+.truck-wrapper .road {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #A89880 50%, transparent);
+  border-radius: 2px;
+}
+
+.truck-wrapper .road::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 10px,
+    #E8E2D9 10px,
+    #E8E2D9 20px
+  );
+  transform: translateY(-50%);
+  animation: roadMove 0.5s linear infinite;
+}
+
+.dark .truck-wrapper .road {
+  background: linear-gradient(90deg, transparent, #4a4a4a 50%, transparent);
+}
+
+.dark .truck-wrapper .road::before {
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 10px,
+    #3a3a3a 10px,
+    #3a3a3a 20px
+  );
+}
+
+@keyframes roadMove {
+  from { transform: translateY(-50%) translateX(0); }
+  to { transform: translateY(-50%) translateX(-20px); }
+}
+
+/* Truck Body */
+.truck-wrapper .truck {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 60px;
+  animation: truckBounce 0.3s ease-in-out infinite;
+}
+
+@keyframes truckBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-3px); }
+}
+
+/* Truck Cabin */
+.truck-wrapper .cabin {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--color) 0%, #4A7259 100%);
+  border-radius: 8px 8px 4px 4px;
+  box-shadow: 
+    inset 2px 2px 0 rgba(255, 255, 255, 0.2),
+    0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Window */
+.truck-wrapper .cabin::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 18px;
+  height: 15px;
+  background: linear-gradient(180deg, #87CEEB 0%, #B0E0E6 100%);
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Truck Cargo */
+.truck-wrapper .cargo {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 75px;
+  height: 50px;
+  background: linear-gradient(135deg, #C9897A 0%, #B57A6A 100%);
+  border-radius: 4px 8px 4px 4px;
+  box-shadow: 
+    inset 2px 2px 0 rgba(255, 255, 255, 0.2),
+    0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Cargo Stripes */
+.truck-wrapper .cargo::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  box-shadow: 0 10px 0 rgba(255, 255, 255, 0.3), 0 20px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Wheels */
+.truck-wrapper .wheel {
+  position: absolute;
+  bottom: -8px;
+  width: 20px;
+  height: 20px;
+  background: #2D2D2D;
+  border-radius: 50%;
+  box-shadow: 
+    inset 0 0 0 3px #4a4a4a,
+    0 2px 5px rgba(0, 0, 0, 0.2);
+  animation: wheelSpin 0.3s linear infinite;
+}
+
+.truck-wrapper .wheel::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: #6a6a6a;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.truck-wrapper .wheel-front {
+  right: 8px;
+}
+
+.truck-wrapper .wheel-back {
+  left: 15px;
+}
+
+@keyframes wheelSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Smoke Effect */
+.truck-wrapper .smoke {
+  position: absolute;
+  bottom: 15px;
+  left: -10px;
+  width: 8px;
+  height: 8px;
+  background: rgba(168, 152, 128, 0.6);
+  border-radius: 50%;
+  animation: smoke 0.8s ease-out infinite;
+}
+
+.truck-wrapper .smoke:nth-child(2) {
+  animation-delay: 0.2s;
+  left: -15px;
+}
+
+.truck-wrapper .smoke:nth-child(3) {
+  animation-delay: 0.4s;
+  left: -20px;
+}
+
+@keyframes smoke {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px) scale(2);
+  }
+}
+
+/* Loading Text */
+.truck-loader-text {
+  margin-top: 30px;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #5C8A6E;
+  text-align: center;
+}
+
+.dark .truck-loader-text {
+  color: #7bb391;
+}
+
+.truck-loader-text .dots {
+  display: inline-block;
+  width: 20px;
+  text-align: left;
+}
+
+.truck-loader-text .dots::after {
+  content: '';
+  animation: dots 1.5s infinite;
+}
+
+@keyframes dots {
+  0%, 20% { content: ''; }
+  40% { content: '.'; }
+  60% { content: '..'; }
+  80%, 100% { content: '...'; }
+}
+
+/* ============================================
+   3. Sparkle Help Button - زر المساعدة العائم
+   ============================================ */
+
+.help-btn-container {
+  position: fixed;
+  bottom: 100px;  /* رفع للمسافة بين الزرين */
+  left: 24px;
+  z-index: 1000;
+}
+
+[dir="rtl"] .help-btn-container {
+  left: auto;
+  right: 24px;
+}
+
+.help-btn {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #5C8A6E 0%, #4A7259 100%);
+  color: white;
+  cursor: pointer;
+  overflow: visible;
+  box-shadow: 
+    0 4px 15px rgba(92, 138, 110, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.help-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 
+    0 6px 20px rgba(92, 138, 110, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.help-btn:active {
+  transform: scale(0.95);
+}
+
+.help-btn svg {
+  position: relative;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+}
+
+.help-btn .sparkles {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Individual Sparkle */
+.sparkle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #F59E0B;
+  border-radius: 50%;
+  animation: sparkleFloat 2s ease-in-out infinite;
+}
+
+.sparkle::before,
+.sparkle::after {
+  content: '';
+  position: absolute;
+  background: #F59E0B;
+}
+
+.sparkle::before {
+  width: 2px;
+  height: 10px;
+  top: -2px;
+  left: 2px;
+  border-radius: 2px;
+}
+
+.sparkle::after {
+  width: 10px;
+  height: 2px;
+  top: 2px;
+  left: -2px;
+  border-radius: 2px;
+}
+
+/* Sparkle Positions and Delays */
+.sparkle:nth-child(1) {
+  top: -5px;
+  left: 50%;
+  animation-delay: 0s;
+}
+
+.sparkle:nth-child(2) {
+  top: 50%;
+  right: -5px;
+  animation-delay: 0.3s;
+}
+
+.sparkle:nth-child(3) {
+  bottom: -5px;
+  left: 50%;
+  animation-delay: 0.6s;
+}
+
+.sparkle:nth-child(4) {
+  top: 50%;
+  left: -5px;
+  animation-delay: 0.9s;
+}
+
+.sparkle:nth-child(5) {
+  top: 0;
+  right: 0;
+  animation-delay: 0.2s;
+}
+
+.sparkle:nth-child(6) {
+  bottom: 0;
+  left: 0;
+  animation-delay: 0.5s;
+}
+
+@keyframes sparkleFloat {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
+}
+
+/* Pulse Ring Effect */
+.help-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: rgba(92, 138, 110, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: pulseRing 2s ease-out infinite;
+  z-index: 0;
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Dark Mode Help Button */
+.dark .help-btn {
+  background: linear-gradient(135deg, #7bb391 0%, #5C8A6E 100%);
+  box-shadow: 
+    0 4px 15px rgba(92, 138, 110, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.dark .help-btn:hover {
+  box-shadow: 
+    0 6px 20px rgba(92, 138, 110, 0.4),
+    0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* Help Tooltip */
+.help-tooltip {
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #2D2D2D;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+[dir="rtl"] .help-tooltip {
+  left: auto;
+  right: 50%;
+  transform: translateX(50%) translateY(10px);
+}
+
+.help-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #2D2D2D;
+}
+
+[dir="rtl"] .help-tooltip::after {
+  left: auto;
+  right: 50%;
+  transform: translateX(50%);
+}
+
+.help-btn:hover .help-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+[dir="rtl"] .help-btn:hover .help-tooltip {
+  transform: translateX(50%) translateY(0);
+}
+
+.dark .help-tooltip {
+  background: #4a4a4a;
+}
+
+.dark .help-tooltip::after {
+  border-top-color: #4a4a4a;
+}
+
+/* ============================================
+   4. Floating Cart Button - زر السلة العائم
+   ============================================ */
+
+.floating-cart-btn-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+}
+
+[dir="rtl"] .floating-cart-btn-container {
+  right: auto;
+  left: 24px;
+}
+
+.floating-cart-btn {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #C9897A 0%, #B57A6A 100%);
+  color: white;
+  cursor: pointer;
+  overflow: visible;
+  box-shadow: 
+    0 4px 15px rgba(201, 137, 122, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.floating-cart-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 
+    0 6px 20px rgba(201, 137, 122, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.floating-cart-btn:active {
+  transform: scale(0.95);
+}
+
+.floating-cart-btn svg {
+  position: relative;
+  z-index: 2;
+  width: 26px;
+  height: 26px;
+}
+
+/* Cart Sparkles Container */
+.floating-cart-btn .sparkles-cart {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Cart Sparkle */
+.sparkle_cart {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #5C8A6E;
+  border-radius: 50%;
+  animation: sparkleFloat 2s ease-in-out infinite;
+}
+
+.sparkle_cart::before,
+.sparkle_cart::after {
+  content: '';
+  position: absolute;
+  background: #5C8A6E;
+}
+
+.sparkle_cart::before {
+  width: 2px;
+  height: 10px;
+  top: -2px;
+  left: 2px;
+  border-radius: 2px;
+}
+
+.sparkle_cart::after {
+  width: 10px;
+  height: 2px;
+  top: 2px;
+  left: -2px;
+  border-radius: 2px;
+}
+
+.sparkle_cart:nth-child(1) {
+  top: -5px;
+  left: 50%;
+  animation-delay: 0s;
+}
+
+.sparkle_cart:nth-child(2) {
+  top: 50%;
+  right: -5px;
+  animation-delay: 0.3s;
+}
+
+.sparkle_cart:nth-child(3) {
+  bottom: -5px;
+  left: 50%;
+  animation-delay: 0.6s;
+}
+
+.sparkle_cart:nth-child(4) {
+  top: 50%;
+  left: -5px;
+  animation-delay: 0.9s;
+}
+
+.sparkle_cart:nth-child(5) {
+  top: 0;
+  right: 0;
+  animation-delay: 0.2s;
+}
+
+.sparkle_cart:nth-child(6) {
+  bottom: 0;
+  left: 0;
+  animation-delay: 0.5s;
+}
+
+/* Pulse Ring for Cart */
+.floating-cart-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: rgba(201, 137, 122, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: pulseRing 2s ease-out infinite;
+  z-index: 0;
+}
+
+/* Cart Badge */
+.floating-cart-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 22px;
+  height: 22px;
+  background: #EF4444;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+[dir="rtl"] .floating-cart-badge {
+  right: auto;
+  left: -5px;
+}
+
+/* Cart Tooltip */
+.cart-tooltip {
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #2D2D2D;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+[dir="rtl"] .cart-tooltip {
+  left: auto;
+  right: 50%;
+  transform: translateX(50%) translateY(10px);
+}
+
+.cart-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #2D2D2D;
+}
+
+[dir="rtl"] .cart-tooltip::after {
+  left: auto;
+  right: 50%;
+  transform: translateX(50%);
+}
+
+.floating-cart-btn:hover .cart-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+[dir="rtl"] .floating-cart-btn:hover .cart-tooltip {
+  transform: translateX(50%) translateY(0);
+}
+
+.dark .cart-tooltip {
+  background: #4a4a4a;
+}
+
+.dark .cart-tooltip::after {
+  border-top-color: #4a4a4a;
+}
+
+/* Dark Mode Cart Button */
+.dark .floating-cart-btn {
+  background: linear-gradient(135deg, #D4A69A 0%, #C9897A 100%);
+  box-shadow: 
+    0 4px 15px rgba(201, 137, 122, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.dark .floating-cart-btn:hover {
+  box-shadow: 
+    0 6px 20px rgba(201, 137, 122, 0.4),
+    0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================
+   5. Search Loading State - حالة تحميل البحث
+   ============================================ */
+
+.search-loading {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #FDFBF8;
+  border-radius: 0 0 16px 16px;
+  padding: 20px;
+  display: none;
+}
+
+.search-loading.active {
+  display: block;
+}
+
+.dark .search-loading {
+  background: #2d2d2d;
+}
+
+.search-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Mini truck for search */
+.search-loading .mini-truck {
+  transform: scale(0.6);
+}
+
+/* ============================================
+   6. Responsive Adjustments
+   ============================================ */
+
+@media (max-width: 640px) {
+  .help-btn-container {
+    bottom: 90px;
+    left: 16px;
+  }
+  
+  [dir="rtl"] .help-btn-container {
+    left: auto;
+    right: 16px;
+  }
+  
+  .floating-cart-btn-container {
+    bottom: 16px;
+    right: 16px;
+  }
+  
+  [dir="rtl"] .floating-cart-btn-container {
+    right: auto;
+    left: 16px;
+  }
+  
+  .help-btn,
+  .floating-cart-btn {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .help-btn svg,
+  .floating-cart-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .floating-cart-badge {
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+}

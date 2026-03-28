@@ -1,15 +1,15 @@
 from django.contrib import admin
 from .models import (
-    Profile, Category, Product, ProductImage,
+    AttributeValue, ProductVariant, Profile, Category, Product, ProductImage,
     Cart, CartItem, Order, OrderItem,
-    Wishlist, Review
+    Wishlist, Review, Attribute
 )
 
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'is_seller', 'phone', 'city', 'store_name')
-    list_filter = ('is_seller', 'city')
+    list_display = ('user', 'is_seller', 'phone', 'wilaya', 'baladia', 'store_name')
+    list_filter = ('is_seller', 'wilaya', 'baladia')
     search_fields = ('user__username', 'phone', 'store_name')
     readonly_fields = ('created_at', 'updated_at')
 
@@ -27,32 +27,48 @@ class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 3
 
+@admin.register(Attribute)
+class AttributeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category')
+    search_fields = ('name',)
+
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    list_display = ['name', 'seller']
     list_display = ('name', 'category', 'seller', 'price', 'old_price', 'discount', 'stock', 'is_active', 'is_featured')
     list_filter = ('category', 'is_active', 'is_featured', 'brand')
     search_fields = ('name', 'description', 'sku')
     readonly_fields = ('rating', 'reviews_count', 'sold_count', 'created_at', 'updated_at')
     prepopulated_fields = {'slug': ('name',)}
     inlines = [ProductImageInline]
-
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.profile.is_seller:
             return qs.filter(seller=request.user)
         return qs
-
     def save_model(self, request, obj, form, change):
-        if not obj.seller_id:
-            obj.seller = request.user
-        super().save_model(request, obj, form, change)
+        if not obj.seller:
+            obj.seller = request.user.profile  # 🔥 هنا الحل
+        super().save_model(request, obj, form, change) 
+
 
 
 @admin.register(ProductImage)
 class ProductImageAdmin(admin.ModelAdmin):
-    list_display = ('product', 'image', 'created_at')
+    list_display = ('product', 'image', 'is_main')
     search_fields = ('product__name',)
+
+@admin.register(ProductVariant)
+class ProductVariantAdmin(admin.ModelAdmin):
+    list_display = ('product', 'sku', 'price', 'stock')
+    search_fields = ('product__name', 'sku')
+
+@admin.register(AttributeValue)
+class AttributeValueAdmin(admin.ModelAdmin):
+    list_display = ('attribute', 'value')
+    search_fields = ('attribute__name', 'value')
+
 
 
 class CartItemInline(admin.TabularInline):

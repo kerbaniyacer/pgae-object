@@ -1,6 +1,8 @@
 import time
 import random
 import json
+import re
+from urllib import request
 from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -19,7 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import (
     Profile, Category, Product, ProductImage, Cart, CartItem,
-    Order, OrderItem, Wishlist, Review
+    Order, OrderItem, Wishlist, Review, ProductVariant
 )
 from .forms import RegisterForm, LoginForm, ProfileForm, UserTypeForm, ProductForm
 
@@ -48,55 +50,55 @@ def home(request):
 
 def products(request):
     """Products listing page with filters"""
-    products_list = Product.objects.filter(is_active=True)
+    products = Product.objects.filter(is_active=True)
     categories = Category.objects.filter(is_active=True)
 
     # Filter by category
     category_ids = request.GET.getlist('category')
     if category_ids:
-        products_list = products_list.filter(category_id__in=category_ids)
+        products = products.filter(category_id__in=category_ids)
 
     # Filter by price
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
     if min_price:
-        products_list = products_list.filter(price__gte=min_price)
+        products = products.filter(price__gte=min_price)
     if max_price:
-        products_list = products_list.filter(price__lte=max_price)
+        products = products.filter(price__lte=max_price)
 
     # Filter by search
     search = request.GET.get('search')
     if search:
-        products_list = products_list.filter(
+        products = products.filter(
             Q(name__icontains=search) | Q(description__icontains=search)
         )
 
     # Filter by in stock
     in_stock = request.GET.get('in_stock')
     if in_stock:
-        products_list = products_list.filter(stock__gt=0)
+        products = products.filter(stock__gt=0)
 
     # Sorting
-    sort = request.GET.get('sort', '-created_at')
-    sort_options = {
-        'newest': '-created_at',
-        'price_low': 'price',
-        'price_high': '-price',
-        'rating': '-rating',
-        'popular': '-sold_count',
-    }
-    products_list = products_list.order_by(sort_options.get(sort, '-created_at'))
+    sort = request.GET.get('sort')
+    if sort == 'newest':
+        products = products.order_by('-created_at')
+    elif sort == 'price_low':
+        products = products.order_by('price')
+    elif sort == 'price_high':
+        products = products.order_by('-price')
+    elif sort == 'rating':
+        products = products.order_by('-rating')
+    elif sort == 'popular':
+        products = products.order_by('-sold_count')
 
     # Pagination
-    paginator = Paginator(products_list, 12)
+    paginator = Paginator(products, 12)
     page_number = request.GET.get('page')
-    products_page = paginator.get_page(page_number)
+    products = paginator.get_page(page_number)
 
     context = {
-        'products': products_page,
+        'products': products,
         'categories': categories,
-        'selected_categories': category_ids,
-        'current_sort': sort,
     }
     return render(request, 'store/products.html', context)
 
@@ -106,19 +108,13 @@ def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk, is_active=True)
     related_products = Product.objects.filter(
         category=product.category, is_active=True
-    ).exclude(pk=pk)[:4]
+    ).exclude(pk=pk)[:5]
     reviews = product.reviews.all()[:5]
-
-    # Check if in wishlist
-    in_wishlist = False
-    if request.user.is_authenticated:
-        in_wishlist = Wishlist.objects.filter(user=request.user, product=product).exists()
 
     context = {
         'product': product,
         'related_products': related_products,
         'reviews': reviews,
-        'in_wishlist': in_wishlist,
     }
     return render(request, 'store/product_detail.html', context)
 
@@ -131,19 +127,56 @@ def get_or_create_cart(request):
     """Helper function to get or create cart"""
     if request.user.is_authenticated:
         cart_obj, created = Cart.objects.get_or_create(user=request.user)
+        # If user had a session cart, merge it
+        session_key = request.session.session_key
+        if session_key:
+            try:
+                session_cart = Cart.objects.get(session_key=session_key, user__isnull=True)
+                # Merge session cart items into user cart
+                for item in session_cart.items.all():
+                    cart_item, created = CartItem.objects.get_or_create(
+                        cart=cart_obj,
+                        variant=item.variant,
+                        defaults={'quantity': item.quantity}
+                    )
+                    if not created:
+                        cart_item.quantity += item.quantity
+                        cart_item.save()
+                # Delete the session cart
+                session_cart.delete()
+            except Cart.DoesNotExist:
+                pass
     else:
         session_key = request.session.session_key
         if not session_key:
             request.session.create()
             session_key = request.session.session_key
-        cart_obj, created = Cart.objects.get_or_create(session_key=session_key)
+        cart_obj, created = Cart.objects.get_or_create(
+            session_key=session_key,
+            user__isnull=True
+        )
     return cart_obj, created
+
+
+def get_default_variant(product):
+    """Get or create default variant for a product"""
+    variant = product.variants.first()
+    if not variant:
+        # Create default variant if none exists
+        variant = ProductVariant.objects.create(
+            product=product,
+            name='افتراضي',
+            price=product.price,
+            stock=product.stock,
+            sku=product.sku or f'{product.id}-default'
+        )
+    return variant
 
 
 def cart(request):
     """Shopping cart page"""
     cart_obj, created = get_or_create_cart(request)
-    cart_items = cart_obj.items.select_related('product').all()
+    cart_items = cart_obj.items.select_related('variant__product').all()
 
     context = {
         'cart': cart_obj,
@@ -152,114 +185,170 @@ def cart(request):
     return render(request, 'store/cart.html', context)
 
 
-@require_POST
-def add_to_cart(request):
-    """Add product to cart (AJAX)"""
+def cart_count(request):
+    """Get cart items count (AJAX)"""
     try:
-        data = json.loads(request.body)
-        product_id = data.get('product_id')
-        quantity = int(data.get('quantity', 1))
-
-        if quantity < 1:
-            return JsonResponse({'success': False, 'message': 'الكمية غير صالحة'})
-
-        product = get_object_or_404(Product, pk=product_id, is_active=True)
-        
-        if product.stock < quantity:
-            return JsonResponse({
-                'success': False, 
-                'message': f'الكمية المتوفرة: {product.stock}'
-            })
-
-        cart_obj, created = get_or_create_cart(request)
-
-        cart_item, created = CartItem.objects.get_or_create(
-            cart=cart_obj,
-            product=product,
-            defaults={'quantity': quantity}
-        )
-
-        if not created:
-            new_quantity = cart_item.quantity + quantity
-            if new_quantity > product.stock:
-                return JsonResponse({
-                    'success': False, 
-                    'message': f'الكمية المتوفرة: {product.stock}'
-                })
-            cart_item.quantity = new_quantity
-            cart_item.save()
-
+        cart_obj, _ = get_or_create_cart(request)
+        count = cart_obj.items_count
         return JsonResponse({
             'success': True,
-            'message': 'تمت إضافة المنتج للسلة',
-            'cart_count': cart_obj.total_items
+            'count': count
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'count': 0
         })
 
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': 'حدث خطأ'})
+
+def add_to_cart(request):
+    """Add product to cart (AJAX)"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            product_id = data.get('product_id')
+            variant_id = data.get('variant_id')
+            quantity = int(data.get('quantity', 1))
+
+            if quantity < 1:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'الكمية غير صالحة'
+                })
+
+            product = get_object_or_404(Product, pk=product_id, is_active=True)
+            
+            # Get variant (specific or default)
+            if variant_id:
+                variant = get_object_or_404(ProductVariant, pk=variant_id, product=product)
+            else:
+                variant = get_default_variant(product)
+            
+            # التحقق من المخزون
+            if variant.stock < quantity:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'الكمية المتوفرة: {variant.stock}'
+                })
+
+            cart_obj, created = get_or_create_cart(request)
+
+            cart_item, created = CartItem.objects.get_or_create(
+                cart=cart_obj,
+                variant=variant,
+                defaults={'quantity': quantity}
+            )
+
+            if not created:
+                new_quantity = cart_item.quantity + quantity
+                if new_quantity > variant.stock:
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'الكمية المتوفرة: {variant.stock}'
+                    })
+                cart_item.quantity = new_quantity
+                cart_item.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': 'تمت إضافة المنتج للسلة',
+                'cart_count': cart_obj.items_count
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'حدث خطأ: {str(e)}'
+            })
+
+    return JsonResponse({'success': False, 'message': 'طلب غير صالح'})
 
 
-@require_POST
 def update_cart(request):
     """Update cart item quantity (AJAX)"""
-    try:
-        data = json.loads(request.body)
-        product_id = data.get('product_id')
-        quantity = int(data.get('quantity', 1))
-
-        if quantity < 0:
-            return JsonResponse({'success': False, 'message': 'الكمية غير صالحة'})
-
-        cart_obj, _ = get_or_create_cart(request)
-
+    if request.method == 'POST':
         try:
-            cart_item = CartItem.objects.get(cart=cart_obj, product_id=product_id)
-            
-            if quantity == 0:
-                cart_item.delete()
-            elif quantity > cart_item.product.stock:
-                return JsonResponse({
-                    'success': False, 
-                    'message': f'الكمية المتوفرة: {cart_item.product.stock}'
-                })
+            data = json.loads(request.body)
+            product_id = data.get('product_id')  # للتوافق مع الكود القديم
+            variant_id = data.get('variant_id')
+            quantity = int(data.get('quantity', 1))
+
+            cart_obj, _ = get_or_create_cart(request)
+
+            # البحث بالـ variant_id أو product_id
+            if variant_id:
+                cart_item = CartItem.objects.get(cart=cart_obj, variant_id=variant_id)
+            elif product_id:
+                # البحث عن طريق المنتج (للتوافق مع الكود القديم)
+                cart_item = CartItem.objects.filter(
+                    cart=cart_obj, 
+                    variant__product_id=product_id
+                ).first()
+                if not cart_item:
+                    return JsonResponse({'success': False, 'message': 'العنصر غير موجود'})
             else:
+                return JsonResponse({'success': False, 'message': 'معرف غير صالح'})
+            
+            if quantity > 0:
+                # التحقق من المخزون
+                if quantity > cart_item.variant.stock:
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'الكمية المتوفرة: {cart_item.variant.stock}'
+                    })
                 cart_item.quantity = quantity
                 cart_item.save()
-                
+            else:
+                cart_item.delete()
+
             return JsonResponse({
                 'success': True,
-                'cart_count': cart_obj.total_items,
-                'cart_total': float(cart_obj.total_price)
+                'cart_count': cart_obj.items_count
             })
         except CartItem.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'المنتج غير موجود في السلة'})
+            return JsonResponse({'success': False, 'message': 'العنصر غير موجود'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
 
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': 'حدث خطأ'})
+    return JsonResponse({'success': False})
 
 
-@require_POST
 def remove_from_cart(request):
     """Remove product from cart (AJAX)"""
-    try:
-        data = json.loads(request.body)
-        product_id = data.get('product_id')
-
-        cart_obj, _ = get_or_create_cart(request)
-
+    if request.method == 'POST':
         try:
-            cart_item = CartItem.objects.get(cart=cart_obj, product_id=product_id)
+            data = json.loads(request.body)
+            product_id = data.get('product_id')  # للتوافق مع الكود القديم
+            variant_id = data.get('variant_id')
+
+            cart_obj, _ = get_or_create_cart(request)
+
+            # البحث بالـ variant_id أو product_id
+            if variant_id:
+                cart_item = CartItem.objects.get(cart=cart_obj, variant_id=variant_id)
+            elif product_id:
+                # البحث عن طريق المنتج (للتوافق مع الكود القديم)
+                cart_item = CartItem.objects.filter(
+                    cart=cart_obj, 
+                    variant__product_id=product_id
+                ).first()
+                if not cart_item:
+                    return JsonResponse({'success': False, 'message': 'العنصر غير موجود'})
+            else:
+                return JsonResponse({'success': False, 'message': 'معرف غير صالح'})
+            
             cart_item.delete()
+
             return JsonResponse({
                 'success': True,
-                'cart_count': cart_obj.total_items,
-                'cart_total': float(cart_obj.total_price)
+                'cart_count': cart_obj.items_count
             })
         except CartItem.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'المنتج غير موجود في السلة'})
+            return JsonResponse({'success': False, 'message': 'العنصر غير موجود'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
 
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': 'حدث خطأ'})
+    return JsonResponse({'success': False})
 
 
 # ============================================
@@ -270,7 +359,7 @@ def remove_from_cart(request):
 def checkout(request):
     """Checkout page"""
     cart_obj, _ = get_or_create_cart(request)
-    cart_items = cart_obj.items.select_related('product').all()
+    cart_items = cart_obj.items.select_related('variant__product').all()
 
     if not cart_items:
         messages.warning(request, 'سلة التسوق فارغة')
@@ -288,17 +377,10 @@ def checkout(request):
 def place_order(request):
     """Place order"""
     cart_obj, _ = get_or_create_cart(request)
-    cart_items = cart_obj.items.select_related('product').all()
+    cart_items = cart_obj.items.all()
 
     if not cart_items:
-        messages.error(request, 'سلة التسوق فارغة')
         return redirect('store:cart')
-
-    # Check stock availability
-    for item in cart_items:
-        if item.quantity > item.product.stock:
-            messages.error(request, f'الكمية المتوفرة من {item.product.name}: {item.product.stock}')
-            return redirect('store:cart')
 
     # Calculate totals
     subtotal = sum(item.subtotal for item in cart_items)
@@ -308,11 +390,12 @@ def place_order(request):
     # Create order
     order = Order.objects.create(
         user=request.user,
-        full_name=request.POST.get('full_name', request.user.get_full_name()),
-        phone=request.POST.get('phone', request.user.profile.phone if hasattr(request.user, 'profile') else ''),
-        email=request.POST.get('email', request.user.email),
+        full_name=request.POST.get('full_name'),
+        phone=request.POST.get('phone'),
+        email=request.POST.get('email'),
         address=request.POST.get('address'),
-        city=request.POST.get('city'),
+        wilaya=request.POST.get('wilaya', ''),
+        baladia=request.POST.get('baladia', ''),
         postal_code=request.POST.get('postal_code', ''),
         notes=request.POST.get('notes', ''),
         subtotal=subtotal,
@@ -323,24 +406,29 @@ def place_order(request):
 
     # Create order items
     for item in cart_items:
+        product = item.variant.product
         OrderItem.objects.create(
             order=order,
-            product=item.product,
-            product_name=item.product.name,
-            product_price=item.product.price,
+            product=product,
+            product_name=product.name,
+            product_price=item.variant.price,
             quantity=item.quantity,
             subtotal=item.subtotal
         )
-        # Update product stock
-        item.product.stock -= item.quantity
-        item.product.sold_count += item.quantity
-        item.product.save()
+        # Update variant stock
+        item.variant.stock -= item.quantity
+        item.variant.save()
+        
+        # Update product sold count
+        product.sold_count = getattr(product, 'sold_count', 0) + item.quantity
+        product.save()
 
     # Clear cart
     cart_items.delete()
 
-    messages.success(request, f'تم تأكيد طلبك بنجاح! رقم الطلب: #{order.id}')
+    messages.success(request, f'تم تأكيد طلبك بنجاح! رقم الطلب: {order.order_number}')
     return redirect('store:order_detail', pk=order.pk)
+
 
 
 # ============================================
@@ -352,14 +440,8 @@ def orders(request):
     """User orders history"""
     user_orders = Order.objects.filter(user=request.user).order_by('-created_at')
 
-    # Filter by status
-    status = request.GET.get('status')
-    if status:
-        user_orders = user_orders.filter(current_status=status)
-
     context = {
         'orders': user_orders,
-        'current_status': status,
     }
     return render(request, 'store/orders.html', context)
 
@@ -568,6 +650,11 @@ def logout_view(request):
     return redirect('store:home')
 
 
+import re
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 def register(request):
     """User registration"""
     if request.user.is_authenticated:
@@ -586,6 +673,53 @@ def register(request):
     # Step 2: Registration details
     if user_type in ['customer', 'seller']:
         if request.method == 'POST' and 'username' in request.POST:
+            username = request.POST.get('username', '').strip()
+            email = request.POST.get('email', '').strip().lower()
+            
+            # التحقق من اسم المستخدم - لا رموز
+            if not re.match(r'^[a-zA-Z0-9_\u0600-\u06FF]+$', username):
+                messages.error(request, 'اسم المستخدم يجب أن يحتوي على أحرف وأرقام فقط بدون رموز')
+                form = RegisterForm(request.POST, request.FILES)
+                return render(request, 'accounts/register.html', {
+                    'form': form,
+                    'user_type': user_type,
+                })
+            
+            # التحقق من طول اسم المستخدم
+            if len(username) < 3:
+                messages.error(request, 'اسم المستخدم يجب أن يكون 3 أحرف على الأقل')
+                form = RegisterForm(request.POST, request.FILES)
+                return render(request, 'accounts/register.html', {
+                    'form': form,
+                    'user_type': user_type,
+                })
+            
+            if len(username) > 30:
+                messages.error(request, 'اسم المستخدم يجب ألا يتجاوز 30 حرف')
+                form = RegisterForm(request.POST, request.FILES)
+                return render(request, 'accounts/register.html', {
+                    'form': form,
+                    'user_type': user_type,
+                })
+            
+            # التحقق من عدم وجود اسم المستخدم مسبقاً
+            if User.objects.filter(username__iexact=username).exists():
+                messages.error(request, 'اسم المستخدم مستخدم بالفعل، اختر اسماً آخر')
+                form = RegisterForm(request.POST, request.FILES)
+                return render(request, 'accounts/register.html', {
+                    'form': form,
+                    'user_type': user_type,
+                })
+            
+            # التحقق من عدم وجود البريد الإلكتروني مسبقاً
+            if User.objects.filter(email__iexact=email).exists():
+                messages.error(request, 'البريد الإلكتروني مستخدم بالفعل، سجل الدخول أو استخدم بريداً آخر')
+                form = RegisterForm(request.POST, request.FILES)
+                return render(request, 'accounts/register.html', {
+                    'form': form,
+                    'user_type': user_type,
+                })
+            
             form = RegisterForm(request.POST, request.FILES)
             if form.is_valid():
                 user = form.save()
@@ -596,6 +730,11 @@ def register(request):
                 send_registration_confirmation(to_email=user.email, username=user.username)
                 
                 return redirect('store:home')
+            else:
+                # التحقق الإضافي من الأخطاء في الفورم
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f'{error}')
         else:
             form = RegisterForm(initial={'user_type': user_type})
 
@@ -629,17 +768,71 @@ def change_password(request):
     """Change user password"""
     if request.method == 'POST':
         form = PasswordChangeForm(request.user, request.POST)
-        if form.is_valid():
-            user = form.save()
-            update_session_auth_hash(request, user)
-            messages.success(request, 'تم تغيير كلمة المرور بنجاح')
-            
-            # Send notification email
-            password_change_notification(to_email=request.user.email, username=request.user.username)
-            
-            return redirect('store:profile')
+        # Check if this is step 1 (change_password) or step 2 (OTP verification)
+        otp_sent = request.POST.get('otp_sent') == 'true'
+        
+        if otp_sent:
+            # Step 2: Verify OTP
+            code_verification = request.POST.get('code_verification', '').strip()
+            if not code_verification:
+                messages.error(request, 'يرجى إدخال رمز التحقق')
+                masked_email = request.session.get('login_user_email', '')
+                return render(request, 'accounts/change_password.html', {
+                    'form': form, 
+                    'otp_sent': True,
+                    'user_email': masked_email
+                })
+            try: 
+                if verify_otp_code(request.user.email, code_verification):
+                    # OTP is valid, proceed with password change
+                    if form.is_valid():
+                        user = form.save()
+                        update_session_auth_hash(request, user)
+                        messages.success(request, 'تم تغيير كلمة المرور بنجاح')
+                        
+                        # Send notification email
+                        password_change_notification(to_email=request.user.email, username=request.user.username)
+                        logout(request)
+                        return redirect('store:login')
+                    else:
+                        messages.error(request, 'يرجى تصحيح الأخطاء أدناه')
+                else:
+                    messages.error(request, 'رمز التحقق غير صحيح أو منتهي الصلاحية')
+                    masked_email = mask_email(request.user.email)
+                    return render(request, 'accounts/change_password.html', {
+                        'form': form, 
+                        'otp_sent': True,
+                        'user_email': masked_email
+                    })
+            except Exception as e:
+                messages.error(request, 'حدث خطأ، يرجى المحاولة مرة أخرى')
+                return redirect('store:change_password')
         else:
-            messages.error(request, 'يرجى تصحيح الأخطاء أدناه')
+            # Step 1: Send OTP for password change verification
+            cache_key = f'otp_rate_limit_{request.user.email}'
+            if cache.get(cache_key):
+                messages.warning(request, 'يرجى الانتظار 60 ثانية قبل طلب رمز جديد')
+                masked_email = mask_email(request.user.email)
+                return render(request, 'accounts/change_password.html', {
+                    'form': form,
+                    'otp_sent': True,
+                    'user_email': masked_email
+                })
+            
+            # Validate form first before sending OTP
+            if form.is_valid():
+                send_otp_email(to_email=request.user.email, username=request.user.username)
+                cache.set(cache_key, True, 60)
+                request.session['login_user_email'] = mask_email(request.user.email)
+                messages.info(request, 'تم إرسال رمز التحيق إلى بريدك الإلكتروني')
+                return render(request, 'accounts/change_password.html', {
+                    'form': form,
+                    'otp_sent': True,
+                    'user_email': mask_email(request.user.email)
+                })
+            else:
+                messages.error(request, 'يرجى تصحيح الأخطاء أدناه')
+        
     else:
         form = PasswordChangeForm(request.user)
 
@@ -779,62 +972,6 @@ def reset_password(request, uidb64, token):
         'uidb64': uidb64,
         'token': token
     })
-
-
-def send_password_reset_email(to_email, username, reset_url):
-    """Send password reset email"""
-    send_mail(
-        subject="🔑 إعادة تعيين كلمة المرور - متجرنا",
-        message=f"لإعادة تعيين كلمة المرور، يرجى زيارة: {reset_url}",
-        from_email=None,
-        recipient_list=[to_email],
-        html_message=f"""
-        <div dir="rtl" style="font-family:Arial; max-width:600px; margin:auto; padding:20px; border:1px solid #e0e0e0; border-radius:10px;">
-            <h2 style="color:#5C8A6E; text-align:center;">متجرنا</h2>
-            <hr>
-            <p>مرحباً <strong>{username}</strong> 👋</p>
-            <p>لقد تلقينا طلباً لإعادة تعيين كلمة المرور الخاصة بك.</p>
-            <p>اضغط على الزر أدناه لإعادة تعيين كلمة المرور:</p>
-            <div style="text-align:center; margin:25px 0;">
-                <a href="{reset_url}" style="background:#5C8A6E; color:white; padding:12px 30px; text-decoration:none; border-radius:8px; font-weight:bold;">
-                    إعادة تعيين كلمة المرور
-                </a>
-            </div>
-            <p style="color:#888; font-size:13px;">⏳ الرابط صالح لمدة <strong>ساعة واحدة</strong> فقط.</p>
-            <p style="color:#888; font-size:13px;">⚠️ إذا لم تطلب هذا التغيير، يمكنك تجاهل هذه الرسالة بأمان.</p>
-            <hr>
-            <p style="color:#aaa; font-size:12px; text-align:center;">© 2026 متجرنا - جميع الحقوق محفوظة</p>
-        </div>
-        """,
-        fail_silently=False,
-    )
-
-
-def password_reset_success_email(to_email, username):
-    """Send password reset success notification"""
-    send_mail(
-        subject="✅ تم تغيير كلمة المرور - متجرنا",
-        message=f"مرحباً {username}، تم تغيير كلمة المرور الخاصة بك بنجاح.",
-        from_email=None,
-        recipient_list=[to_email],
-        html_message=f"""
-        <div dir="rtl" style="font-family:Arial; max-width:600px; margin:auto; padding:20px; border:1px solid #e0e0e0; border-radius:10px;">
-            <h2 style="color:#5C8A6E; text-align:center;">متجرنا</h2>
-            <hr>
-            <p>مرحباً <strong>{username}</strong> 👋</p>
-            <p>تم تغيير كلمة المرور الخاصة بك بنجاح ✅</p>
-            <p>يمكنك الآن تسجيل الدخول باستخدام كلمة المرور الجديدة.</p>
-            <div style="background:#FEF3E2; padding:15px; border-radius:8px; margin:20px 0;">
-                <p style="margin:0; color:#C9897A; font-size:14px;">
-                    ⚠️ إذا لم تقم بهذا التغيير، يرجى التواصل معنا فوراً.
-                </p>
-            </div>
-            <hr>
-            <p style="color:#aaa; font-size:12px; text-align:center;">© 2026 متجرنا - جميع الحقوق محفوظة</p>
-        </div>
-        """,
-        fail_silently=False,
-    )
 
 
 @require_POST
@@ -1293,3 +1430,163 @@ def password_change_notification(to_email, username):
         """,
         fail_silently=False,
     )
+
+
+def send_password_reset_email(to_email, username, reset_url):
+    """Send password reset email"""
+    send_mail(
+        subject="🔑 إعادة تعيين كلمة المرور - سوق",
+        message=f"لإعادة تعيين كلمة المرور، يرجى زيارة: {reset_url}",
+        from_email=None,
+        recipient_list=[to_email],
+        html_message=f"""
+        <div dir="rtl" style="font-family:Arial; max-width:600px; margin:auto; padding:20px; border:1px solid #e0e0e0; border-radius:10px;">
+            <h2 style="color:#5C8A6E; text-align:center;">سوق</h2>
+            <hr>
+            <p>مرحباً <strong>{username}</strong> 👋</p>
+            <p>لقد تلقينا طلباً لإعادة تعيين كلمة المرور الخاصة بك.</p>
+            <p>اضغط على الزر أدناه لإعادة تعيين كلمة المرور:</p>
+            <div style="text-align:center; margin:25px 0;">
+                <a href="{reset_url}" style="background:#5C8A6E; color:white; padding:12px 30px; text-decoration:none; border-radius:8px; font-weight:bold;">
+                    إعادة تعيين كلمة المرور
+                </a>
+            </div>
+            <p style="color:#888; font-size:13px;">⏳ الرابط صالح لمدة <strong>ساعة واحدة</strong> فقط.</p>
+            <p style="color:#888; font-size:13px;">⚠️ إذا لم تطلب هذا التغيير، يمكنك تجاهل هذه الرسالة بأمان.</p>
+            <hr>
+            <p style="color:#aaa; font-size:12px; text-align:center;">© 2026 سوق - جميع الحقوق محفوظة</p>
+        </div>
+        """,
+        fail_silently=False,
+    )
+
+
+def password_reset_success_email(to_email, username):
+    """Send password reset success notification"""
+    send_mail(
+        subject="✅ تم تغيير كلمة المرور - سوق",
+        message=f"مرحباً {username}، تم تغيير كلمة المرور الخاصة بك بنجاح.",
+        from_email=None,
+        recipient_list=[to_email],
+        html_message=f"""
+        <div dir="rtl" style="font-family:Arial; max-width:600px; margin:auto; padding:20px; border:1px solid #e0e0e0; border-radius:10px;">
+            <h2 style="color:#5C8A6E; text-align:center;">سوق</h2>
+            <hr>
+            <p>مرحباً <strong>{username}</strong> 👋</p>
+            <p>تم تغيير كلمة المرور الخاصة بك بنجاح ✅</p>
+            <p>يمكنك الآن تسجيل الدخول باستخدام كلمة المرور الجديدة.</p>
+            <div style="background:#FEF3E2; padding:15px; border-radius:8px; margin:20px 0;">
+                <p style="margin:0; color:#C9897A; font-size:14px;">
+                    ⚠️ إذا لم تقم بهذا التغيير، يرجى التواصل معنا فوراً.
+                </p>
+            </div>
+            <hr>
+            <p style="color:#aaa; font-size:12px; text-align:center;">© 2026 سوق - جميع الحقوق محفوظة</p>
+        </div>
+        """,
+        fail_silently=False,
+    )
+
+
+@login_required
+def send_invoice(request, pk):
+    """Send order invoice to user's email (AJAX)"""
+    try:
+        order = get_object_or_404(Order, pk=pk, user=request.user)
+        
+        # Build invoice HTML
+        items_html = ""
+        for item in order.items.all():
+            items_html += f"""
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #e8e2d9;">{item.product_name}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e8e2d9; text-align: center;">{item.quantity}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e8e2d9; text-align: right;">{item.product_price} ر.س</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e8e2d9; text-align: right;">{item.subtotal} ر.س</td>
+                </tr>
+            """
+        
+        invoice_html = f"""
+        <div dir="rtl" style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; background: #F8F6F2;">
+            <div style="background: white; border-radius: 16px; padding: 30px; border: 1px solid #E8E2D9;">
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #5C8A6E; font-size: 28px; margin: 0;">سوق</h1>
+                    <p style="color: #7A7169; margin: 5px 0 0 0;">فاتورة طلب</p>
+                </div>
+                
+                <!-- Order Info -->
+                <div style="background: #EAF2EE; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <h2 style="color: #5C8A6E; margin: 0 0 15px 0; font-size: 18px;">تفاصيل الطلب #{order.id}</h2>
+                    <p style="margin: 5px 0; color: #2D2D2D;"><strong>التاريخ:</strong> {order.created_at|date:"d/m/Y H:i"}</p>
+                    <p style="margin: 5px 0; color: #2D2D2D;"><strong>الحالة:</strong> {order.get_current_status_display}</p>
+                </div>
+                
+                <!-- Shipping Info -->
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: #5C8A6E; margin: 0 0 10px 0;">معلومات الشحن</h3>
+                    <p style="margin: 5px 0; color: #2D2D2D;"><strong>الاسم:</strong> {order.full_name}</p>
+                    <p style="margin: 5px 0; color: #2D2D2D;"><strong>الهاتف:</strong> {order.phone}</p>
+                    <p style="margin: 5px 0; color: #2D2D2D;"><strong>العنوان:</strong> {order.address}, {order.wilaya}</p>
+                </div>
+                
+                <!-- Items Table -->
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <thead>
+                        <tr style="background: #5C8A6E; color: white;">
+                            <th style="padding: 12px; text-align: right;">المنتج</th>
+                            <th style="padding: 12px; text-align: center;">الكمية</th>
+                            <th style="padding: 12px; text-align: right;">السعر</th>
+                            <th style="padding: 12px; text-align: right;">الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {items_html}
+                    </tbody>
+                </table>
+                
+                <!-- Totals -->
+                <div style="border-top: 2px solid #E8E2D9; padding-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #7A7169;">المجموع الفرعي:</span>
+                        <span style="color: #2D2D2D;">{order.subtotal} ر.س</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #7A7169;">الشحن:</span>
+                        <span style="color: #2D2D2D;">{"مجاناً" if order.shipping_cost == 0 else f"{order.shipping_cost} ر.س"}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: bold; padding-top: 10px; border-top: 1px solid #E8E2D9;">
+                        <span style="color: #5C8A6E;">الإجمالي:</span>
+                        <span style="color: #5C8A6E;">{order.total_amount} ر.س</span>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #E8E2D9;">
+                    <p style="color: #7A7169; font-size: 12px;">شكراً لتسوقكم معنا!</p>
+                    <p style="color: #B5AFA8; font-size: 11px;">© 2024 سوق - جميع الحقوق محفوظة</p>
+                </div>
+            </div>
+        </div>
+        """
+        
+        # Send email
+        send_mail(
+            subject=f"📄 فاتورة الطلب #{order.id} - سوق",
+            message=f"فاتورة طلبك رقم #{order.id}",
+            from_email=None,
+            recipient_list=[order.email],
+            html_message=invoice_html,
+            fail_silently=False,
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'تم إرسال الفاتورة إلى بريدك الإلكتروني'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'حدث خطأ: {str(e)}'
+        })

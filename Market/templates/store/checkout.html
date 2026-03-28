@@ -5,7 +5,6 @@
 
 {% block content %}
 <div class="bg-page-bg min-h-screen">
-    <!-- Breadcrumb -->
     <div class="bg-surface border-b border-border-sand">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <nav class="flex items-center gap-2 text-sm">
@@ -82,22 +81,80 @@
                                 <label class="block text-sm text-text-secondary mb-2">العنوان <span class="text-rose">*</span></label>
                                 <input type="text" name="address" required value="{{ user.profile.address|default:'' }}" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="الحي، الشارع، رقم المبنى">
                             </div>
+                            
+                            <!-- قائمة الولايات والبلديات - الجزائر -->
                             <div>
-                                <label class="block text-sm text-text-secondary mb-2">المدينة <span class="text-rose">*</span></label>
-                                <select name="city" required class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all">
-                                    <option value="">اختر المدينة</option>
-                                    <option value="riyadh">الرياض</option>
-                                    <option value="jeddah">جدة</option>
-                                    <option value="makkah">مكة المكرمة</option>
-                                    <option value="madinah">المدينة المنورة</option>
-                                    <option value="dammam">الدمام</option>
-                                    <option value="khobar">الخبر</option>
-                                    <option value="dhahran">الظهران</option>
-                                    <option value="tabuk">تبوك</option>
-                                    <option value="abha">أبها</option>
-                                    <option value="taif">الطائف</option>
+                                <label class="block text-sm text-text-secondary mb-2">الولاية <span class="text-rose">*</span></label>
+                                <select name="wilaya" id="wilaya-select" required class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" onchange="updateCommunes(this.value)">
+                                    <option value="">اختر الولاية</option>
+                                    <option value="01">01 - أدرار</option>
+                                    <option value="02">02 - الشلف</option>
+                                    <option value="03">03 - الأغواط</option>
+                                    <option value="04">04 - أم البواقي</option>
+                                    <option value="05">05 - باتنة</option>
+                                    <option value="06">06 - بجاية</option>
+                                    <option value="07">07 - بسكرة</option>
+                                    <option value="08">08 - بشار</option>
+                                    <option value="09">09 - البليدة</option>
+                                    <option value="10">10 - البويرة</option>
+                                    <option value="11">11 - تمنراست</option>
+                                    <option value="12">12 - تبسة</option>
+                                    <option value="13">13 - تلمسان</option>
+                                    <option value="14">14 - تيارت</option>
+                                    <option value="15">15 - تيزي وزو</option>
+                                    <option value="16">16 - الجزائر</option>
+                                    <option value="17">17 - الجلفة</option>
+                                    <option value="18">18 - جيجل</option>
+                                    <option value="19">19 - سطيف</option>
+                                    <option value="20">20 - سعيدة</option>
+                                    <option value="21">21 - سكيكدة</option>
+                                    <option value="22">22 - سيدي بلعباس</option>
+                                    <option value="23">23 - عنابة</option>
+                                    <option value="24">24 - قالمة</option>
+                                    <option value="25">25 - قسنطينة</option>
+                                    <option value="26">26 - المدية</option>
+                                    <option value="27">27 - مستغانم</option>
+                                    <option value="28">28 - المسيلة</option>
+                                    <option value="29">29 - معسكر</option>
+                                    <option value="30">30 - ورقلة</option>
+                                    <option value="31">31 - وهران</option>
+                                    <option value="32">32 - البيض</option>
+                                    <option value="33">33 - إليزي</option>
+                                    <option value="34">34 - برج بوعريريج</option>
+                                    <option value="35">35 - بومرداس</option>
+                                    <option value="36">36 - الطارف</option>
+                                    <option value="37">37 - تندوف</option>
+                                    <option value="38">38 - تيسمسيلت</option>
+                                    <option value="39">39 - الوادي</option>
+                                    <option value="40">40 - خنشلة</option>
+                                    <option value="41">41 - سوق أهراس</option>
+                                    <option value="42">42 - تيبازة</option>
+                                    <option value="43">43 - ميلة</option>
+                                    <option value="44">44 - عين الدفلى</option>
+                                    <option value="45">45 - النعامة</option>
+                                    <option value="46">46 - عين تيموشنت</option>
+                                    <option value="47">47 - غرداية</option>
+                                    <option value="48">48 - غليزان</option>
+                                    <option value="49">49 - تيميمون</option>
+                                    <option value="50">50 - برج باجي مختار</option>
+                                    <option value="51">51 - أولاد جلال</option>
+                                    <option value="52">52 - بني عباس</option>
+                                    <option value="53">53 - عين صالح</option>
+                                    <option value="54">54 - عين قزام</option>
+                                    <option value="55">55 - تقرت</option>
+                                    <option value="56">56 - جانت</option>
+                                    <option value="57">57 - المغير</option>
+                                    <option value="58">58 - المنيعة</option>
                                 </select>
                             </div>
+                            
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">البلدية <span class="text-rose">*</span></label>
+                                <select name="commune" id="commune-select" required class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" disabled>
+                                    <option value="">اختر الولاية أولاً</option>
+                                </select>
+                            </div>
+                            
                             <div>
                                 <label class="block text-sm text-text-secondary mb-2">الرمز البريدي</label>
                                 <input type="text" name="postal_code" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="12345">
@@ -136,25 +193,11 @@
                                     <p class="font-medium text-text-primary">بطاقة ائتمان</p>
                                     <p class="text-sm text-text-secondary">Visa, Mastercard, Mada</p>
                                 </div>
-                                <div class="flex gap-2">
-                                    <img src="https://placehold.co/40x25/E8E2D9/7A7169?text=Visa" alt="Visa" class="h-6">
-                                    <img src="https://placehold.co/40x25/E8E2D9/7A7169?text=MC" alt="Mastercard" class="h-6">
-                                    <img src="https://placehold.co/40x25/E8E2D9/7A7169?text=Mada" alt="Mada" class="h-6">
-                                </div>
-                            </label>
-
-                            <label class="flex items-center gap-4 p-4 bg-page-bg border border-border-sand rounded-xl cursor-pointer hover:border-sage transition-colors">
-                                <input type="radio" name="payment_method" value="apple_pay" class="w-5 h-5 text-sage focus:ring-sage/20">
-                                <div class="flex-1">
-                                    <p class="font-medium text-text-primary">Apple Pay</p>
-                                    <p class="text-sm text-text-secondary">ادفع بسرعة وأمان</p>
-                                </div>
-                                <img src="https://placehold.co/50x25/E8E2D9/7A7169?text=Apple" alt="Apple Pay" class="h-6">
                             </label>
                         </div>
                     </div>
 
-                    <!-- Terms & Conditions -->
+                    <!-- Terms -->
                     <div class="flex items-start gap-3">
                         <input type="checkbox" name="terms" required id="terms" class="mt-1 w-5 h-5 rounded border-border-sand text-sage focus:ring-sage/20">
                         <label for="terms" class="text-sm text-text-secondary">
@@ -164,14 +207,27 @@
                 </form>
             </div>
 
-            <!-- Order Summary -->
+            <!-- Order Summary - يستخدم بيانات Django -->
             <div class="lg:col-span-1">
                 <div class="bg-surface rounded-2xl border border-border-sand p-6 sticky top-24">
                     <h2 class="font-semibold text-text-primary text-lg mb-6">ملخص الطلب</h2>
 
-                    <!-- Cart Items Preview -->
-                    <div id="checkoutItems" class="space-y-4 max-h-64 overflow-y-auto mb-6">
-                        <!-- Items will be rendered by JavaScript -->
+                    <!-- Cart Items Preview من Django -->
+                    <div class="space-y-4 max-h-64 overflow-y-auto mb-6">
+                        {% for item in cart_items %}
+                        <div class="flex items-center gap-3">
+                            <div class="relative w-16 h-16 rounded-lg overflow-hidden bg-[#F0EBE3] flex-shrink-0">
+                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/64x64/F0EBE3/5C8A6E?text=Product'">
+                                <span class="absolute -top-1 -left-1 w-5 h-5 bg-sage text-white text-xs rounded-full flex items-center justify-center">{{ item.quantity }}</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-text-primary truncate">{{ item.product.name }}</p>
+                                <p class="font-price text-sm text-sage">{{ item.product.price }} ر.س</p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-text-secondary text-center py-4">السلة فارغة</p>
+                        {% endfor %}
                     </div>
 
                     <hr class="border-border-sand mb-4">
@@ -179,52 +235,31 @@
                     <div class="space-y-3">
                         <div class="flex justify-between text-text-secondary">
                             <span>المجموع الفرعي</span>
-                            <span id="subtotal" class="font-price">0 ر.س</span>
+                            <span class="font-price">{{ cart.total }} ر.س</span>
                         </div>
                         <div class="flex justify-between text-text-secondary">
                             <span>الشحن</span>
-                            <span id="shipping" class="font-price">مجاني</span>
-                        </div>
-                        <div id="discountRow" class="hidden flex justify-between text-rose">
-                            <span>الخصم</span>
-                            <span id="discount" class="font-price">-0 ر.س</span>
+                            <span class="font-price">{% if cart.total >= 200 %}مجاني{% else %}25 ر.س{% endif %}</span>
                         </div>
                         <hr class="border-border-sand">
                         <div class="flex justify-between text-text-primary">
                             <span class="font-semibold text-lg">المجموع</span>
-                            <span id="total" class="font-price text-xl font-bold text-sage">0 ر.س</span>
+                            <span class="font-price text-xl font-bold text-sage">{% if cart.total >= 200 %}{{ cart.total }}{% else %}{{ cart.total|add:25 }}{% endif %} ر.س</span>
                         </div>
                     </div>
 
-                    <!-- Place Order Button -->
+                    {% if cart_items %}
                     <button type="submit" form="checkoutForm" class="mt-6 w-full btn-primary py-4 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-all flex items-center justify-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         تأكيد الطلب
                     </button>
-
-                    <p class="text-xs text-text-secondary text-center mt-4">
-                        بالضغط على تأكيد الطلب، فإنك توافق على إتمام عملية الشراء
-                    </p>
-
-                    <!-- Security Badges -->
-                    <div class="mt-6 pt-6 border-t border-border-sand">
-                        <div class="flex items-center justify-center gap-4 text-text-secondary">
-                            <div class="flex items-center gap-1">
-                                <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                </svg>
-                                <span class="text-xs">آمن</span>
-                            </div>
-                            <div class="flex items-center gap-1">
-                                <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                                </svg>
-                                <span class="text-xs">محمي</span>
-                            </div>
-                        </div>
-                    </div>
+                    {% else %}
+                    <a href="{% url 'store:cart' %}" class="mt-6 w-full py-4 bg-gray-400 text-white rounded-xl font-medium flex items-center justify-center gap-2">
+                        العودة للسلة
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -234,66 +269,99 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const checkoutItems = document.getElementById('checkoutItems');
-        const subtotalEl = document.getElementById('subtotal');
-        const shippingEl = document.getElementById('shipping');
-        const totalEl = document.getElementById('total');
+// بيانات البلديات الجزائرية
+const communesData = {
+    "01": ["أدرار","أولف","رقان","إن زغمير","تيمياوين","تامنطيط","تيت","شروين","أكبلي","بودة","تسابيت","زاوية كنتة","فنوغيل","تيميمون","أقبلي","أولد سعيد","بوداء","وادي ميا","درارة","متارفة","أنزقمر","تمست","كنادسة"],
+    "02": ["الشلف","تنس","بوقادير","أم الدروع","الحجاج","بني بوعتاب","أبو الحسن","الكريمية","بنيايلان","الصبحة","وادي فودة","الهرانفة","بني راشد","تاجنة","سيدي عكاشة","بلعاس","واد سلي","الظهرة","عين مران","بريرة","الدهاليل","المرسى","حرشون","الزبوجة","عمي محمد","تاملوكة","عطية","بوزغاية","لحمام","مسرة","سيدي عبد الرحمان"],
+    "03": ["الأغواط","حاسي الرمل","قصر الشارف","عين ماضي","تاجموت","بريدة","حاسي دلاعة","سيدي مخلوف","عين سيدي علي","سبقاق","بنور","بن ناصر بن شهرة","الحويطة","عفلو","الغيشة","تاجرونة","قلتة سيدي سعد","وادي مرة","زلفانة"],
+    "04": ["أم البواقي","عين البيضاء","عين مليلة","عين الفكرون","عين الزيتون","سوق نعمان","فكيرينة","بريش","زرق","الضلعة","المصارة","الرحية","سيقوس","عين الديس","الهرقلة","خيران","عين بابوش"],
+    "05": ["باتنة","مروانة","رأس العيون","عين التوتة","عين جاسر","الشمرة","أريس","بريكة","تكوت","المعافة","أولاد سي سليمان","فسديس","إشمول","عين يابوس","لمسان","وادي الشعبة","تيمقاد","جرمة","عزيل عبد القادر","نقاوس","سريانة","لازرو","المعذر","وادي الفضة"],
+    "06": ["بجاية","خراطة","أكفادو","أميزور","بني كيلان","تيغيلت","تيفرة","الفلاي","ضراع القايد","أقبيل","فيناية الماتن","تيشي","بني مليكش","أيت رزين","بني جليل","سوق الأثنين","بوحمزة"],
+    "07": ["بسكرة","سيدي عقبة","أولاد جلال","طولقة","أوماش","الحاجب","برج بن عزوز","شتمة","أولاد رحمة","البسباس","الدوسن","ليشانة","ذراع الغروم","القنطرة","زريبة الوادي","مشونش","المزيرعة","وادي الزناتي"],
+    "08": ["بشار","القنادسة","عين الصفراء","كرزاز","تاغيت","بني عباس","البيضاء","إقلي","ملعب","لحمر","بوعلام","طريفاوي"],
+    "09": ["البليدة","الشريعة","أولاد يعيش","الرباح","موزاية","بن خليل","الأربعاء","الخميس","بوفاريك","بوعيسى","أولاد سلامة","مفتاح","أولاد يايش","أوالدي","عين رومانة","موسى","سوهان","شبلي","الحمدانية"],
+    "10": ["البويرة","سور الغزلان","لكصر البخاري","المشدالة","العجيبة","ذراع السمار","شكفة","أعمر","حيزر","عين لحجر","قادة","راعة","أولاد لمين","عين الشاور","الحفيظية","بودربالة"],
+    "11": ["تمنراست","عين صالح","عين قزام","إدلس","تازروك"],
+    "12": ["تبسة","الشريعة","بئر العاتر","الونزة","بئر موقر","المريج","عين الزرقاء","عقلة الحمايم","سطح قنطيس","تليجان","القصبات","الكويف","نقرين","الحويجبات","مرسط","غورابة","العقلة"],
+    "13": ["تلمسان","ندرومة","غزووات","مغنية","رمشي","أولاد ميمون","بني سنوس","سبدو","فلوسن","أولاد رياح","أغبال","بني سمييل","سيدي مجاهد","بنسكران","بوتلليس","فرجيوة","حونين","تيانت","عين يوسف","عين فزة","عين نحالة"],
+    "14": ["تيارت","الرحوية","فرندة","سوق أهراس","السوقر","بوقارة","الوشام","قصر الشلالة","عين الكرمة","سيدي عبد الرحمان","جيلالي بن عمار","القصور","السبت","حمادية","شحيمة","عين الحديد","تاغدنت","عياط","سيدي حسين","مدروسة"],
+    "15": ["تيزي وزو","أزفون","عين الحمام","ذراع بن خدة","مقلع","أقبيل","لاربعاء ناث إيراثن","تاوريرت","فريحة","الاربعاء أيت إيراثن","بني يني","إفرحونن","بوجيمة","أيت خليل","مكلة","يتافن","إلولا أومالو","تيزي ن تلاتة","الأمير عبد القادر","واذلول","أيت أومالو","تيغزرت","دراع بن خدة","بوزقن","سيدي نعمان","مزغنة","بني زمنزر"],
+    "16": ["الجزائر الوسطى","باب الوادي","حسين داي","القبة","بولوغين","الحراش","بئر مراد رايس","الدار البيضاء","بابا حسن","الرغاية","بئر توتة","الأبيار","حيدرة","بن عكنون","الدويرة","العاشور","المحمدية","بورقيقة","سيدي موسى","شراقة","أولاد فايت","القليعة","رويسو","الكاليتوس","بوزريعة","أولاد سيدي إبراهيم"],
+    "17": ["الجلفة","حاسي بحبح","مسعد","عين وسارة","بيرين","عموري","أجلو","قطارة","سيدي لعجال","زكار","مجبارة","دار الشيوخ","فيض البطمة","عين إبل","حد الصحاري","سيدي بايزيد","الأدهم","بني ياقوب","حلفاية","تاذجينة","ربط الجديد"],
+    "18": ["جيجل","الطاهير","الميلية","تاكسنة","بوراوي بلهادف","شقفات","غبالة","زيامة منصورية","الأمير عبد القادر","أولاد رابح","برج الطهر","إيراقن أوملال","سيدي معروف","لجيدر","عوانة","بوجعفر","قنصارة","سيدي عبيد","العوانة","الشقفة"],
+    "19": ["سطيف","عين أزال","بئر العرش","العلمة","الأرسال","أيت نواس","بوطالب","بني وارتيلان","المعاظيم","قجال","أولاد صالح","أولاد سيدي إبراهيم","السطح","مجانة","أولاد تبان","أيت تيزي","سيدي عيسى","حمام السخنة","السطح","عين سبت","أبركان","بازر سكرة","بابور","تالة إيفاسن","ضهامشة","تيفرة","عين ولمان"],
+    "20": ["سعيدة","سيدي أحمد","ولتيتي","عين الحجر","دوي ثابت","سيدي بوبكر","يوب","ويسهان","تيرين","مولاي الارهاني"],
+    "21": ["سكيكدة","العلمة","عزابة","بن عزوز","القول","عين بوزيان","زردازة","تاملوكا","الحروش","رمضان جمال","قنواع","جندل","كركرة","أم طوب","لخزارة","فلفلة","الميلية","الحدائق"],
+    "22": ["سيدي بلعباس","بلعباس","مصطفى بن إبراهيم","محمد بن علي","رأس الماء","سيدي إبراهيم","صفيصيفة","واد ثالث","معصول","تيلموني","أولاد خالد","بوخنيفيس","أحمر","أولاد سيدي إبراهيم","تفسور","لحمر"],
+    "23": ["عنابة","البوني","برحال","الحجار","سرايدي","عين الباردة","شطايبي","عين البرج"],
+    "24": ["قالمة","بوحشانة","نشماية","بلخير","هيليوبوليس","عين رقادة","سدراتة","الرقيبة","مهمل","بوهشمة","أولاد عجرود","التاميزرت","وادي الزناتي","قلعة بوصبع","بني مزلين","عين صندل","دهامشة"],
+    "25": ["قسنطينة","ابن زياد","عين سمارة","حامة بوزيان","ديدوش مراد","الخروب","عين عبيد","بني حميدان","أولاد رحمة","زيغود يوسف","أولاد إبراهيم","محمد بوضياف"],
+    "26": ["المدية","بعاصيل","الأربعاء","ربيعة","بني دوالة","مجبر","قصر البخاري","الوناس","تابلاط","العمري","أولاد درار","شنيف","دراق","أولاد عنتر","تمزقيدة","الكمومة","بوعيش","حناشة","سيدي رابح","عزيزي","أولاد هليل","السواقي","الشهبونية"],
+    "27": ["مستغانم","عين توتة","أشعاشعة","سيرات","حاسي ماماش","فروحة","سيدي علي","خضرة"],
+    "28": ["المسيلة","بوسعادة","المطارفة","المنصورة","ونوغة","برهوم","أولاد مادي","محمد بوضياف","سيدي عيسى","أولاد خالد","مقرة","السوامع","بن سرور","سيدي عامر","أولاد صالح","خبانة","أولاد شبل","عين الحجل","الهامل","سيدي م'حمد"],
+    "29": ["معسكر","سيق","سيدي قادة","واضية","حشم","قوسم","عين فراح","أولاد مامية","محمد بن علي","زهانة","سيدي عبد الجبار","علاي","مطاعيس"],
+    "30": ["ورقلة","حاسي مسعود","تماسيت","عين البيضاء","الحجيرة","برج عمر إدريس","عنق","التومة","سيدي خويلد","الرويسات","زلفانة","الزاوية العابدية","النزلة"],
+    "31": ["وهران","بطيوة","ع الكرمة","أميودية","بن فريحة","طفراوي","سيدي بن يبقى","القلعة","بوتليليس","الكرمة","أرزيو","عين البية","المرسى الكبير","سيدي الشحمي","الحمري","أولاد تاها"],
+    "32": ["البيض","بوعلام","الأبيض سيدي الشيخ","الشقيق","بريزينة","سفيسيفة","ستيتن","سيدي عمر","الكسيبة","خنق سيدي ناجي"],
+    "33": ["إليزي","دبداب","إن أمناس"],
+    "34": ["برج بوعريريج","المنصورة","الرأس المغربي","البرج","عين التاغروت","أولاد إبراهيم","الاخضرية","برج بوعريريج","تيمدات","الاشتبية","ثنية العابد","دهدهان","أولاد سيدي إبراهيم","عين تسرا","كنادسة","بئر قاصد علي"],
+    "35": ["بومرداس","بودواو","دلس","ثنية الحد","أفير","إسر","نعمة","أزازقة","بني عمران","باغلية","الناصرية","تاكسانت","أميزور","بوعدلن","عمال","كبلوت","قندل"],
+    "36": ["الطارف","الكالة","القل","بوحجار","البسباس","زيتونة","أولاد رياح","القلعة","الريحانة","صاوونة","عين العسل","أولاد غانم","السيدي الطيب"],
+    "37": ["تندوف","أم العسل"],
+    "38": ["تيسمسيلت","برج بونعامة","خميستي","الأزهرية","سيدي السليم","لرجام","بوقاعة","الإبراهيمية","ليطم","أميلعة"],
+    "39": ["الوادي","الرباح","الطالب لعريبي","حاسي خليفة","المقرن","الرقيبة","ورماس","كوينين","تاغزوت","حاسي الفحل","بن قشة","الوادي","جامعة","دبيلة","تبارقة","المرارة","العقلة","الدبيلة","سيدي عون","البهيمة"],
+    "40": ["خنشلة","بغاي","الحامة","شلية","بابار","المحمل","أولاد رشاش","قايس","مصارة"],
+    "41": ["سوق أهراس","سدراتة","خضارة","تيفاش","عين صولتان","مدخال","أولاد إدريس","بئر بوهوش","لعوينات","راس الكنتور","اولاد مومن","سوق أهراس","مقدم","العقلة"],
+    "42": ["تيبازة","شرشال","فوكة","حجوط","القليعة","الغريبة","بواسماعيل","منصورية","بواسماعيل","دواودة","أغبال","مراد"],
+    "43": ["ميلة","تسادان هيشر","تاجنانت","سيدي مروان","العيون","عميرة أرك","فرجيوة","شلغوم العيد","وادي الأثمنية","تيبرقنت"],
+    "44": ["عين الدفلى","الخميس","مليانة","أولاد بن عبيد","بطحية","العبادية","الحسانية","العطاف","عين الدفلى","بودواو","جنادل","الرحمانية","زبودة","ع لبنى"],
+    "45": ["النعامة","المشرية","عسلة","تيوت","صفيصيفة","مغرار","قصدير"],
+    "46": ["عين تيموشنت","سيدي بن عدة","بني صاف","أقلة","شعبة اللحم","سيدي صالح","سيدي بوبكر","عين الكيحل","أولاد الكيحل"],
+    "47": ["غرداية","القرارة","بريان","العطف","متليلي","أولاد صالح","سبسب","العطف","زلفانة","حاسي قرمة"],
+    "48": ["غليزان","المصمودة","سيدي خطاب","بلعيزمية","لزك","بنيان","رحوية","أولاد يحيى","عمي موسى","حمري","سيدي عمار","سيدي يعقوب","العلمة"],
+    "49": ["تيميمون","أولف","أقبيل","شروين","تمسطيت"],
+    "50": ["برج باجي مختار","تيمياوين","إن أبقارق"],
+    "51": ["أولاد جلال","شتمة","دوسن"],
+    "52": ["بني عباس","كرزاز","بوعلام"],
+    "53": ["عين صالح","إدلس","فقارة الزوة"],
+    "54": ["عين قزام","تين زواتن"],
+    "55": ["تقرت","تبسبست","بن ناصر","النزلة","الطيبات"],
+    "56": ["جانت","إن أمقل","أفارو"],
+    "57": ["المغير","سيدي خليل","جامعة","المقارين","النخلة","سيدي عمران"],
+    "58": ["المنيعة","حاسي قرمة","عين الهجر","زاوية سيدي الشيخ"]
+};
 
-        // Render cart items preview
-        function renderCheckoutItems() {
-            const cart = Souq.getCart();
+function updateCommunes(wilayaCode) {
+    const communeSelect = document.getElementById('commune-select');
+    communeSelect.innerHTML = '';
 
-            if (cart.length === 0) {
-                window.location.href = '{% url "store:cart" %}';
-                return;
+    if (!wilayaCode) {
+        communeSelect.innerHTML = '<option value="">اختر الولاية أولاً</option>';
+        communeSelect.disabled = true;
+        return;
+    }
+
+    const communes = communesData[wilayaCode] || [];
+    let html = '<option value="">اختر البلدية</option>';
+    communes.forEach(c => { html += `<option value="${c}">${c}</option>`; });
+    communeSelect.innerHTML = html;
+    communeSelect.disabled = false;
+}
+
+// Payment method styling
+document.querySelectorAll('input[name="payment_method"]').forEach(input => {
+    input.addEventListener('change', () => {
+        document.querySelectorAll('input[name="payment_method"]').forEach(i => {
+            const label = i.closest('label');
+            if (i.checked) {
+                label.classList.remove('border-border-sand');
+                label.classList.add('border-2', 'border-sage');
+            } else {
+                label.classList.add('border-border-sand');
+                label.classList.remove('border-2', 'border-sage');
             }
-
-            checkoutItems.innerHTML = cart.map(item => `
-                <div class="flex items-center gap-3">
-                    <div class="relative w-16 h-16 rounded-lg overflow-hidden bg-[#F0EBE3] flex-shrink-0">
-                        <img src="${item.image || 'https://placehold.co/64x64/F0EBE3/5C8A6E?text=Product'}" alt="${item.name}" class="w-full h-full object-cover">
-                        <span class="absolute -top-1 -left-1 w-5 h-5 bg-sage text-white text-xs rounded-full flex items-center justify-center">${item.quantity}</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm text-text-primary truncate">${item.name}</p>
-                        <p class="font-price text-sm text-sage">${item.price} ر.س</p>
-                    </div>
-                </div>
-            `).join('');
-
-            updateTotals();
-        }
-
-        function updateTotals() {
-            const cart = Souq.getCart();
-            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const shipping = subtotal >= 200 ? 0 : 25;
-            const total = subtotal + shipping;
-
-            subtotalEl.textContent = subtotal.toFixed(2) + ' ر.س';
-            shippingEl.textContent = shipping === 0 ? 'مجاني' : shipping.toFixed(2) + ' ر.س';
-            totalEl.textContent = total.toFixed(2) + ' ر.س';
-        }
-
-        // Payment method selection styling
-        const paymentInputs = document.querySelectorAll('input[name="payment_method"]');
-        paymentInputs.forEach(input => {
-            input.addEventListener('change', () => {
-                document.querySelectorAll('input[name="payment_method"]').forEach(i => {
-                    const label = i.closest('label');
-                    if (i.checked) {
-                        label.classList.remove('border-border-sand');
-                        label.classList.add('border-2', 'border-sage');
-                    } else {
-                        label.classList.add('border-border-sand');
-                        label.classList.remove('border-2', 'border-sage');
-                    }
-                });
-            });
         });
-
-        renderCheckoutItems();
     });
+});
 </script>
 {% endblock %}

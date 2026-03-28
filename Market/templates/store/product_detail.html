@@ -34,7 +34,7 @@
             <div class="space-y-4" data-animate>
                 <!-- Main Image -->
                 <div class="relative aspect-square bg-[#F0EBE3] rounded-2xl overflow-hidden cursor-zoom-in" id="mainImageContainer">
-                    <img id="mainImage" src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover" data-lightbox onerror="this.src='https://placehold.co/600x600/F0EBE3/5C8A6E?text=Product'">
+                    <img id="mainImage" src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain" data-lightbox onerror="this.src='https://placehold.co/600x600/F0EBE3/5C8A6E?text=Product'">
 
                     {% if product.discount %}
                     <span class="absolute top-4 right-4 px-3 py-1 bg-rose text-white text-sm font-medium rounded-lg">
@@ -54,11 +54,11 @@
                 {% if product.images.all %}
                 <div class="flex gap-3 overflow-x-auto pb-2">
                     <button class="thumbnail flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 ring-2 ring-sage border-border-sand">
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover" data-image="{{ product.image.url }}">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain" data-image="{{ product.image.url }}">
                     </button>
                     {% for image in product.images.all %}
                     <button class="thumbnail flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border-sand hover:border-sage transition-all">
-                        <img src="{{ image.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover" data-image="{{ image.image.url }}">
+                        <img src="{{ image.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain" data-image="{{ image.image.url }}">
                     </button>
                     {% endfor %}
                 </div>
@@ -138,7 +138,7 @@
 
                 <!-- Short Description -->
                 {% if product.description %}
-                <p class="text-text-secondary leading-relaxed">{{ product.description|truncatewords:50 }}</p>
+                <p class="text-text-secondary leading-relaxed">{{ product.description}}</p>
                 {% endif %}
 
                 <!-- Variants (if any) -->
@@ -281,7 +281,7 @@
                 <!-- Description Tab -->
                 <div id="description" class="tab-content">
                     <div class="prose prose-lg max-w-none text-text-secondary">
-                        {{ product.description|safe|linebreaks }}
+                        {{ product.Specifications|safe|linebreaks }}
                     </div>
                 </div>
 
@@ -471,7 +471,7 @@
                 <div class="product-card bg-surface rounded-2xl border border-border-sand overflow-hidden group">
                     <div class="relative aspect-square overflow-hidden bg-[#F0EBE3]">
                         <a href="{% url 'store:product_detail' related.pk %}">
-                            <img src="{{ related.image.url }}" alt="{{ related.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/300x300/F0EBE3/5C8A6E?text=Product'">
+                            <img src="{{ related.image.url }}" alt="{{ related.name }}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/300x300/F0EBE3/5C8A6E?text=Product'">
                         </a>
                     </div>
                     <div class="p-3">
@@ -513,19 +513,19 @@
 {% block extra_js %}
 <script>
     // Product-specific functions
-    function addToCartWithQuantity() {
-        const quantity = parseInt(document.querySelector('input[name="quantity"]').value) || 1;
-        Souq.addToCart({
-            id: '{{ product.id }}',
-            name: '{{ product.name }}',
-            price: {{ product.price }},
-            image: '{{ product.image.url }}',
-            quantity: quantity
-        });
+    async function addToCartWithQuantity() {
+    const quantity = parseInt(document.querySelector('input[name="quantity"]').value) || 1;
+    await Souq.addToCart({
+        id: '{{ product.id }}',
+        name: '{{ product.name }}',
+        price: {{ product.price }},
+        image: '{{ product.image.url }}',
+        quantity: quantity
+    });
     }
 
-    function buyNow() {
-        addToCartWithQuantity();
+    async function buyNow() {
+        await addToCartWithQuantity();
         window.location.href = '{% url "store:cart" %}';
     }
 

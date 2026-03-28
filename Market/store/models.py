@@ -1,5 +1,10 @@
+from unicodedata import name
+from django.utils.text import slugify
+
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from ckeditor_uploader.fields import RichTextUploadingField
 
 
 class Profile(models.Model):
@@ -7,7 +12,8 @@ class Profile(models.Model):
     is_seller = models.BooleanField(default=False, verbose_name='تاجر')
     phone = models.CharField(max_length=20, blank=True, verbose_name='رقم الهاتف')
     address = models.CharField(max_length=255, blank=True, verbose_name='العنوان')
-    city = models.CharField(max_length=100, blank=True, verbose_name='المدينة')
+    wilaya = models.CharField(max_length=100, blank=True, verbose_name='الولاية')
+    baladia = models.CharField(max_length=100, blank=True, verbose_name='البلدية')
     bio = models.TextField(blank=True, verbose_name='نبذة')
     photo = models.ImageField(upload_to='profiles/', blank=True, null=True, verbose_name='الصورة الشخصية')
 
@@ -31,22 +37,62 @@ class Profile(models.Model):
 
 class Category(models.Model):
     name = models.CharField(max_length=100, verbose_name='اسم الفئة')
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='children'
+    )    
     slug = models.SlugField(unique=True, blank=True, verbose_name='الرابط')
     image = models.ImageField(upload_to='categories/', blank=True, null=True, verbose_name='الصورة')
     is_active = models.BooleanField(default=True, verbose_name='نشط')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 
     class Meta:
+        unique_together = ['name', 'parent']
         verbose_name = 'الفئة'
         verbose_name_plural = 'الفئات'
-        ordering = ['name']
 
-    def __str__(self):
-        return self.name
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+
+            while Category.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug
+
+        super().save(*args, **kwargs)
 
     @property
     def products_count(self):
         return self.products.filter(is_active=True).count()
+
+    def __str__(self):
+        return self.name
+
+
+class Attribute(models.Model):
+    name = models.CharField(max_length=255)  # مثال: RAM, Color
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='attributes')
+
+    def __str__(self):
+        return f"{self.name} ({self.category.name})"
+
+
+class AttributeValue(models.Model):
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE, related_name='values')
+    value = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = ['attribute', 'value']
+
+    def __str__(self):
+        return self.value
 
 
 class Product(models.Model):
@@ -54,6 +100,7 @@ class Product(models.Model):
     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products', verbose_name='البائع')
     name = models.CharField(max_length=255, verbose_name='اسم المنتج')
     slug = models.SlugField(unique=True, blank=True, verbose_name='الرابط')
+    Specifications = RichTextUploadingField(verbose_name='المواصفات')
     description = models.TextField(verbose_name='الوصف')
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='السعر')
     old_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name='السعر القديم')
@@ -70,36 +117,107 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
 
-    class Meta:
-        verbose_name = 'المنتج'
-        verbose_name_plural = 'المنتجات'
-        ordering = ['-created_at']
+    def generate_unique_slug(self):
+        slug = slugify(self.name)
+        unique_slug = slug
+        counter = 1
 
-    def __str__(self):
-        return self.name
+        while Product.objects.filter(slug=unique_slug).exists():
+            unique_slug = f"{slug}-{counter}"
+            counter += 1
+
+        return unique_slug
 
     def save(self, *args, **kwargs):
-        # Calculate discount percentage
+        if not self.slug:
+            self.slug = self.generate_unique_slug()
+
         if self.old_price and self.old_price > self.price:
             self.discount = int((self.old_price - self.price) / self.old_price * 100)
+
         super().save(*args, **kwargs)
 
     @property
     def is_in_stock(self):
+        # التحقق من المخزون عبر المتغيرات أو المخزون المباشر
+        if self.variants.exists():
+            return self.variants.filter(stock__gt=0).exists()
         return self.stock > 0
+
+    @property
+    def total_stock(self):
+        if self.variants.exists():
+            return self.variants.aggregate(total=models.Sum('stock'))['total'] or 0
+        return self.stock
+
+    def __str__(self):
+        return self.name
+
+
+class ProductAttribute(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product_attributes')
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
+    value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
+
+    def clean(self):
+        if self.value.attribute != self.attribute:
+            raise ValidationError("القيمة لا تنتمي إلى الخاصية")
+
+    def __str__(self):
+        return f"{self.product.name} - {self.attribute.name}: {self.value}"
 
 
 class ProductImage(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images', verbose_name='المنتج')
-    image = models.ImageField(upload_to='products/gallery/', verbose_name='الصورة')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='products/gallery/')
+    is_main = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if self.is_main:
+            ProductImage.objects.filter(product=self.product, is_main=True).update(is_main=False)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Image of {self.product.name}"
+
+
+class ProductVideo(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='videos', verbose_name='المنتج')
+    video = models.FileField(upload_to='products/videos/', verbose_name='فيديو')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = 'صورة المنتج'
-        verbose_name_plural = 'صور المنتجات'
+        verbose_name = 'فيديو المنتج'
+        verbose_name_plural = 'فيديوهات المنتجات'
 
     def __str__(self):
-        return f"صورة لـ {self.product.name}"
+        return f"فيديو لـ {self.product.name}"
+
+
+class ProductVariant(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants', verbose_name='المنتج')
+    name = models.CharField(max_length=100, verbose_name='اسم المتغير', blank=True, default='')
+    sku = models.CharField(max_length=100, verbose_name='رمز المتغير')
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='السعر')
+    stock = models.PositiveIntegerField(default=0, verbose_name='المخزون')
+    image = models.ImageField(upload_to='products/variants/', blank=True, null=True, verbose_name='صورة المتغير')
+    is_active = models.BooleanField(default=True, verbose_name='نشط')
+    attributes = models.ManyToManyField(AttributeValue, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+
+    class Meta:
+        unique_together = ['product', 'sku']
+        verbose_name = 'متغير المنتج'
+        verbose_name_plural = 'متغيرات المنتجات'
+
+    def __str__(self):
+        if self.name:
+            return f"{self.product.name} - {self.name}"
+        return f"{self.product.name} - {self.sku}"
+
+    @property
+    def is_in_stock(self):
+        return self.stock > 0
 
 
 class Cart(models.Model):
@@ -111,9 +229,26 @@ class Cart(models.Model):
     class Meta:
         verbose_name = 'سلة المشتريات'
         verbose_name_plural = 'سلال المشتريات'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user'],
+                condition=models.Q(user__isnull=False),
+                name='unique_user_cart'
+            ),
+            models.UniqueConstraint(
+                fields=['session_key'],
+                condition=models.Q(user__isnull=True),
+                name='unique_session_cart'
+            ),
+        ]
 
     def __str__(self):
-        return f"سلة {self.user.username if self.user else self.session_key}"
+        if self.user:
+            return f"سلة {self.user.username}"
+        return f"سلة زائر ({self.session_key})"
+
+    def clear(self):
+        self.items.all().delete()
 
     @property
     def total(self):
@@ -123,24 +258,45 @@ class Cart(models.Model):
     def items_count(self):
         return sum(item.quantity for item in self.items.all())
 
+    @property
+    def unique_items_count(self):
+        return self.items.count()
+
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items', verbose_name='السلة')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='المنتج')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='المنتج', null=True, blank=True)
+    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, verbose_name='المتغير', null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1, verbose_name='الكمية')
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
 
     class Meta:
         verbose_name = 'عنصر السلة'
         verbose_name_plural = 'عناصر السلة'
-        unique_together = ['cart', 'product']
+        unique_together = ['cart', 'variant']
+
+    def __str__(self):
+        return f"{self.quantity}x {self.variant.product.name}"
+
+    @property
+    def product(self):
+        """للتوافق مع القوالب القديمة"""
+        return self.variant.product
 
     @property
     def subtotal(self):
-        return self.product.price * self.quantity
+        return self.variant.price * self.quantity
 
-    def __str__(self):
-        return f"{self.quantity}x {self.product.name}"
+    def clean(self):
+        if self.quantity < 1:
+            raise ValidationError('الكمية يجب أن تكون 1 على الأقل')
+        if self.quantity > self.variant.stock:
+            raise ValidationError(f'الكمية المتوفرة هي {self.variant.stock} فقط')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class Order(models.Model):
@@ -168,7 +324,8 @@ class Order(models.Model):
     phone = models.CharField(max_length=20, verbose_name='رقم الهاتف')
     email = models.EmailField(verbose_name='البريد الإلكتروني')
     address = models.TextField(verbose_name='العنوان')
-    city = models.CharField(max_length=100, verbose_name='المدينة')
+    wilaya = models.CharField(max_length=100, verbose_name='الولاية', default='اختر الولاية')
+    baladia = models.CharField(max_length=100, verbose_name='البلدية', default='اختر البلدية')
     postal_code = models.CharField(max_length=20, blank=True, verbose_name='الرمز البريدي')
     notes = models.TextField(blank=True, verbose_name='ملاحظات')
 

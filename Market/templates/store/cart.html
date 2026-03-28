@@ -21,10 +21,55 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 class="font-headline text-3xl font-bold text-text-primary mb-8">سلة المشتريات</h1>
 
-        <div id="cartContent" class="grid lg:grid-cols-3 gap-8">
+        {% if cart_items %}
+        <div class="grid lg:grid-cols-3 gap-8">
             <!-- Cart Items -->
-            <div class="lg:col-span-2 space-y-4" id="cartItems">
-                <!-- Items will be rendered by JavaScript -->
+            <div class="lg:col-span-2 space-y-4">
+                {% for item in cart_items %}
+                <div class="bg-surface rounded-2xl border border-border-sand p-4 md:p-6 flex gap-4 md:gap-6" data-item-id="{{ item.product.id }}">
+                    <!-- Product Image -->
+                    <div class="w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-[#F0EBE3] flex-shrink-0">
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product'">
+                    </div>
+
+                    <!-- Product Info -->
+                    <div class="flex-1 flex flex-col">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <a href="{% url 'store:product_detail' item.product.pk %}" class="font-medium text-text-primary hover:text-sage transition-colors">
+                                    {{ item.product.name }}
+                                </a>
+                                <p class="text-sm text-text-secondary mt-1">السعر: <span class="font-price text-sage">{{ item.product.price }} ر.س</span></p>
+                            </div>
+                            <button onclick="removeItem('{{ item.product.id }}')" class="text-text-placeholder hover:text-rose transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="mt-auto flex items-center justify-between pt-4">
+                            <!-- Quantity -->
+                            <div class="quantity-selector flex items-center gap-2">
+                                <button type="button" onclick="updateQuantity('{{ item.product.id }}', {{ item.quantity|add:'-1' }})" class="w-8 h-8 flex items-center justify-center bg-page-bg border border-border-sand rounded-lg text-text-secondary hover:bg-sage-light hover:border-sage hover:text-sage transition-all">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                    </svg>
+                                </button>
+                                <input type="number" value="{{ item.quantity }}" min="1" data-product-id="{{ item.product.id }}" class="w-12 h-8 text-center bg-page-bg border border-border-sand rounded-lg text-text-primary font-medium text-sm quantity-input">
+                                <button type="button" onclick="updateQuantity('{{ item.product.id }}', {{ item.quantity|add:'1' }})" class="w-8 h-8 flex items-center justify-center bg-page-bg border border-border-sand rounded-lg text-text-secondary hover:bg-sage-light hover:border-sage hover:text-sage transition-all">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Item Total -->
+                            <p class="font-price text-lg font-semibold text-text-primary">{{ item.subtotal }} ر.س</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
 
             <!-- Order Summary -->
@@ -35,51 +80,39 @@
                     <div class="space-y-4">
                         <div class="flex justify-between text-text-secondary">
                             <span>المجموع الفرعي</span>
-                            <span id="subtotal" class="font-price">0 ر.س</span>
+                            <span class="font-price">{{ cart.total }} ر.س</span>
                         </div>
                         <div class="flex justify-between text-text-secondary">
                             <span>الشحن</span>
-                            <span id="shipping" class="font-price">مجاني</span>
-                        </div>
-
-                        <!-- Discount Row -->
-                        <div id="discountRow" class="hidden flex justify-between text-rose">
-                            <span>الخصم</span>
-                            <span id="discount" class="font-price">-0 ر.س</span>
+                            <span class="font-price">{% if cart.total >= 200 %}مجاني{% else %}25 ر.س{% endif %}</span>
                         </div>
 
                         <hr class="border-border-sand">
 
                         <div class="flex justify-between text-text-primary">
                             <span class="font-semibold">المجموع</span>
-                            <span id="total" class="font-price text-xl font-bold text-sage">0 ر.س</span>
+                            <span class="font-price text-xl font-bold text-sage">
+                                {% if cart.total >= 200 %}{{ cart.total }}{% else %}{{ cart.total|add:"25" }}{% endif %} ر.س
+                            </span>
                         </div>
                     </div>
 
-                    <!-- Coupon Code -->
-                    <form id="couponForm" class="mt-6">
-                        <label class="text-sm text-text-secondary mb-2 block">كود الخصم</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="couponInput" placeholder="أدخل الكود" class="flex-1 px-4 py-2 bg-page-bg border border-border-sand rounded-lg focus:border-sage focus:ring-1 focus:ring-sage/20 outline-none transition-all text-sm">
-                            <button type="submit" class="px-4 py-2 bg-taupe-light text-taupe rounded-lg font-medium hover:bg-taupe hover:text-white transition-colors text-sm">
-                                تطبيق
-                            </button>
-                        </div>
-                        <p id="discountDisplay" class="hidden mt-2 text-sm text-sage flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            <span>خصم: <span class="discount-value"></span></span>
-                        </p>
-                    </form>
-
                     <!-- Checkout Button -->
-                    <a href="{% url 'store:checkout' %}" id="checkoutBtn" class="mt-6 w-full btn-primary py-4 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'store:checkout' %}" class="mt-6 w-full btn-primary py-4 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-all flex items-center justify-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         إتمام الشراء
                     </a>
+                    {% else %}
+                    <a href="{% url 'store:login' %}?next={% url 'store:checkout' %}" class="mt-6 w-full btn-primary py-4 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-all flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                        </svg>
+                        تسجيل الدخول للمتابعة
+                    </a>
+                    {% endif %}
 
                     <!-- Continue Shopping -->
                     <a href="{% url 'store:products' %}" class="mt-4 w-full py-3 border border-border-sand text-text-secondary rounded-xl font-medium hover:bg-page-bg transition-colors flex items-center justify-center gap-2">
@@ -109,9 +142,9 @@
                 </div>
             </div>
         </div>
-
+        {% else %}
         <!-- Empty Cart State -->
-        <div id="emptyCart" class="hidden text-center py-16">
+        <div class="text-center py-16">
             <svg class="w-32 h-32 mx-auto text-text-placeholder mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
             </svg>
@@ -124,148 +157,128 @@
                 تصفح المنتجات
             </a>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const cartContent = document.getElementById('cartContent');
-        const cartItems = document.getElementById('cartItems');
-        const emptyCart = document.getElementById('emptyCart');
-        const subtotalEl = document.getElementById('subtotal');
-        const shippingEl = document.getElementById('shipping');
-        const discountEl = document.getElementById('discount');
-        const discountRow = document.getElementById('discountRow');
-        const totalEl = document.getElementById('total');
-        const checkoutBtn = document.getElementById('checkoutBtn');
-
-        // Render cart
-        function renderCart() {
-            const cart = Souq.getCart();
-
-            if (cart.length === 0) {
-                cartContent.classList.add('hidden');
-                emptyCart.classList.remove('hidden');
-                return;
-            }
-
-            cartContent.classList.remove('hidden');
-            emptyCart.classList.add('hidden');
-
-            cartItems.innerHTML = cart.map(item => `
-                <div class="bg-surface rounded-2xl border border-border-sand p-4 md:p-6 flex gap-4 md:gap-6" data-item-id="${item.id}">
-                    <!-- Product Image -->
-                    <div class="w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-[#F0EBE3] flex-shrink-0">
-                        <img src="${item.image || 'https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product'}" alt="${item.name}" class="w-full h-full object-cover">
-                    </div>
-
-                    <!-- Product Info -->
-                    <div class="flex-1 flex flex-col">
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <h3 class="font-medium text-text-primary">${item.name}</h3>
-                                <p class="text-sm text-text-secondary mt-1">السعر: <span class="font-price text-sage">${item.price} ر.س</span></p>
-                            </div>
-                            <button onclick="removeItem('${item.id}')" class="text-text-placeholder hover:text-rose transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div class="mt-auto flex items-center justify-between pt-4">
-                            <!-- Quantity -->
-                            <div class="quantity-selector flex items-center gap-2">
-                                <button type="button" data-minus onclick="updateQuantity('${item.id}', ${item.quantity - 1})" class="w-8 h-8 flex items-center justify-center bg-page-bg border border-border-sand rounded-lg text-text-secondary hover:bg-sage-light hover:border-sage hover:text-sage transition-all">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-                                    </svg>
-                                </button>
-                                <input type="number" value="${item.quantity}" min="1" onchange="updateQuantity('${item.id}', this.value)" class="w-12 h-8 text-center bg-page-bg border border-border-sand rounded-lg text-text-primary font-medium text-sm">
-                                <button type="button" data-plus onclick="updateQuantity('${item.id}', ${item.quantity + 1})" class="w-8 h-8 flex items-center justify-center bg-page-bg border border-border-sand rounded-lg text-text-secondary hover:bg-sage-light hover:border-sage hover:text-sage transition-all">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                    </svg>
-                                </button>
-                            </div>
-
-                            <!-- Item Total -->
-                            <p class="font-price text-lg font-semibold text-text-primary">${(item.price * item.quantity).toFixed(2)} ر.س</p>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            updateTotals();
-        }
-
-        // Update totals
-        function updateTotals() {
-            const cart = Souq.getCart();
-            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const shipping = subtotal >= 200 ? 0 : 25;
-            const discount = discountRow.classList.contains('hidden') ? 0 : parseFloat(discountEl.textContent) || 0;
-            const total = subtotal + shipping - discount;
-
-            subtotalEl.textContent = subtotal.toFixed(2) + ' ر.س';
-            shippingEl.textContent = shipping === 0 ? 'مجاني' : shipping.toFixed(2) + ' ر.س';
-            totalEl.textContent = total.toFixed(2) + ' ر.س';
-
-            if (checkoutBtn) {
-                checkoutBtn.disabled = cart.length === 0;
+    // CSRF Token
+    function getCSRFToken() {
+        const name = 'csrftoken';
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                return cookie.substring(name.length + 1);
             }
         }
+        return '';
+    }
 
-        // Remove item
-        window.removeItem = function(id) {
-            Souq.removeFromCart(id);
-            renderCart();
-        };
-
-        // Update quantity
-        window.updateQuantity = function(id, quantity) {
-            quantity = parseInt(quantity);
-            if (quantity < 1) quantity = 1;
-            Souq.updateCartQuantity(id, quantity);
-            renderCart();
-        };
-
-        // Coupon form
-        const couponForm = document.getElementById('couponForm');
-        if (couponForm) {
-            couponForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const code = document.getElementById('couponInput').value.trim().toUpperCase();
-
-                const coupons = {
-                    'WELCOME10': { discount: 0.1, type: 'percent', label: '10%' },
-                    'SAVE50': { discount: 50, type: 'fixed', label: '50 ر.س' }
-                };
-
-                if (coupons[code]) {
-                    const cart = Souq.getCart();
-                    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                    const discountValue = coupons[code].type === 'percent' ? subtotal * coupons[code].discount : coupons[code].discount;
-
-                    discountRow.classList.remove('hidden');
-                    discountEl.textContent = discountValue.toFixed(2) + ' ر.س';
-
-                    const discountDisplay = document.getElementById('discountDisplay');
-                    discountDisplay.classList.remove('hidden');
-                    discountDisplay.querySelector('.discount-value').textContent = coupons[code].label;
-
-                    updateTotals();
-                    Souq.showToast('تم تطبيق كود الخصم بنجاح', 'success');
-                } else {
-                    Souq.showToast('كود الخصم غير صالح', 'error');
+    // ✅ تحديث شارة السلة من السيرفر فوراً
+    function updateCartBadgeNow() {
+        fetch('/cart/count/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.count !== undefined) {
+                    const cartCountEl = document.getElementById('cartCount');
+                    if (cartCountEl) {
+                        cartCountEl.textContent = data.count;
+                        cartCountEl.style.display = data.count > 0 ? 'flex' : 'none';
+                    }
                 }
+            })
+            .catch(error => console.error('Error updating cart badge:', error));
+    }
+
+    // Remove item from cart
+    async function removeItem(productId) {
+        if (!confirm('هل تريد إزالة هذا المنتج من السلة؟')) return;
+
+        try {
+            const response = await fetch('/cart/remove/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({ product_id: productId })
             });
+
+            const data = await response.json();
+
+            if (data.success) {
+                if (data.cart_count !== undefined) {
+                    const cartCountEl = document.getElementById('cartCount');
+                    if (cartCountEl) {
+                        cartCountEl.textContent = data.cart_count;
+                    }
+                }
+                window.location.reload();
+            } else {
+                alert(data.message || 'حدث خطأ');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال');
+        }
+    }
+
+    // Update quantity
+    async function updateQuantity(productId, quantity) {
+        if (quantity < 1) {
+            await removeItem(productId);
+            return;
         }
 
-        // Initial render
-        renderCart();
+        try {
+            const response = await fetch('/cart/update/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({ 
+                    product_id: productId, 
+                    quantity: quantity 
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                if (data.cart_count !== undefined) {
+                    const cartCountEl = document.getElementById('cartCount');
+                    if (cartCountEl) {
+                        cartCountEl.textContent = data.cart_count;
+                    }
+                }
+                window.location.reload();
+            } else {
+                alert(data.message || 'حدث خطأ');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال');
+        }
+    }
+
+    // Handle manual quantity input
+    document.querySelectorAll('.quantity-input').forEach(input => {
+        input.addEventListener('change', function() {
+            const productId = this.dataset.productId;
+            const quantity = parseInt(this.value) || 1;
+            updateQuantity(productId, quantity);
+        });
     });
+
+    // ✅ تنفيذ فوري - تحديث الشارة من السيرفر
+    updateCartBadgeNow();
+    
+    // ✅ تأكيد إضافي
+    setTimeout(updateCartBadgeNow, 100);
+    setTimeout(updateCartBadgeNow, 500);
 </script>
 {% endblock %}

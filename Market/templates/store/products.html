@@ -192,7 +192,7 @@
                         <!-- Product Image -->
                         <div class="relative aspect-square overflow-hidden bg-[#F0EBE3]">
                             <a href="{% url 'store:product_detail' product.pk %}">
-                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/400x400/F0EBE3/5C8A6E?text=Product'">
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/400x400/F0EBE3/5C8A6E?text=Product'">
                             </a>
 
                             {% if product.discount %}
@@ -258,7 +258,7 @@
                     {% for i in "123456789" %}
                     <div class="product-card bg-surface rounded-2xl border border-border-sand overflow-hidden group">
                         <div class="relative aspect-square overflow-hidden bg-[#F0EBE3]">
-                            <img src="https://placehold.co/400x400/F0EBE3/5C8A6E?text=Product+{{ forloop.counter }}" alt="Product" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <img src="https://placehold.co/400x400/F0EBE3/5C8A6E?text=Product+{{ forloop.counter }}" alt="Product" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500">
                             <span class="absolute top-3 right-3 px-2 py-1 bg-rose text-white text-xs font-medium rounded-lg">
                                 -15%
                             </span>

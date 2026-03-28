@@ -13,12 +13,17 @@ handler400 = 'store.views.handler400_view'
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
     path('', include('store.urls')),
-    path('error/<int:error_code>/', error_view, name='error_page'),  # ← خارج if DEBUG
-    
-    re_path(r'^.*$', handler404_view),  # ← يلتقط أي URL غير موجود
+    path('error/<int:error_code>/', error_view, name='error_page'),
 ]
 
+# ⭐ أضف الميديا أولاً قبل الـ catch-all
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+
+# ⭐ ثم أضف الـ catch-all في النهاية
+urlpatterns += [
+    re_path(r'^(?!media/)(?!static/).*$', handler404_view),
+]

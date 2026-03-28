@@ -25,6 +25,7 @@ urlpatterns = [
     # CART
     # ============================================
     path('cart/', views.cart, name='cart'),
+    path('cart/count/', views.cart_count, name='cart_count'),
     path('cart/add/', views.add_to_cart, name='add_to_cart'),
     path('cart/update/', views.update_cart, name='update_cart'),
     path('cart/remove/', views.remove_from_cart, name='remove_from_cart'),
@@ -40,6 +41,7 @@ urlpatterns = [
     # ============================================
     path('orders/', views.orders, name='orders'),
     path('orders/<int:pk>/', views.order_detail, name='order_detail'),
+    path('orders/<int:pk>/send-invoice/', views.send_invoice, name='send_invoice'),
 
     # ============================================
     # WISHLIST
@@ -73,5 +75,5 @@ urlpatterns = [
 
 urlpatterns += [
     path('error/<int:error_code>/', views.error_view, name='error_page'),
-    re_path(r'^.*$', views.handler404_view),  # ← يلتقط أي URL غير موجود
+    re_path(r'^(?!media/)(?!static/).*$', views.handler404_view),  # ← يلتقط أي URL غير موجود
 ]
