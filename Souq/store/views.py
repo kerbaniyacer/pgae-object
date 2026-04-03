@@ -1,5 +1,6 @@
 import json
 import uuid
+from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -23,7 +24,6 @@ from .forms import ProductForm, ProductVariantForm
 def home(request):
     categories = Category.objects.filter(is_active=True, parent=None)[:4]
     featured_products = Product.objects.filter(is_active=True, is_featured=True)[:8]
-    
     try:
         new_products = Product.objects.filter(is_active=True).order_by('-sold_count')[:8]
     except Exception:
@@ -1155,3 +1155,115 @@ def handler403_view(request, exception=None):
 def handler400_view(request, exception=None):
     return error_view(request, 400)
 
+from django.db.models import Sum, Count, Q
+
+# ============================================
+# ADMIN PANEL VIEWS
+# ============================================
+
+@login_required
+def admin_dashboard(request):
+    """لوحة تحكم الأدمن الشاملة"""
+    if not request.user.is_superuser:
+        messages.error(request, 'ليس لديك صلاحية الوصول لهذه الصفحة')
+        return redirect('store:home')
+    
+    # جلب المستخدمين المسجلين مع بيانات الملف الشخصي
+    users = User.objects.select_related('profile').all().order_by('-date_joined')
+    
+    # جلب الزوار (طلبات بدون مستخدم مسجل)
+    guest_orders = Order.objects.filter(user__isnull=True).values('email', 'full_name').annotate(
+        orders_count=Count('id')
+    ).order_by('-orders_count')
+
+    # إحصائيات عامة
+    total_sellers = users.filter(profile__is_seller=True).count()
+    total_buyers = users.filter(profile__is_seller=False).count()
+    total_products = Product.objects.count()
+    total_orders = Order.objects.count()
+    total_revenue = Order.objects.filter(payment_status='paid').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    
+    # آخر الطلبات في النظام
+    recent_orders = Order.objects.select_related('user').order_by('-created_at')[:10]
+
+    context = {
+        'users': users,
+        'guest_orders': guest_orders,
+        'total_sellers': total_sellers,
+        'total_buyers': total_buyers,
+        'total_products': total_products,
+        'total_orders': total_orders,
+        'total_revenue': total_revenue,
+        'recent_orders': recent_orders,
+    }
+    return render(request, 'store/admin_dashboard.html', context)
+
+
+@login_required
+def admin_user_detail(request, user_id):
+    """صفحة تفاصيل المستخدم (تاجر أو مشتري) للأدمن"""
+    if not request.user.is_superuser:
+        return redirect('store:home')
+        
+    target_user = get_object_or_404(User.objects.select_related('profile'), pk=user_id)
+    profile = target_user.profile
+    
+    context = {
+        'target_user': target_user,
+        'profile': profile,
+    }
+    
+    if profile.is_seller:
+        # بيانات التاجر
+        products = Product.objects.filter(seller=target_user)
+        merchant_orders_items = OrderItem.objects.filter(product__seller=target_user)
+        seller_revenue = merchant_orders_items.aggregate(Sum('subtotal'))['subtotal__sum'] or 0
+        seller_products_count = products.count()
+        
+        context.update({
+            'products': products,
+            'merchant_orders_items': merchant_orders_items[:20],
+            'seller_revenue': seller_revenue,
+            'seller_products_count': seller_products_count,
+        })
+    else:
+        # بيانات المشتري
+        buyer_orders = Order.objects.filter(user=target_user).order_by('-created_at')
+        total_spent = buyer_orders.filter(payment_status='paid').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        
+        context.update({
+            'buyer_orders': buyer_orders,
+            'total_spent': total_spent,
+        })
+        
+    return render(request, 'store/admin_user_detail.html', context)
+
+
+@login_required
+@require_POST
+def admin_delete_user(request, user_id):
+    """حذف مستخدم (تاجر/مشتري) من قبل الأدمن"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'message': 'غير مصرح'})
+    try:
+        user = get_object_or_404(User, pk=user_id)
+        if user == request.user:
+            return JsonResponse({'success': False, 'message': 'لا يمكنك حذف حسابك الخاص'})
+        user.delete()
+        return JsonResponse({'success': True, 'message': 'تم حذف المستخدم وجميع بياناته بنجاح'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
+@login_required
+@require_POST
+def admin_delete_product(request, product_id):
+    """حذف منتج معين من قبل الأدمن"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'message': 'غير مصرح'})
+    try:
+        product = get_object_or_404(Product, pk=product_id)
+        product.delete()
+        return JsonResponse({'success': True, 'message': 'تم حذف المنتج بنجاح'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})

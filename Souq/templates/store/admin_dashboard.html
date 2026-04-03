@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}لوحة تحكم الإدارة - سوق{% endblock %}
+
+{% block content %}
+<div class="bg-page-bg min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 class="font-headline text-3xl font-bold text-text-primary mb-8">لوحة تحكم الإدارة</h1>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-surface p-6 rounded-2xl border border-border-sand">
+                <p class="text-text-secondary text-sm">إجمالي المبيعات</p>
+                <p class="text-2xl font-bold text-sage mt-2">{{ total_revenue|floatformat:0 }} د.ج</p>
+                <p class="text-xs text-text-placeholder mt-1">{{ total_orders }} طلب مدفوع</p>
+            </div>
+            <div class="bg-surface p-6 rounded-2xl border border-border-sand">
+                <p class="text-text-secondary text-sm">التجار</p>
+                <p class="text-2xl font-bold text-text-primary mt-2">{{ total_sellers }}</p>
+            </div>
+            <div class="bg-surface p-6 rounded-2xl border border-border-sand">
+                <p class="text-text-secondary text-sm">المشترين</p>
+                <p class="text-2xl font-bold text-text-primary mt-2">{{ total_buyers }}</p>
+            </div>
+            <div class="bg-surface p-6 rounded-2xl border border-border-sand">
+                <p class="text-text-secondary text-sm">المنتجات</p>
+                <p class="text-2xl font-bold text-text-primary mt-2">{{ total_products }}</p>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Users List -->
+            <div class="lg:col-span-2 bg-surface rounded-2xl border border-border-sand p-6">
+                <h2 class="font-semibold text-lg text-text-primary mb-4">المستخدمون المسجلون</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-page-bg text-text-secondary">
+                            <tr>
+                                <th class="px-4 py-3 text-right">المستخدم</th>
+                                <th class="px-4 py-3 text-right">النوع</th>
+                                <th class="px-4 py-3 text-right">تاريخ التسجيل</th>
+                                <th class="px-4 py-3 text-right">إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border-sand">
+                            {% for user in users %}
+                            <tr class="hover:bg-page-bg/50 transition-colors">
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-sage-light rounded-full flex items-center justify-center text-sage font-bold text-xs">
+                                            {{ user.username|slice:":1"|upper }}
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-text-primary">{{ user.get_full_name|default:user.username }}</p>
+                                            <p class="text-xs text-text-placeholder">{{ user.email }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    {% if user.profile.is_seller %}
+                                    <span class="px-2 py-1 bg-rose-light text-rose text-xs rounded-full">تاجر</span>
+                                    {% else %}
+                                    <span class="px-2 py-1 bg-sage-light text-sage text-xs rounded-full">مشتري</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-text-secondary">{{ user.date_joined|date:"Y-m-d" }}</td>
+                                <td class="px-4 py-3">
+                                    <a href="{% url 'store:admin_user_detail' user.id %}" class="text-sage hover:text-sage-dark font-medium">عرض التفاصيل</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Side Panels -->
+            <div class="space-y-6">
+                <!-- Guests -->
+                <div class="bg-surface rounded-2xl border border-border-sand p-6">
+                    <h2 class="font-semibold text-lg text-text-primary mb-4">الزوار (غير مسجلين)</h2>
+                    <div class="space-y-3">
+                        {% for guest in guest_orders %}
+                        <div class="p-3 bg-page-bg rounded-xl">
+                            <p class="font-medium text-text-primary text-sm">{{ guest.full_name|default:"بدون اسم" }}</p>
+                            <p class="text-xs text-text-placeholder">{{ guest.email }}</p>
+                            <p class="text-xs text-text-secondary mt-1">{{ guest.orders_count }} طلب كضيف</p>
+                        </div>
+                        {% empty %}
+                        <p class="text-sm text-text-placeholder text-center py-4">لا يوجد زوار حالياً</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Recent Orders -->
+                <div class="bg-surface rounded-2xl border border-border-sand p-6">
+                    <h2 class="font-semibold text-lg text-text-primary mb-4">آخر الطلبات في النظام</h2>
+                    <div class="space-y-3">
+                        {% for order in recent_orders %}
+                        <div class="p-3 bg-page-bg rounded-xl flex justify-between items-center">
+                            <div>
+                                <p class="font-medium text-text-primary text-sm">{{ order.order_number }}</p>
+                                <p class="text-xs text-text-placeholder">{{ order.full_name }}</p>
+                            </div>
+                            <span class="text-sm font-bold text-sage">{{ order.total_amount }} د.ج</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -67,6 +67,12 @@ urlpatterns = [
     path('merchant/orders/<int:pk>/', views.merchant_order_detail, name='merchant_order_detail'),
     path('merchant/orders/<int:pk>/update-status/', views.merchant_update_order_status, name='merchant_update_order_status'),
 
+    # مسارات لوحة تحكم الأدمن
+    path('admin-panel/', views.admin_dashboard, name='admin_dashboard'),
+    path('admin-panel/user/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
+    path('admin-panel/user/<int:user_id>/delete/', views.admin_delete_user, name='admin_delete_user'),
+    path('admin-panel/product/<int:product_id>/delete/', views.admin_delete_product, name='admin_delete_product'),
+
 ]  
 urlpatterns += [
     path('error/<int:error_code>/', views.error_view, name='error_page'),
