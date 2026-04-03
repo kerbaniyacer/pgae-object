@@ -35,6 +35,7 @@ const Souq = {
                 },
                 body: JSON.stringify({
                     product_id: product.id,
+                    variant_id: product.variant_id,
                     quantity: product.quantity || 1
                 })
             });
@@ -62,7 +63,7 @@ const Souq = {
     },
 
     // Remove item from cart (SERVER ONLY)
-    async removeFromCart(productId) {
+    async removeFromCart(variantId) {
         try {
             const response = await fetch('/cart/remove/', {
                 method: 'POST',
@@ -70,7 +71,7 @@ const Souq = {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': this.getCSRFToken()
                 },
-                body: JSON.stringify({ product_id: productId })
+                body: JSON.stringify({ variant_id: variantId })
             });
 
             const data = await response.json();
@@ -87,7 +88,7 @@ const Souq = {
     },
 
     // Update cart quantity (SERVER ONLY)
-    async updateCartQuantity(productId, quantity) {
+    async updateCartQuantity(variantId, quantity) {
         try {
             const response = await fetch('/cart/update/', {
                 method: 'POST',
@@ -96,7 +97,7 @@ const Souq = {
                     'X-CSRFToken': this.getCSRFToken()
                 },
                 body: JSON.stringify({
-                    product_id: productId,
+                    variant_id: variantId,
                     quantity: quantity
                 })
             });
@@ -141,11 +142,23 @@ const Souq = {
         if (cartCountEl) {
             cartCountEl.textContent = count;
             cartCountEl.style.display = count > 0 ? 'flex' : 'none';
+            if (count > 0) cartCountEl.classList.remove('hidden');
+            else cartCountEl.classList.add('hidden');
         }
         
         if (cartCountEl_1) {
             cartCountEl_1.textContent = count;
             cartCountEl_1.style.display = count > 0 ? 'flex' : 'none';
+            if (count > 0) cartCountEl_1.classList.remove('hidden');
+            else cartCountEl_1.classList.add('hidden');
+        }
+
+        const cartCountEl_2 = document.getElementById('cartCount_2');
+        if (cartCountEl_2) {
+            cartCountEl_2.textContent = count;
+            cartCountEl_2.style.display = count > 0 ? 'flex' : 'none';
+            if (count > 0) cartCountEl_2.classList.remove('hidden');
+            else cartCountEl_2.classList.add('hidden');
         }
 
         badges.forEach(badge => {

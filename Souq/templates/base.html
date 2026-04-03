@@ -23,8 +23,6 @@
     <script src="{% static 'js/ui-components.js' %}"></script>
     <!-- Tailwind Config -->
 
-    <!-- Framer Motion -->
-    <script src="https://cdn.jsdelivr.net/npm/framer-motion@10.16.4/dist/framer-motion.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     
     <!-- Custom Styles -->
@@ -503,6 +501,8 @@
                         class="text-text-secondary hover:text-sage transition-colors {% block nav_home %}{% endblock %}">الرئيسية</a>
                     <a href="{% url 'store:products' %}"
                         class="text-text-secondary hover:text-sage transition-colors {% block nav_products %}{% endblock %}">المنتجات</a>
+                    <a href="{% url 'store:track_order' %}"
+                        class="text-text-secondary hover:text-sage transition-colors {% block nav_track_order %}{% endblock %}">تتبع الطلب</a>
                     {% if user.is_authenticated and user.profile.is_seller %}
                     <a href="{% url 'store:merchant_dashboard' %}"
                         class="text-text-secondary hover:text-sage transition-colors {% block nav_dashboard %}{% endblock %}">لوحة
@@ -684,6 +684,8 @@
                 class="block py-2 text-text-secondary hover:text-sage transition-colors">الرئيسية</a>
             <a href="{% url 'store:products' %}"
                 class="block py-2 text-text-secondary hover:text-sage transition-colors">المنتجات</a>
+            <a href="{% url 'store:track_order' %}"
+                class="block py-2 text-text-secondary hover:text-sage transition-colors">تتبع الطلب</a>
             {% if user.is_authenticated and user.profile.is_seller %}
             <a href="{% url 'store:merchant_dashboard' %}"
                 class="block py-2 text-text-secondary hover:text-sage transition-colors">لوحة التحكم</a>
@@ -790,7 +792,7 @@
                                 والاسترجاع</a></li>
                         <li><a href="#" class="text-text-secondary hover:text-sage transition-colors text-sm">الأسئلة
                                 الشائعة</a></li>
-                        <li><a href="#" class="text-text-secondary hover:text-sage transition-colors text-sm">تتبع
+                        <li><a href="{% url 'store:track_order' %}" class="text-text-secondary hover:text-sage transition-colors text-sm">تتبع
                                 طلبك</a></li>
                     </ul>
                 </div>
@@ -955,7 +957,7 @@
     </script>
 
     <!-- Main JavaScript -->
-    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/main.js' %}?v=2"></script>
 
     <!-- Page-specific JavaScript -->
     {% block extra_js %}{% endblock %}

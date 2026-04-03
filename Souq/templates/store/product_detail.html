@@ -800,8 +800,16 @@
             });
             const data = await response.json();
             if (data.success) {
-                const badge = document.getElementById('cartCount');
-                if (badge) { badge.textContent = data.cart_count; badge.classList.remove('hidden'); badge.style.display = 'flex'; }
+                if (typeof Souq !== 'undefined' && typeof Souq.updateCartBadge === 'function') {
+                    Souq.updateCartBadge(data.cart_count);
+                } else {
+                    document.querySelectorAll('#cartCount, #cartCount_1, #cartCount_2, .cart-badge').forEach(badge => {
+                        badge.textContent = data.cart_count;
+                        badge.classList.remove('hidden');
+                        badge.style.display = data.cart_count > 0 ? 'flex' : 'none';
+                        if (data.cart_count === 0) badge.classList.add('hidden');
+                    });
+                }
                 Souq.showToast(data.message || 'تمت إضافة المنتج للسلة', 'success');
             } else { Souq.showToast(data.message || 'حدث خطأ', 'error'); }
         } catch (error) { Souq.showToast('حدث خطأ في الاتصال', 'error'); }

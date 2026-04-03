@@ -19,13 +19,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
+from decouple import config
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-n^6swb5ar25$1q#^bbcn8aafd-6c!^_@ze93mnqp@hnt3nrr&i'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-n^6swb5ar25$1q#^bbcn8aafd-6c!^_@ze93mnqp@hnt3nrr&i')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=lambda v: [s.strip() for s in v.split(',')])
 
 CSRF_TRUSTED_ORIGINS = [
     'https://*.ngrok-free.dev',
@@ -109,7 +111,6 @@ CKEDITOR_UPLOAD_PATH = "uploads/"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-from decouple import config
 
 DATABASES = {
     'default': {
@@ -165,8 +166,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD ='yvhzbmzpzienyhws'  # ← App Password هنا
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='adminsouq@gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 EMAIL_TIMEOUT = 10
 SOCIALACCOUNT_AUTO_SIGNUP = False

@@ -58,13 +58,13 @@
                     <!-- Wishlist Items -->
                     <div class="lg:col-span-2 space-y-4">
                         {% for item in wishlist_items %}
-                        <div class="bg-surface rounded-2xl border border-border-sand p-4 md:p-6 flex gap-4 md:gap-6" data-item-id="{{ item.product.id }}">
+                        <div class="bg-surface rounded-2xl border border-border-sand p-4 md:p-6 flex gap-4 md:gap-6" data-item-id="{{ item.variant.id }}">
                             <!-- Product Image -->
                             <div class="w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-[#F0EBE3] flex-shrink-0">
-                                {% if item.product.image %}
-                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product'">
+                                {% if item.get_product.image %}
+                                <img src="{{ item.get_product.image.url }}" alt="{{ item.get_product.name }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product'">
                                 {% else %}
-                                <img src="https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product" alt="{{ item.product.name }}" class="w-full h-full object-contain">
+                                <img src="https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product" alt="{{ item.get_product.name }}" class="w-full h-full object-contain">
                                 {% endif %}
                             </div>
 
@@ -74,14 +74,14 @@
                                 <div class="flex items-start justify-between">
                                     
                                     <div>
-                                        <a href="{% url 'store:product_detail' item.product.slug %}" class="font-medium text-text-primary hover:text-sage transition-colors">
-                                            {{ item.product.name }}
+                                        <a href="{% url 'store:product_detail' item.get_product.slug %}" class="font-medium text-text-primary hover:text-sage transition-colors">
+                                            {{ item.get_product.name }}
                                         </a>
                                         <p class="text-sm text-text-secondary mt-1">السعر: <span class="font-price text-sage">{{ item.variant.price }} د.ج</span></p>
                                     </div>
                                     
                                     <!-- زر الإزالة من المفضلة (قلب) -->
-                                    <button onclick="removeWishlistItem('{{ item.product.id }}')" class="text-rose hover:text-rose-dark transition-colors p-1">
+                                    <button onclick="removeWishlistItem('{{ item.variant.id }}')" class="text-rose hover:text-rose-dark transition-colors p-1">
                                         <svg class="w-6 h-6" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                                         </svg>
@@ -90,14 +90,14 @@
 
                                 <div class="mt-auto flex items-center justify-between pt-4">
                                     <!-- حالة المخزون -->
-                                    {% if item.product.is_in_stock %}
+                                    {% if item.get_product.is_in_stock %}
                                     <span class="text-xs text-sage bg-sage-light px-2 py-1 rounded-full">متوفر</span>
                                     {% else %}
                                     <span class="text-xs text-rose bg-rose-light px-2 py-1 rounded-full">غير متوفر</span>
                                     {% endif %}
 
                                     <!-- زر الإضافة للسلة -->
-                                    <button onclick="addToCartFromWishlist('{{ item.product.id }}')" class="px-4 py-2 bg-sage text-white rounded-xl text-sm font-medium hover:bg-sage-dark transition-colors flex items-center gap-2">
+                                    <button onclick="addToCartFromWishlist('{{ item.variant.id }}')" class="px-4 py-2 bg-sage text-white rounded-xl text-sm font-medium hover:bg-sage-dark transition-colors flex items-center gap-2">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
                                         </svg>
@@ -205,15 +205,20 @@
 
     // تحديث شارة السلة
     function updateCartBadgeNow() {
+        if (typeof Souq !== 'undefined' && typeof Souq.fetchCartCountFromServer === 'function') {
+            Souq.fetchCartCountFromServer();
+            return;
+        }
         fetch('/cart/count/')
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.count !== undefined) {
-                    const cartCountEl = document.getElementById('cartCount');
-                    if (cartCountEl) {
-                        cartCountEl.textContent = data.count;
-                        cartCountEl.style.display = data.count > 0 ? 'flex' : 'none';
-                    }
+                    document.querySelectorAll('#cartCount, #cartCount_1, #cartCount_2, .cart-badge').forEach(badge => {
+                        badge.textContent = data.count;
+                        badge.style.display = data.count > 0 ? 'flex' : 'none';
+                        if (data.count === 0) badge.classList.add('hidden');
+                        else badge.classList.remove('hidden');
+                    });
                 }
             })
             .catch(error => console.error('Error updating cart badge:', error));
@@ -228,7 +233,7 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCSRFToken()
                 },
-                body: JSON.stringify({ product_id: productId })
+                body: JSON.stringify({ variant_id: productId })
             });
 
             const data = await response.json();
@@ -279,7 +284,7 @@
                     'X-CSRFToken': getCSRFToken()
                 },
                 body: JSON.stringify({ 
-                    product_id: productId,
+                    variant_id: productId,
                     quantity: 1
                 })
             });
@@ -289,10 +294,15 @@
             if (data.success) {
                 // تحديث شارة السلة
                 if (data.cart_count !== undefined) {
-                    const cartCountEl = document.getElementById('cartCount');
-                    if (cartCountEl) {
-                        cartCountEl.textContent = data.cart_count;
-                        cartCountEl.style.display = data.cart_count > 0 ? 'flex' : 'none';
+                    if (typeof Souq !== 'undefined' && typeof Souq.updateCartBadge === 'function') {
+                        Souq.updateCartBadge(data.cart_count);
+                    } else {
+                        document.querySelectorAll('#cartCount, #cartCount_1, #cartCount_2, .cart-badge').forEach(badge => {
+                            badge.textContent = data.cart_count;
+                            badge.style.display = data.cart_count > 0 ? 'flex' : 'none';
+                            if (data.cart_count === 0) badge.classList.add('hidden');
+                            else badge.classList.remove('hidden');
+                        });
                     }
                 }
                 alert('تمت إضافة المنتج للسلة بنجاح!');

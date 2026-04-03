@@ -46,8 +46,12 @@ class CartAdmin(admin.ModelAdmin):
 
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
-    list_display = ('cart', 'product', 'quantity', 'subtotal')
-    search_fields = ('cart__user__username', 'product__name')
+    list_display = ('cart', 'get_product_name', 'quantity', 'subtotal')
+    search_fields = ('cart__user__username', 'variant__product__name')
+    
+    def get_product_name(self, obj):
+        return obj.variant.product.name if obj.variant else '-'
+    get_product_name.short_description = 'المنتج'
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):

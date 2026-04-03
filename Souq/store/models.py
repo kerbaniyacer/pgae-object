@@ -26,7 +26,6 @@ class Category(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 
     class Meta:
-        unique_together = ['name', 'parent']
         verbose_name = 'الفئة'
         verbose_name_plural = 'الفئات'
 
@@ -172,13 +171,13 @@ class Product(models.Model):
         # التحقق من المخزون عبر المتغيرات أو المخزون المباشر
         if self.variants.exists():
             return self.variants.filter(stock__gt=0).exists()
-        return self.stock > 0
+        return False
 
     @property
     def total_stock(self):
         if self.variants.exists():
             return self.variants.aggregate(total=models.Sum('stock'))['total'] or 0
-        return self.stock
+        return 0
 
     def __str__(self):
         return self.name
@@ -224,11 +223,6 @@ class ProductVariant(models.Model):#ProductOptions
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='products/')
-
-    def save(self, *args, **kwargs):
-        if self.is_main:
-            ProductImage.objects.filter(product=self.product, is_main=True).update(is_main=False)
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Image of {self.product.name}"
@@ -295,7 +289,6 @@ class Cart(models.Model):
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items', verbose_name='السلة')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='المنتج', null=True, blank=True)
     variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, verbose_name='المتغير', null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1, verbose_name='الكمية')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
@@ -310,13 +303,13 @@ class CartItem(models.Model):
         return f"{self.quantity}x {self.variant.product.name}"
 
     @property
-    def product(self):
+    def get_product(self):
         """للتوافق مع القوالب القديمة"""
-        return self.variant.product
+        return self.variant.product if self.variant else None
 
     @property
     def subtotal(self):
-        return self.variant.price * self.quantity
+        return self.variant.price * self.quantity if self.variant else 0
 
     def clean(self):
         if self.quantity < 1:
@@ -354,9 +347,9 @@ class Order(models.Model):
         ('apple_pay', 'Apple Pay'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', verbose_name='المستخدم')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', verbose_name='المستخدم', null=True, blank=True)
     order_number = models.CharField(max_length=20, unique=True, verbose_name='رقم الطلب')
-    username = models.CharField(max_length=150, verbose_name='اسم المستخدم')  # حقل جديد لحفظ اسم المستخدم في الطلب
+    username = models.CharField(max_length=150, verbose_name='اسم المستخدم', null=True, blank=True)  # حقل جديد لحفظ اسم المستخدم في الطلب
 
     # Shipping Info
     full_name = models.CharField(max_length=255, verbose_name='الاسم الكامل')
@@ -373,7 +366,7 @@ class Order(models.Model):
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='تكلفة الشحن')
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='الخصم')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='المبلغ الكلي')
-    tracking_number = models.CharField(max_length=50, blank=True, verbose_name='رقم التتبع', null=True, unique=False, default='TRK' + ''.join(random.choices(string.digits, k=8)))
+    tracking_number = models.CharField(max_length=50, blank=True, verbose_name='رقم التتبع', null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='الحالة')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES, default='cod', verbose_name='طريقة الدفع')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending', verbose_name='حالة الدفع')
@@ -389,10 +382,20 @@ class Order(models.Model):
         return f"طلب #{self.order_number}"
 
     def save(self, *args, **kwargs):
+        import random
+        import string
         if not self.order_number:
-            import random
-            import string
-            self.order_number = 'ORD' + ''.join(random.choices(string.digits, k=8))
+            new_number = 'ORD' + ''.join(random.choices(string.digits, k=8))
+            while Order.objects.filter(order_number=new_number).exists():
+                new_number = 'ORD' + ''.join(random.choices(string.digits, k=8))
+            self.order_number = new_number
+            
+        if not self.tracking_number:
+            new_trk = 'TRK' + ''.join(random.choices(string.digits, k=8))
+            while Order.objects.filter(tracking_number=new_trk).exists():
+                new_trk = 'TRK' + ''.join(random.choices(string.digits, k=8))
+            self.tracking_number = new_trk
+            
         super().save(*args, **kwargs)
 
 
@@ -427,7 +430,6 @@ class Wishlist(models.Model):
 
 class WishlistItem(models.Model):
     wishlist = models.ForeignKey(Wishlist, on_delete=models.CASCADE, related_name='items', verbose_name='المفضلة')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='المنتج')
     quantity = models.PositiveIntegerField(default=1, verbose_name='الكمية')
     variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, verbose_name='المتغير', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
@@ -442,7 +444,7 @@ class WishlistItem(models.Model):
         return f"{self.quantity}x {self.variant.product.name}"
 
     @property
-    def product(self):
+    def get_product(self):
         """للتوافق مع القوالب القديمة"""
         return self.variant.product
 

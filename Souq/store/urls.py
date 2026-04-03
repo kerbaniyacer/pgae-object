@@ -14,6 +14,8 @@ urlpatterns = [
     # ============================================
     path('products/', views.products, name='products'),
     path('products/<slug:slug>/', views.product_detail, name='product_detail'),
+    path('category/<slug:slug>/', views.category_detail, name='category_detail'),
+    path('brand/<slug:slug>/', views.brand_detail, name='brand_detail'),
     path('product/copy/<int:pk>/', views.product_copy, name='product_copy'),
     path('upload-video/', views.upload_video, name='upload_video'),
     path('delete-product-image/<int:pk>/', views.delete_product_image, name='delete_product_image'),
@@ -41,6 +43,7 @@ urlpatterns = [
     # ORDERS
     # ============================================
     path('orders/', views.orders, name='orders'),
+    path('track-order/', views.track_order, name='track_order'),
     path('orders/<int:pk>/', views.order_detail, name='order_detail'),
     path('orders/<int:pk>/send-invoice/', send_invoice, name='send_invoice'),
     path('orders/<int:pk>/cancel/', views.cancel_order, name='cancel_order'),
@@ -76,5 +79,4 @@ urlpatterns = [
 ]  
 urlpatterns += [
     path('error/<int:error_code>/', views.error_view, name='error_page'),
-    re_path(r'^(?!media/)(?!static/)(!admin/).*$', views.handler404_view),  # ← يلتقط أي URL غير موجود
 ]   

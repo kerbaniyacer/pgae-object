@@ -205,11 +205,25 @@
                 const data = await response.json();
                 
                 if (data.success) {
+                    // Update floating badge injected via JS
                     const badge = document.getElementById('floatingCartBadge');
                     if (badge) {
                         badge.textContent = data.count;
                         badge.style.display = data.count > 0 ? 'flex' : 'none';
                     }
+                    
+                    // Update all HTML badges (top nav and base floating)
+                    const badges = document.querySelectorAll('#cartCount, #cartCount_2');
+                    badges.forEach(b => {
+                        b.textContent = data.count;
+                        if (data.count > 0) {
+                            b.classList.remove('hidden');
+                            b.style.display = 'flex';
+                        } else {
+                            b.classList.add('hidden');
+                            b.style.display = 'none';
+                        }
+                    });
                 }
             } catch (error) {
                 console.error('Error fetching cart count:', error);

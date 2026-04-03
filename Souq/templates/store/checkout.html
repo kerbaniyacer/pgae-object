@@ -179,12 +179,12 @@
                         {% for item in cart_items %}
                         <div class="flex items-center gap-3">
                             <div class="relative w-16 h-16 rounded-lg overflow-hidden bg-[#F0EBE3] flex-shrink-0">
-                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/64x64/F0EBE3/5C8A6E?text=Product'">
+                                <img src="{{ item.get_product.image.url }}" alt="{{ item.get_product.name }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/64x64/F0EBE3/5C8A6E?text=Product'">
                                 <span class="absolute -top-1 -left-1 w-5 h-5 bg-sage text-white text-xs rounded-full flex items-center justify-center">{{ item.quantity }}</span>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm text-text-primary truncate">{{ item.product.name }}</p>
-                                <p class="font-price text-sm text-sage">{{ item.product.price }} د.ج</p>
+                                <p class="text-sm text-text-primary truncate">{{ item.get_product.name }}</p>
+                                <p class="font-price text-sm text-sage">{{ item.get_product.price }} د.ج</p>
                             </div>
                         </div>
                         {% empty %}

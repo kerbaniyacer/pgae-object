@@ -184,11 +184,7 @@ def login_view(request):
                     pass
             
             if user is not None:
-                # ✅ استثناء admin من OTP
-                if user.username == 'admin':
-                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                    messages.success(request, 'تم تسجيل الدخول كمسؤول')
-                    return redirect('store:home')  # أو لوحة التحكم
+
                 # Check if user is active
                 if not user.is_active:
                     messages.error(request, 'حسابك غير مفعل، يرجى التواصل مع الدعم')
@@ -670,46 +666,6 @@ def reset_password(request, uidb64, token):
     })
 
 
-def resend_otp_page(request):
-    """Standalone page for resending OTP"""
-    if request.user.is_authenticated:
-        return redirect('store:home')
-    
-    if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
-        
-        if not email:
-            messages.error(request, 'يرجى إدخال البريد الإلكتروني')
-            return render(request, 'accounts/resend_otp.html')
-        
-        User = get_user_model()
-        try:
-            user = User.objects.get(email__iexact=email)
-            
-            # Check rate limiting
-            cache_key = f'otp_rate_limit_{email}'
-            if cache.get(cache_key):
-                messages.warning(request, 'يرجى الانتظار 60 ثانية قبل إعادة الإرسال')
-                return render(request, 'accounts/resend_otp.html')
-            
-            # Send new OTP
-            send_otp_email(to_email=user.email, username=user.username)
-            
-            # Set rate limit
-            cache.set(cache_key, True, 60)
-            
-            # Store in session
-            request.session['login_user_id'] = user.id
-            request.session['login_user_email'] = mask_email(user.email)
-            
-            messages.success(request, 'تم إرسال رمز التحقق إلى بريدك الإلكتروني')
-            return redirect('accounts:login')
-            
-        except User.DoesNotExist:
-            messages.error(request, 'البريد الإلكتروني غير مسجل لدينا')
-    
-    return render(request, 'accounts/resend_otp.html')
-
 
 @require_POST
 def resend_otp(request):
@@ -819,13 +775,15 @@ def send_otp_email(to_email, username):
     })
     plain_message = strip_tags(html_message)
     
-    send_mail(
-        subject=subject,
-        message=plain_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[to_email],
-        html_message=html_message,
-    )
+    kwargs = {
+        'subject': subject,
+        'message': plain_message,
+        'from_email': settings.DEFAULT_FROM_EMAIL,
+        'recipient_list': [to_email],
+        'html_message': html_message,
+    }
+    import threading
+    threading.Thread(target=send_mail, kwargs=kwargs, daemon=True).start()
 
 
 def verify_otp_code(email, code):
@@ -849,13 +807,15 @@ def send_registration_confirmation(to_email, username):
     })
     plain_message = strip_tags(html_message)
     
-    send_mail(
-        subject=subject,
-        message=plain_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[to_email],
-        html_message=html_message,
-    )
+    kwargs = {
+        'subject': subject,
+        'message': plain_message,
+        'from_email': settings.DEFAULT_FROM_EMAIL,
+        'recipient_list': [to_email],
+        'html_message': html_message,
+    }
+    import threading
+    threading.Thread(target=send_mail, kwargs=kwargs, daemon=True).start()
 
 
 def send_password_reset_email(to_email, username, reset_url):
@@ -871,13 +831,15 @@ def send_password_reset_email(to_email, username, reset_url):
     })
     plain_message = strip_tags(html_message)
     
-    send_mail(
-        subject=subject,
-        message=plain_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[to_email],
-        html_message=html_message,
-    )
+    kwargs = {
+        'subject': subject,
+        'message': plain_message,
+        'from_email': settings.DEFAULT_FROM_EMAIL,
+        'recipient_list': [to_email],
+        'html_message': html_message,
+    }
+    import threading
+    threading.Thread(target=send_mail, kwargs=kwargs, daemon=True).start()
 
 
 def password_reset_success_email(to_email, username):
@@ -892,13 +854,15 @@ def password_reset_success_email(to_email, username):
     })
     plain_message = strip_tags(html_message)
     
-    send_mail(
-        subject=subject,
-        message=plain_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[to_email],
-        html_message=html_message,
-    )
+    kwargs = {
+        'subject': subject,
+        'message': plain_message,
+        'from_email': settings.DEFAULT_FROM_EMAIL,
+        'recipient_list': [to_email],
+        'html_message': html_message,
+    }
+    import threading
+    threading.Thread(target=send_mail, kwargs=kwargs, daemon=True).start()
 
 
 def password_change_notification(to_email, username):
@@ -913,13 +877,15 @@ def password_change_notification(to_email, username):
     })
     plain_message = strip_tags(html_message)
     
-    send_mail(
-        subject=subject,
-        message=plain_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[to_email],
-        html_message=html_message,
-    )
+    kwargs = {
+        'subject': subject,
+        'message': plain_message,
+        'from_email': settings.DEFAULT_FROM_EMAIL,
+        'recipient_list': [to_email],
+        'html_message': html_message,
+    }
+    import threading
+    threading.Thread(target=send_mail, kwargs=kwargs, daemon=True).start()
 
 import threading
 from django.shortcuts import get_object_or_404

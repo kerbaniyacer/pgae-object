@@ -68,6 +68,12 @@ class RegisterForm(UserCreationForm):
     
     
 
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone', '').strip()
+        if phone and not re.match(r'^0[567][0-9]{8}$', phone):
+            raise ValidationError('رقم الهاتف يجب أن يتكون من 10 أرقام ويبدأ بـ 05، 06، أو 07')
+        return phone
+
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip().lower()
         
@@ -143,6 +149,12 @@ class ProfileForm(forms.ModelForm):
             del self.fields['store_category']
             del self.fields['store_logo']
 
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone', '').strip()
+        if phone and not re.match(r'^0[567][0-9]{8}$', phone):
+            raise ValidationError('رقم الهاتف يجب أن يتكون من 10 أرقام ويبدأ بـ 05، 06، أو 07')
+        return phone
+
     def save(self, commit=True):
         profile = super().save(commit=False)
         full_name = self.cleaned_data.get('full_name', '')
@@ -172,11 +184,10 @@ class CompleteProfileForm(forms.ModelForm):
         ]
         
     def __init__(self, *args, **kwargs):
-        global user_type
-        user_type = kwargs.pop('user_type', None)
+        self.user_type = kwargs.pop('user_type', None)
         super().__init__(*args, **kwargs)
 
-        if user_type == 'seller':
+        if self.user_type == 'seller':
             self.fields['store_name'].required = True
             self.fields['store_description'].required = True
             self.fields['store_category'].required = True
@@ -184,15 +195,20 @@ class CompleteProfileForm(forms.ModelForm):
 
     def clean_store_description(self):
         description = self.cleaned_data.get('store_description', '')
-        if len(description) < 20 and user_type == 'seller':
+        if len(description) < 20 and self.user_type == 'seller':
             raise forms.ValidationError('يجب أن يكون وصف المتجر 20 حرف على الأقل')
         return description
     
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone', '').strip()
+        if phone and not re.match(r'^0[567][0-9]{8}$', phone):
+            raise ValidationError('رقم الهاتف يجب أن يتكون من 10 أرقام ويبدأ بـ 05، 06، أو 07')
+        return phone
+
     def clean(self):
         cleaned_data = super().clean()
-        user_type = self.initial.get('user_type')
 
-        if user_type == 'seller':
+        if self.user_type == 'seller':
             if not cleaned_data.get('store_description'):
                 self.add_error('store_description', 'هذا الحقل مطلوب للتاجر')
         

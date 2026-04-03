@@ -250,7 +250,7 @@
                     </div>
                     <!-- Quick Add to Cart -->
                     <button
-                        onclick="Souq.addToCart({id: '{{ product.id }}', name: '{{ product.name }}', price: {{ variant.price }}, image: '{% if product.image %}{{ product.image.url }}{% else %}https://placehold.co/400x400{% endif %}'})"
+                        onclick="Souq.addToCart({id: '{{ product.id }}', variant_id: '{{ variant.id }}', name: '{{ product.name|escapejs }}', price: {{ variant.price }}, image: '{% if product.image %}{{ product.image.url }}{% else %}https://placehold.co/400x400{% endif %}'})"
                         class="absolute bottom-3 left-3 right-3 py-2 bg-sage text-white rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
                         إضافة للسلة
                     </button>
@@ -469,12 +469,7 @@
                 }
             });
         }, { threshold: 0.1 });
-        const wishlistBtn = document.querySelector('.wishlist-btn');
-        if (wishlistBtn && {{ is_in_wishlist|lower }}) {
-            const svg = wishlistBtn.querySelector('svg');
-            svg.setAttribute('fill', 'currentColor');
-            wishlistBtn.classList.add('bg-rose-light');
-        }
+
         document.querySelectorAll('[data-animate]').forEach(el => observer.observe(el));
     });
 </script>

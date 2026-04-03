@@ -1,7 +1,10 @@
 import json
 import uuid
+import re
+import random
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
@@ -23,15 +26,17 @@ from .forms import ProductForm, ProductVariantForm
 # Create your views here.
 def home(request):
     categories = Category.objects.filter(is_active=True, parent=None)[:4]
-    featured_products = Product.objects.filter(is_active=True, is_featured=True)[:8]
+    featured_products = Product.objects.filter(is_active=True, is_featured=True, variants__stock__gt=0).distinct()[:8]
     try:
-        new_products = Product.objects.filter(is_active=True).order_by('-sold_count')[:8]
+        new_products = Product.objects.filter(is_active=True, variants__stock__gt=0).distinct().order_by('-sold_count')[:8]
     except Exception:
         new_products = None
         
     variants = []
     for product in featured_products:
-        v = ProductVariant.objects.filter(product=product, is_main=True).first()
+        v = ProductVariant.objects.filter(product=product, is_main=True, stock__gt=0).first()
+        if not v:
+            v = ProductVariant.objects.filter(product=product, stock__gt=0).first()
         if not v:
             v = ProductVariant.objects.filter(product=product).first()
         variants.append(v)
@@ -44,19 +49,6 @@ def home(request):
         wishlist_product_ids = list(
             Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)
         )
-        for product in featured_products:
-            if request.user == product.seller :
-                product.is_owner = True
-            else:
-                product.is_owner = False
-            product.save()     
-        # إضافة داخل دالة product_detail قبل تعريف context
-    is_in_wishlist = False
-    if request.user.is_authenticated:
-        is_in_wishlist = WishlistItem.objects.filter(
-            wishlist__user=request.user, 
-            variant__product=product
-        ).exists()
 
     context = {
         'categories': categories,
@@ -64,14 +56,13 @@ def home(request):
         'new_products': new_products,
         'variants': variants,
         'wishlist_product_ids': wishlist_product_ids,
-        'is_in_wishlist': is_in_wishlist,
     }
     return render(request, 'store/home.html', context)
 # ============================================
 # PRODUCT VIEWS
 # ============================================
 def products(request):
-    products = Product.objects.filter(is_active=True)
+    products = Product.objects.filter(is_active=True, variants__stock__gt=0).distinct()
     categories = Category.objects.filter(is_active=True, parent=None)
 
     category_ids = request.GET.getlist('category')
@@ -116,7 +107,9 @@ def products(request):
     
     variant = []
     for product in products:
-        v = ProductVariant.objects.filter(product=product, is_main=True).first()
+        v = ProductVariant.objects.filter(product=product, is_main=True, stock__gt=0).first()
+        if not v:
+            v = ProductVariant.objects.filter(product=product, stock__gt=0).first()
         if not v:
             v = ProductVariant.objects.filter(product=product).first()
         variant.append(v)
@@ -126,36 +119,34 @@ def products(request):
         wishlist_product_ids = list(
             Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)
         )
-    for product in products:
-        if request.user == product.seller :
-            product.is_owner = True
-        else:
-            product.is_owner = False
-        product.save()
-    
-        # إضافة داخل دالة product_detail قبل تعريف context
-    is_in_wishlist = False
-    if request.user.is_authenticated:
-        is_in_wishlist = WishlistItem.objects.filter(
-            wishlist__user=request.user, 
-            variant__product=product
-        ).exists()
+
     context = {
         'products': products,
         'user': request.user,
         'categories': categories,
         'variant': variant,
-        'is_in_wishlist': is_in_wishlist,
         'wishlist_product_ids': wishlist_product_ids,
     }
     return render(request, 'store/products.html', context)
 
 
+def category_detail(request, slug):
+    category = get_object_or_404(Category, slug=slug, is_active=True)
+    return redirect(f"{reverse('store:products')}?category={category.id}")
+
+def brand_detail(request, slug):
+    brand = get_object_or_404(Brand, slug=slug)
+    return redirect('store:products')
+
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug, is_active=True)
     variants = ProductVariant.objects.filter(product=product)
 
-    is_main = variants.filter(is_main=True).first() or variants.first()
+    is_main = variants.filter(is_main=True, stock__gt=0).first()
+    if not is_main:
+        is_main = variants.filter(stock__gt=0).first()
+    if not is_main:
+        is_main = variants.filter(is_main=True).first() or variants.first()
 
     attr_map = {}     
     variants_json = []
@@ -289,13 +280,18 @@ def get_or_create_cart(request):
             request.session.create()
         cart_obj, created = Cart.objects.get_or_create(
             session_key=request.session.session_key,
-            user__isnull=True
+            user=None
         )
     return cart_obj, created
 
 
 def get_default_variant(product):
-    variant = product.variants.first()
+    variant = product.variants.filter(is_main=True, stock__gt=0).first()
+    if not variant:
+        variant = product.variants.filter(stock__gt=0).first()
+    if not variant:
+        variant = product.variants.filter(is_main=True).first() or product.variants.first()
+        
     if not variant:
         variant = ProductVariant.objects.create(
             product=product,
@@ -413,7 +409,6 @@ def remove_from_cart(request):
 # CHECKOUT & ORDERS VIEWS
 # ============================================
 
-@login_required
 def checkout(request):
     cart_obj, _ = get_or_create_cart(request)
     cart_items = cart_obj.items.select_related('variant__product').all()
@@ -423,7 +418,6 @@ def checkout(request):
     return render(request, 'store/checkout.html', {'cart': cart_obj, 'cart_items': cart_items})
 
 
-@login_required
 @require_POST
 def place_order(request):
     cart_obj, _ = get_or_create_cart(request)
@@ -431,15 +425,23 @@ def place_order(request):
     if not cart_items:
         return redirect('store:cart')
 
+    phone = request.POST.get('phone', '').strip()
+    if phone and not re.match(r'^0[567][0-9]{8}$', phone):
+        messages.error(request, 'رقم الهاتف غير صالح. يجب أن يتكون من 10 أرقام ويبدأ بـ 05، 06، أو 07')
+        return redirect('store:checkout')
+
     subtotal = sum(item.subtotal for item in cart_items)
     shipping = 0 if subtotal >= 200 else 25
     total = subtotal + shipping
 
     payment_stat = 'paid' if request.POST.get('payment_method') in ['card', 'apple_pay'] else 'pending'
+    
+    user = request.user if request.user.is_authenticated else None
+    username = request.user.username if request.user.is_authenticated else request.POST.get('full_name')
 
     order = Order.objects.create(
-        user=request.user, username=request.user.username,
-        full_name=request.POST.get('full_name'), phone=request.POST.get('phone'),
+        user=user, username=username,
+        full_name=request.POST.get('full_name'), phone=phone,
         email=request.POST.get('email'), address=request.POST.get('address'),
         wilaya=request.POST.get('wilaya', ''), baladia=request.POST.get('baladia', ''),
         postal_code=request.POST.get('postal_code', ''), notes=request.POST.get('notes', ''),
@@ -447,6 +449,9 @@ def place_order(request):
         status='pending', payment_method=request.POST.get('payment_method', 'cod'),
         payment_status=payment_stat,
     )
+
+    from django.core.mail import send_mail
+    merchants_emails = set()
 
     for item in cart_items:
         product = item.variant.product
@@ -458,8 +463,104 @@ def place_order(request):
         item.variant.save()
         product.sold_count += item.quantity  # ✅ تم التصحيح
         product.save()
+        
+        if product.seller and product.seller.email:
+            merchants_emails.add(product.seller.email)
 
     cart_items.delete()
+    
+    if merchants_emails:
+        from django.template.loader import render_to_string
+        from django.utils.formats import date_format
+        from django.conf import settings
+        from django.urls import reverse
+        
+        merchant_email_html = render_to_string('emails/merchant_order_email.html', {
+            'order_number': order.order_number,
+            'order_date': date_format(order.created_at, "d/m/Y H:i"),
+            'dashboard_url': request.build_absolute_uri(reverse('store:merchant_dashboard')),
+        })
+        
+        send_mail(
+            subject=f'سوق - طلب جديد #{order.order_number}',
+            message=f'لقد تم طلب منتجات من متجرك في الطلب رقم {order.order_number}.',
+            from_email=settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else None,
+            recipient_list=list(merchants_emails),
+            fail_silently=True,
+            html_message=merchant_email_html
+        )
+
+    request.session['recent_order_id'] = order.pk
+
+    if order.email:
+        from django.template.loader import render_to_string
+        from django.utils.formats import date_format
+        from django.conf import settings
+        
+        status_display = order.get_status_display()
+        items_html = ""
+        for item in order.items.all():
+            items_html += f"""
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #e8e2d9;">{item.product_name}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e8e2d9; text-align: center;">{item.quantity}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e8e2d9; text-align: right;">{item.product_price} د.ج</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e8e2d9; text-align: right;">{item.subtotal} د.ج</td>
+                </tr>
+            """
+        
+        invoice_html = f"""
+        <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; background: #F8F6F2;">
+            <div style="background: white; border-radius: 16px; padding: 30px; border: 1px solid #E8E2D9;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #5C8A6E; font-size: 28px; margin: 0;">سوق</h1>
+                    <p style="color: #7A7169; margin: 5px 0 0 0;">تم استلام طلبك بنجاح</p>
+                </div>
+                
+                <div style="background: #EAF2EE; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <h2 style="color: #5C8A6E; margin: 0 0 15px 0; font-size: 18px;">المعلومات الأساسية</h2>
+                    <p style="margin: 5px 0; color: #2D2D2D;"><strong>رقم الطلب:</strong> {order.order_number}</p>
+                    <p style="margin: 5px 0; color: #2D2D2D;"><strong>الحالة:</strong> {status_display}</p>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: #5C8A6E; margin: 0 0 10px 0;">معلومات الشحن</h3>
+                    <p style="margin: 5px 0; color: #2D2D2D;"><strong>الاسم:</strong> {order.full_name}</p>
+                    <p style="margin: 5px 0; color: #2D2D2D;"><strong>الهاتف:</strong> {order.phone}</p>
+                    <p style="margin: 5px 0; color: #2D2D2D;"><strong>العنوان:</strong> {order.address}, {order.wilaya}</p>
+                </div>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <thead>
+                        <tr style="background: #5C8A6E; color: white;">
+                            <th style="padding: 12px; text-align: right;">المنتج</th>
+                            <th style="padding: 12px; text-align: center;">الكمية</th>
+                            <th style="padding: 12px; text-align: right;">السعر</th>
+                            <th style="padding: 12px; text-align: right;">المجموع</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {items_html}
+                    </tbody>
+                </table>
+                
+                <div style="text-align: left; margin-bottom: 30px;">
+                    <p style="font-size: 18px; margin: 5px 0; color: #2D2D2D;"><strong>المجموع الفرعي:</strong> <span style="color: #5C8A6E;">{order.subtotal} د.ج</span></p>
+                    <p style="font-size: 18px; margin: 5px 0; color: #2D2D2D;"><strong>تكلفة الشحن:</strong> <span style="color: #5C8A6E;">{order.shipping_cost} د.ج</span></p>
+                    <h3 style="font-size: 22px; margin: 10px 0 0 0; color: #2D2D2D;"><strong>الإجمالي:</strong> <span style="color: #5C8A6E;">{order.total_amount} د.ج</span></h3>
+                </div>
+            </div>
+        </div>
+        """
+        send_mail(
+            subject=f'سوق - تم تأكيد طلبك #{order.order_number}',
+            message=f'تم استلام طلبك رقم {order.order_number}. يمكنك تتبع طلبك عبر الموقع.',
+            from_email=settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else None,
+            recipient_list=[order.email],
+            fail_silently=True,
+            html_message=invoice_html
+        )
+
     messages.success(request, f'تم تأكيد طلبك بنجاح! رقم الطلب: {order.order_number}')
     return redirect('store:order_detail', pk=order.pk)
 
@@ -474,11 +575,43 @@ def orders(request):
     return render(request, 'store/orders.html', {'orders': user_orders, 'current_status': current_status})
 
 
-@login_required
 def order_detail(request, pk):
-    order = get_object_or_404(Order, pk=pk, user=request.user)
-    my_num = Order.objects.filter(user=request.user, created_at__gt=order.created_at).count() + 1
+    order = get_object_or_404(Order, pk=pk)
+    
+    has_access = False
+    if request.user.is_authenticated and order.user == request.user:
+        has_access = True
+    elif request.session.get('recent_order_id') == order.pk:
+        has_access = True
+    elif request.session.get('tracked_order_id') == order.pk:
+        has_access = True
+        
+    if not has_access:
+        messages.error(request, 'عذراً، لا تملك صلاحية الوصول إلى هذه الصفحة.')
+        return redirect('store:home')
+        
+    my_num = 1
+    if order.user and request.user.is_authenticated:
+        my_num = Order.objects.filter(user=request.user, created_at__gt=order.created_at).count() + 1
+        
     return render(request, 'store/order_detail.html', {'order': order, 'my_num': my_num})
+
+def track_order(request):
+    if request.method == 'POST':
+        order_number = request.POST.get('order_number', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        
+        if not order_number or not phone:
+            messages.error(request, 'يرجى إدخال رقم الطلب والبحث المدخل بشكل صحيح.')
+        else:
+            try:
+                order = Order.objects.get(order_number=order_number, phone=phone)
+                request.session['tracked_order_id'] = order.pk
+                messages.success(request, 'تم التحقق بنجاح من بيانات الطلب.')
+                return redirect('store:order_detail', pk=order.pk)
+            except Order.DoesNotExist:
+                messages.error(request, 'عذراً، لم يتم العثور على طلب مطابق. تأكد من إدخال البيانات بشكل صحيح.')
+    return render(request, 'store/track_order.html')
 
 
 @login_required
@@ -528,27 +661,7 @@ def merchant_products(request):
     return render(request, 'store/merchant_products.html', {'products': products})
 
 
-@login_required
-def merchant_orders(request):
-    if not hasattr(request.user, 'profile') or not request.user.profile.is_seller:
-        messages.error(request, 'ليس لديك صلاحية الوصول')
-        return redirect('store:home')
-        
-    current_status = request.GET.get('status')
-    merchant_orders = Order.objects.filter(items__product__seller=request.user).distinct()
-    
-    if current_status:
-        merchant_orders = merchant_orders.filter(status=current_status)
-        
-    merchant_orders = merchant_orders.order_by('-created_at')
-    paginator = Paginator(merchant_orders, 10)
-    orders = paginator.get_page(request.GET.get('page'))
-    
-    stats_raw = Order.objects.filter(items__product__seller=request.user).values('status').annotate(count=Count('id'))
-    stats = {item['status']: item['count'] for item in stats_raw}
-    stats['total'] = sum(item['count'] for item in stats_raw)
-    
-    return render(request, 'store/merchant_orders.html', {'orders': orders, 'current_status': current_status, 'stats': stats})
+
 
 @login_required
 def merchant_order_detail(request, pk):
@@ -611,6 +724,21 @@ def merchant_update_order_status(request, pk):
                 
             order.save()
             
+            if order.email:
+                status_dict = {
+                    'pending': 'قيد الانتظار', 'confirmed': 'مؤكد', 'processing': 'قيد التجهيز',
+                    'shipped': 'تم الشحن', 'delivered': 'تم التوصيل', 'cancelled': 'ملغي', 'returned': 'معاد'
+                }
+                ar_status = status_dict.get(new_status, new_status)
+                from django.core.mail import send_mail
+                send_mail(
+                    subject=f'تحديث حالة الطلب: {order.order_number}',
+                    message=f'مرحباً،\nتم تحديث حالة طلبك إلى: {ar_status}\nرقم التتبع: {order.tracking_number if order.tracking_number else "غير متوفر"}',
+                    from_email=None,
+                    recipient_list=[order.email],
+                    fail_silently=True,
+                )
+            
             status_names = {
                 'pending': 'قيد الانتظار', 'confirmed': 'مؤكد', 'processing': 'قيد التجهيز',
                 'shipped': 'تم الشحن', 'delivered': 'تم التوصيل', 'cancelled': 'ملغي', 'returned': 'معاد'
@@ -626,8 +754,7 @@ def merchant_update_order_status(request, pk):
     
     return JsonResponse({'success': False, 'message': 'طلب غير صالح'})
 
-from django.db.models import Q, Count
-from django.core.paginator import Paginator
+
 
 @login_required
 def merchant_orders(request):
@@ -960,7 +1087,7 @@ def toggle_wishlist(request):
             # ✅ موجود -> حذفه وحذف الأب أيضاً لمنع خطأ التكرار لاحقاً
             parent_wishlist = wishlist_item.wishlist
             wishlist_item.delete()
-            if parent_wishlist:
+            if parent_wishlist and not parent_wishlist.items.exists():
                 parent_wishlist.delete()
                 
             return JsonResponse({
@@ -1017,7 +1144,7 @@ def remove_from_wishlist(request):
                 # ✅ حذف العنصر وحذف الأب أيضاً
                 parent_wishlist = wishlist_item.wishlist
                 wishlist_item.delete()
-                if parent_wishlist:
+                if parent_wishlist and not parent_wishlist.items.exists():
                     parent_wishlist.delete()
                     
                 return JsonResponse({
@@ -1066,7 +1193,7 @@ def update_wishlist(request):
                 # ✅ إذا كانت الكمية 0، نحذف العنصر والأب
                 parent_wishlist = wishlist_item.wishlist
                 wishlist_item.delete()
-                if parent_wishlist:
+                if parent_wishlist and not parent_wishlist.items.exists():
                     parent_wishlist.delete()
                 
             return JsonResponse({
