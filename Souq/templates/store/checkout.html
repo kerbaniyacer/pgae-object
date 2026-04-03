@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إتمام الشراء - سوق{% endblock %}
+
+{% block content %}
+<div class="bg-page-bg min-h-screen">
+    <div class="bg-surface border-b border-border-sand">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <nav class="flex items-center gap-2 text-sm">
+                <a href="{% url 'store:home' %}" class="text-text-secondary hover:text-sage transition-colors">الرئيسية</a>
+                <svg class="w-4 h-4 text-text-placeholder rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                <a href="{% url 'store:cart' %}" class="text-text-secondary hover:text-sage transition-colors">سلة المشتريات</a>
+                <svg class="w-4 h-4 text-text-placeholder rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                <span class="text-text-primary font-medium">إتمام الشراء</span>
+            </nav>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Progress Steps -->
+        <div class="flex items-center justify-center mb-8">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-sage text-white flex items-center justify-center text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <span class="text-sage font-medium hidden sm:inline">السلة</span>
+                </div>
+                <div class="w-8 sm:w-16 h-0.5 bg-sage"></div>
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-sage text-white flex items-center justify-center text-sm font-medium">2</div>
+                    <span class="text-sage font-medium hidden sm:inline">الشحن</span>
+                </div>
+                <div class="w-8 sm:w-16 h-0.5 bg-border-sand"></div>
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-border-sand text-text-secondary flex items-center justify-center text-sm font-medium">3</div>
+                    <span class="text-text-secondary hidden sm:inline">الدفع</span>
+                </div>
+            </div>
+        </div>
+
+        <h1 class="font-headline text-3xl font-bold text-text-primary mb-8 text-center">إتمام الشراء</h1>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Checkout Form -->
+            <div class="lg:col-span-2 space-y-6">
+                <form id="checkoutForm" method="post" action="{% url 'store:place_order' %}" data-validate>
+                    {% csrf_token %}
+
+                    <!-- Shipping Information -->
+                    <div class="bg-surface rounded-2xl border border-border-sand p-6">
+                        <h2 class="font-semibold text-text-primary text-lg mb-6 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            معلومات الشحن
+                        </h2>
+
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">الاسم الكامل <span class="text-rose">*</span></label>
+                                <input type="text" name="full_name" required value="{{ user.get_full_name|default:'' }}" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="أدخل اسمك الكامل">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">رقم الهاتف <span class="text-rose">*</span></label>
+                                <input type="tel" name="phone" required value="{{ user.profile.phone|default:'' }}" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="05xxxxxxxx">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm text-text-secondary mb-2">البريد الإلكتروني <span class="text-rose">*</span></label>
+                                <input type="email" name="email" required value="{{ user.email|default:'' }}" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="example@email.com">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm text-text-secondary mb-2">العنوان <span class="text-rose">*</span></label>
+                                <input type="text" name="address" required value="{{ user.profile.address|default:'' }}" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="الحي، الشارع، رقم المبنى">
+                            </div>
+                            
+                            <!-- قائمة الولايات والبلديات - الجزائر -->
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">الولاية <span
+                                        class="text-rose">*</span></label>
+                                    
+                                <select name="wilaya" id="wilaya-select" required class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" data-wilaya = '{{ user.profile.wilaya }}' data-baladia = '{{ user.profile.baladia }}' onchange="updateCommunes(this.value)">
+                                    <option value="{{ user.profile.wilaya }}" selected >{{ user.profile.wilaya }}</option>
+                                    {% for code, name in wilayas %}
+                                        <option value="{{ name }}" {% if name == user.profile.wilaya or code == user.profile.wilaya  %}selected{% endif %}>{{ code }} - {{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">البلدية <span
+                                        class="text-rose">*</span></label>
+                                <select name="baladia" id="commune-select" required
+                                    class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all"
+                                    disabled>
+                                    <option value="">اختر الولاية أولاً</option>
+                                </select>
+                            </div>
+                            
+                        <!-- حقل الرمز البريدي (أضفه بعد بلدية مباشرة) -->
+                        <div>
+                            <label class="block text-sm text-text-secondary mb-2">الرمز البريدي <span class="text-rose">*</span></label>
+                            <input type="text" name="postal_code" id="postal-code-input" 
+                                value="{{ user.profile.postal_code|default:'' }}"
+                                list="postal-codes-list" required
+                                class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all"
+                                placeholder="اختر أو اكتب الرمز البريدي">
+                            
+                            <!-- هذه القائمة المخفية مهمة جداً لكي لا يظهر الخطأ -->
+                            <datalist id="postal-codes-list"></datalist>
+                            
+                            <!-- هذا النص مهم لكي لا يظهر الخطأ -->
+                            <p id="postal-error" class="text-rose text-xs mt-1 hidden">الرمز البريدي غير صحيح لهذه البلدية</p>
+                        </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm text-text-secondary mb-2">ملاحظات إضافية</label>
+                                <textarea name="notes" rows="3" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all resize-none" placeholder="تعليمات خاصة للتوصيل..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="bg-surface rounded-2xl border border-border-sand p-6">
+                        <h2 class="font-semibold text-text-primary text-lg mb-6 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>
+                            طريقة الدفع
+                        </h2>
+
+                        <div class="space-y-4">
+                            <label class="flex items-center gap-4 p-4 bg-page-bg border-2 border-sage rounded-xl cursor-pointer">
+                                <input type="radio" name="payment_method" value="cod" checked class="w-5 h-5 text-sage focus:ring-sage/20">
+                                <div class="flex-1">
+                                    <p class="font-medium text-text-primary">الدفع عند الاستلام</p>
+                                    <p class="text-sm text-text-secondary">ادفع نقداً عند استلام طلبك</p>
+                                </div>
+                                <svg class="w-8 h-8 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                            </label>
+
+                            <label class="flex items-center gap-4 p-4 bg-page-bg border border-border-sand rounded-xl cursor-pointer hover:border-sage transition-colors">
+                                <input type="radio" name="payment_method" value="card" class="w-5 h-5 text-sage focus:ring-sage/20">
+                                <div class="flex-1">
+                                    <p class="font-medium text-text-primary">بطاقة ائتمان</p>
+                                    <p class="text-sm text-text-secondary">Visa, Mastercard, Mada</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Terms -->
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" name="terms" required id="terms" class="mt-1 w-5 h-5 rounded border-border-sand text-sage focus:ring-sage/20">
+                        <label for="terms" class="text-sm text-text-secondary">
+                            أوافق على <a href="#" class="text-sage hover:text-sage-dark">الشروط والأحكام</a> و <a href="#" class="text-sage hover:text-sage-dark">سياسة الخصوصية</a>
+                        </label>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Order Summary - يستخدم بيانات Django -->
+            <div class="lg:col-span-1">
+                <div class="bg-surface rounded-2xl border border-border-sand p-6 sticky top-24">
+                    <h2 class="font-semibold text-text-primary text-lg mb-6">ملخص الطلب</h2>
+
+                    <!-- Cart Items Preview من Django -->
+                    <div class="space-y-4 max-h-64 overflow-y-auto mb-6">
+                        {% for item in cart_items %}
+                        <div class="flex items-center gap-3">
+                            <div class="relative w-16 h-16 rounded-lg overflow-hidden bg-[#F0EBE3] flex-shrink-0">
+                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/64x64/F0EBE3/5C8A6E?text=Product'">
+                                <span class="absolute -top-1 -left-1 w-5 h-5 bg-sage text-white text-xs rounded-full flex items-center justify-center">{{ item.quantity }}</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-text-primary truncate">{{ item.product.name }}</p>
+                                <p class="font-price text-sm text-sage">{{ item.product.price }} د.ج</p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-text-secondary text-center py-4">السلة فارغة</p>
+                        {% endfor %}
+                    </div>
+
+                    <hr class="border-border-sand mb-4">
+
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-text-secondary">
+                            <span>المجموع الفرعي</span>
+                            <span class="font-price">{{ cart.total }} د.ج</span>
+                        </div>
+                        <div class="flex justify-between text-text-secondary">
+                            <span>الشحن</span>
+                            <span class="font-price">{% if cart.total >= 200 %}مجاني{% else %}25 د.ج{% endif %}</span>
+                        </div>
+                        <hr class="border-border-sand">
+                        <div class="flex justify-between text-text-primary">
+                            <span class="font-semibold text-lg">المجموع</span>
+                            <span class="font-price text-xl font-bold text-sage">{% if cart.total >= 200 %}{{ cart.total }}{% else %}{{ cart.total|add:25 }}{% endif %} د.ج</span>
+                        </div>
+                    </div>
+
+                    {% if cart_items %}
+                    <button type="submit" form="checkoutForm" class="mt-6 w-full btn-primary py-4 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-all flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        تأكيد الطلب
+                    </button>
+                    {% else %}
+                    <a href="{% url 'store:cart' %}" class="mt-6 w-full py-4 bg-gray-400 text-white rounded-xl font-medium flex items-center justify-center gap-2">
+                        العودة للسلة
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// بيانات البلديات الجزائرية
+
+   let allPostalData = [];
+    let validPostalCodes = [];
+
+    document.addEventListener('DOMContentLoaded', async function () {
+        // جلب العناصر مع التأكد من وجودها لتجنب خطأ Null
+        const wilayaSelect = document.getElementById('wilaya-select');
+        const communeSelect = document.getElementById('commune-select');
+        const postalInput = document.getElementById('postal-code-input');
+        const postalDatalist = document.getElementById('postal-codes-list');
+        const postalError = document.getElementById('postal-error');
+
+        const savedWilaya = wilayaSelect ? wilayaSelect.dataset.wilaya : null;
+        const savedCommune = wilayaSelect ? wilayaSelect.dataset.baladia : null;
+        const savedPostal = wilayaSelect ? wilayaSelect.dataset.postal : null;
+
+        try {
+            const response = await fetch("{% static 'data/algeria_postal_codes.json' %}");
+            if (!response.ok) throw new Error("ملف JSON غير موجود");
+            allPostalData = await response.json();
+
+            const uniqueWilayas = [...new Set(allPostalData.map(item => item.wilaya_name))].sort();
+            
+            if (wilayaSelect) {
+                wilayaSelect.innerHTML = '<option value="" disabled>اختر الولاية</option>';
+                uniqueWilayas.forEach(wilaya => {
+                    const option = document.createElement('option');
+                    option.value = wilaya;
+                    option.textContent = wilaya;
+                    if (savedWilaya === wilaya) option.selected = true;
+                    wilayaSelect.appendChild(option);
+                });
+            }
+
+            if (savedWilaya && communeSelect) {
+                loadCommunes(savedWilaya, savedCommune);
+            }
+
+        } catch (error) {
+            console.error("خطأ في تحميل بيانات الرموز البريدية:", error);
+            if (wilayaSelect) wilayaSelect.innerHTML = '<option value="">خطأ في تحميل الولايات</option>';
+        }
+
+        if (wilayaSelect) {
+            wilayaSelect.addEventListener('change', function () {
+                if (postalInput) postalInput.value = '';
+                if (postalError) postalError.classList.add('hidden');
+                loadCommunes(this.value);
+            });
+        }
+
+        function loadCommunes(selectedWilaya, selectedCommune = null) {
+            const filteredByWilaya = allPostalData.filter(item => item.wilaya_name === selectedWilaya);
+            const uniqueCommunes = [...new Set(filteredByWilaya.map(item => item.commune_name))].sort();
+
+            if (communeSelect) {
+                communeSelect.innerHTML = '<option value="">اختر البلدية</option>';
+                if (uniqueCommunes.length > 0) {
+                    communeSelect.disabled = false;
+                    uniqueCommunes.forEach(commune => {
+                        const option = document.createElement('option');
+                        option.value = commune;
+                        option.textContent = commune;
+                        if (selectedCommune === commune) option.selected = true;
+                        communeSelect.appendChild(option);
+                    });
+                    if (selectedCommune) {
+                        loadPostalCodes(selectedWilaya, selectedCommune, savedPostal);
+                    }
+                } else {
+                    communeSelect.disabled = true;
+                }
+            }
+        }
+
+        if (communeSelect) {
+            communeSelect.addEventListener('change', function () {
+                if (postalInput) postalInput.value = '';
+                if (postalError) postalError.classList.add('hidden');
+                const selectedWilaya = wilayaSelect.value;
+                loadPostalCodes(selectedWilaya, this.value);
+            });
+        }
+
+        function loadPostalCodes(selectedWilaya, selectedCommune, savedPostal = null) {
+            // التحقق من وجود العناصر قبل استخدامها
+            if (!postalDatalist || !postalInput) return; 
+
+            const filteredByCommune = allPostalData.filter(
+                item => item.wilaya_name === selectedWilaya && item.commune_name === selectedCommune
+            );
+            validPostalCodes = [...new Set(filteredByCommune.map(item => item.post_code))];
+            
+            postalDatalist.innerHTML = '';
+            filteredByCommune.forEach(post => {
+                const option = document.createElement('option');
+                option.value = post.post_code;
+                option.textContent = `${post.post_code} - ${post.post_name}`;
+                postalDatalist.appendChild(option);
+            });
+
+            if (savedPostal) {
+                postalInput.value = savedPostal;
+                validatePostalCode(savedPostal);
+            }
+        }
+
+        if (postalInput) {
+            postalInput.addEventListener('input', function () {
+                validatePostalCode(this.value);
+            });
+        }
+
+        function validatePostalCode(code) {
+            if (!postalError || !postalInput) return false;
+            const cleanCode = code.trim();
+            if (cleanCode === '') {
+                postalError.classList.add('hidden');
+                postalInput.classList.remove('border-rose');
+                return false;
+            }
+            if (validPostalCodes.includes(cleanCode)) {
+                postalError.classList.add('hidden');
+                postalInput.classList.remove('border-rose');
+                return true;
+            } else {
+                postalError.classList.remove('hidden');
+                postalInput.classList.add('border-rose');
+                return false;
+            }
+        }
+
+        // التحقق عند الإرسال
+        const profileForm = document.querySelector('form[enctype="multipart/form-data"]');
+        if (profileForm && postalInput) {
+            profileForm.addEventListener('submit', function(e) {
+                if (!validatePostalCode(postalInput.value)) {
+                    e.preventDefault();
+                    if (postalError) {
+                        postalError.textContent = 'يرجى اختيار رمز بريدي صحيح من القائمة المقترحة.';
+                        postalError.classList.remove('hidden');
+                    }
+                }
+            });
+        }
+    });
+// Payment method styling
+document.querySelectorAll('input[name="payment_method"]').forEach(input => {
+    input.addEventListener('change', () => {
+        document.querySelectorAll('input[name="payment_method"]').forEach(i => {
+            const label = i.closest('label');
+            if (i.checked) {
+                label.classList.remove('border-border-sand');
+                label.classList.add('border-2', 'border-sage');
+            } else {
+                label.classList.add('border-border-sand');
+                label.classList.remove('border-2', 'border-sage');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,981 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - سوق{% endblock %}
+
+{% block content %}
+<div class="bg-page-bg min-h-screen">
+    <!-- Breadcrumb -->
+    <div class="bg-surface border-b border-border-sand">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <nav class="flex items-center gap-2 text-sm">
+                <a href="{% url 'store:home' %}" class="text-text-secondary hover:text-sage transition-colors">الرئيسية</a>
+                <svg class="w-4 h-4 text-text-placeholder rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                <a href="{% url 'store:products' %}" class="text-text-secondary hover:text-sage transition-colors">المنتجات</a>
+                <svg class="w-4 h-4 text-text-placeholder rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                {% if product.category %}
+                <a href="{% url 'store:products' %}?category={{ product.category.id }}" class="text-text-secondary hover:text-sage transition-colors">{{ product.category.name }}</a>
+                <svg class="w-4 h-4 text-text-placeholder rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                {% endif %}
+                <span class="text-text-primary font-medium">{{ product.name }}</span>
+            </nav>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid lg:grid-cols-2 gap-8 lg:gap-12">
+            <!-- Product Images -->
+            <div class="space-y-4" data-animate>
+                <!-- Main Image -->
+                <div class="relative aspect-square bg-[#F0EBE3] rounded-2xl overflow-hidden cursor-zoom-in" id="mainImageContainer">
+                    {% if is_main.image %}
+                    <img id="mainImage" src="{{ is_main.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain" data-lightbox onerror="this.src='https://placehold.co/600x600/F0EBE3/5C8A6E?text=Product'">
+                    {% elif product.image %}
+                    <img id="mainImage" src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain" data-lightbox onerror="this.src='https://placehold.co/600x600/F0EBE3/5C8A6E?text=Product'">
+                    {% else %}
+                    <img id="mainImage" src="https://placehold.co/600x600/F0EBE3/5C8A6E?text=Product" alt="{{ product.name }}" class="w-full h-full object-contain" data-lightbox>
+                    {% endif %}
+
+                    {% if is_main.discount > 0 %}
+                    <span class="absolute top-4 right-4 px-3 py-1 bg-rose text-white text-sm font-medium rounded-lg">
+                        خصم {{ is_main.discount }}%
+                    </span>
+                    {% endif %}
+
+                    <!-- Zoom Icon -->
+                    <div class="absolute bottom-4 left-4 w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-text-secondary">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Videos -->
+                {% if videos %}
+                <div class="flex gap-3 overflow-x-auto pb-2">
+                    {% for video in videos %}
+                    <button class="video-thumbnail flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border-sand hover:border-sage transition-all relative">
+                        <video src="{{ video.video.url }}" class="w-full h-full object-cover" muted></video>
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                        </div>
+                    </button>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Thumbnails -->
+                <div class="flex gap-3 overflow-x-auto pb-2">
+                    <button class="thumbnail flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 ring-2 ring-sage border-border-sand">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain" data-image="{{ product.image.url }}">
+                    </button>
+                    {% for img in images %}
+                    <button class="thumbnail flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border-sand hover:border-sage transition-all">
+                        <img src="{{ img.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain" data-image="{{ img.image.url }}">
+                    </button>
+                    {% endfor %}
+                    {% for v in variants %}
+                    {% if v.image %}
+                    <button class="thumbnail variant-image-thumb flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border-sand hover:border-sage transition-all" data-variant-id="{{ v.id }}">
+                        <img src="{{ v.image.url }}" alt="{{ v.name }}" class="w-full h-full object-contain" data-image="{{ v.image.url }}">
+                    </button>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="space-y-6" data-animate>
+                <!-- Title & Brand -->
+                <div>
+                    <div class="flex items-center gap-3 mb-2">
+                        {% if is_owner %}
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-sage-mint text-sage rounded-full text-xs font-semibold">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Owner
+                        </span>
+                        {% endif %}
+                        
+                        {% if product.brand %}
+                        <span class="text-sm text-text-secondary">{{ product.brand }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <h1 class="font-headline text-2xl md:text-3xl font-bold text-text-primary">{{ product.name }}</h1>
+                    <p class="text-sm text-text-placeholder mt-1">SKU: {{ is_main.sku|default:product.sku|default:"-" }}</p>
+                </div>
+
+                <!-- Rating -->
+                <div class="flex items-center gap-4 flex-wrap">
+                    <div class="flex items-center gap-1">
+                        {% for i in "12345" %}
+                        <svg class="w-5 h-5 {% if forloop.counter <= product.rating|floatformat:0 %}text-taupe{% else %}text-gray-300{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        {% endfor %}
+                    </div>
+                    <span class="text-text-secondary">{{ product.rating|default:"0" }}</span>
+                    <span class="text-text-placeholder">|</span>
+                    <a href="#reviews" class="text-sage hover:text-sage-dark transition-colors">{{ product.reviews_count|default:"0" }} تقييم</a>
+                    <span class="text-text-placeholder">|</span>
+                    <span class="text-text-secondary">{{ product.sold_count|default:"0" }} بيع</span>
+                </div>
+
+                <!-- Price -->
+                <div class="bg-surface rounded-2xl p-6 border border-border-sand">
+                    <div class="flex items-center gap-4 flex-wrap">
+                        <span id="productPrice" class="font-price text-3xl font-bold text-sage">{{ is_main.price }} د.ج</span>
+                        {% if is_main.old_price and is_main.old_price > is_main.price %}
+                        <span id="productOldPrice" class="font-price text-xl text-text-placeholder line-through">{{ is_main.old_price }} د.ج</span>
+                        <span id="productDiscount" class="px-2 py-1 bg-rose-light text-rose text-sm font-medium rounded-lg">وفر {{ is_main.discount }}%</span>
+                        {% else %}
+                        <span id="productOldPrice" class="font-price text-xl text-text-placeholder line-through hidden"></span>
+                        <span id="productDiscount" class="px-2 py-1 bg-rose-light text-rose text-sm font-medium rounded-lg hidden"></span>
+                        {% endif %}
+                    </div>
+
+                    {% if is_main.old_price and is_main.old_price > is_main.price %}
+                    <p id="savingsText" class="text-sm text-text-secondary mt-2">
+                        <span class="text-sage font-medium">وفر {{ is_main.old_price|add:is_main.price }} د.ج</span> على هذا المنتج
+                    </p>
+                    {% else %}
+                    <p id="savingsText" class="text-sm text-text-secondary mt-2 hidden"></p>
+                    {% endif %}
+
+                    <!-- Price range if multiple variants -->
+                    {% if has_price_range %}
+                    <p class="text-sm text-text-placeholder mt-2">
+                        يبدأ من: <span class="text-sage font-medium">{{ min_price }} د.ج</span> إلى <span class="text-sage font-medium">{{ max_price }} د.ج</span>
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Stock Status -->
+                <div class="flex items-center gap-3" id="stockStatus">
+                    {% if is_main.stock > 0 %}
+                    {% if is_main.stock < 5 %}
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-[#FAE5DF] text-rose rounded-full text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        متبقي {{ is_main.stock }} فقط
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-sage-mint text-sage rounded-full text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        متوفر في المخزون
+                    </span>
+                    {% endif %}
+                    {% else %}
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-light text-rose rounded-full text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        نفذ المخزون
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Short Description -->
+                {% if product.description %}
+                <p class="text-text-secondary leading-relaxed">{{ product.description }}</p>
+                {% endif %}
+
+                <!-- Variant Selection -->
+                <!-- Variant Selection -->
+                {% if variants|length > 0 %}
+                <div class="space-y-5" id="variantSelector">
+
+                    <!-- ① إشعار: اختر المتغير أولاً -->
+                    <div id="variantPrompt" class="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        يرجى تحديد جميع خيارات المنتج قبل الإضافة للسلة
+                    </div>
+
+                    <!-- ② مجموعات الخصائص — كل attribute في صفه -->
+                    {% for attr_name, attr_values in variant_attributes.items %}
+                    <div class="variant-group" data-attr="{{ attr_name }}">
+                        <p class="font-medium text-text-primary mb-3 flex items-center gap-2">
+                            {{ attr_name }}:
+                            <span class="selected-label text-sage text-sm font-normal opacity-0 transition-opacity" data-attr="{{ attr_name }}"></span>
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            {% for value in attr_values %}
+                            <button
+                                type="button"
+                                class="variant-option-btn px-4 py-2 border border-border-sand rounded-lg text-sm font-medium text-text-secondary hover:border-sage hover:text-sage transition-all"
+                                data-attr="{{ attr_name }}"
+                                data-value="{{ value.value }}"
+                                {% if value.image %}data-image="{{ value.image.url }}"{% endif %}
+                            >
+                                {{ value.value }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- ③ بطاقة المتغير المحدد -->
+                    <div id="selectedVariantCard" class="hidden p-4 bg-sage/5 border border-sage/30 rounded-xl">
+                        <div class="flex items-center gap-3">
+                            <div id="variantCardImage" class="w-14 h-14 rounded-lg overflow-hidden bg-page-bg border border-border-sand flex-shrink-0 hidden">
+                                <img id="variantCardImg" src="" alt="" class="w-full h-full object-contain">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-text-primary" id="variantCardName">—</p>
+                                <p class="text-xs text-text-placeholder mt-0.5">SKU: <span id="variantCardSku">—</span></p>
+                            </div>
+                            <div class="text-right flex-shrink-0">
+                                <p class="text-lg font-bold text-sage" id="variantCardPrice">—</p>
+                                <p class="text-xs text-text-placeholder line-through hidden" id="variantCardOldPrice"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- hidden input للمتغير المحدد -->
+                    <input type="hidden" id="selectedVariantId" value="">
+                </div>
+
+                {% else %}
+                <!-- منتج بدون متغيرات -->
+                <input type="hidden" id="selectedVariantId" value="{{ is_main.id }}">
+                {% endif %}
+
+                <!-- Quantity Selector -->
+                <div>
+                    <p class="font-medium text-text-primary mb-3">الكمية:</p>
+                    <div class="quantity-selector flex items-center gap-3">
+                        <button type="button" data-minus class="w-10 h-10 flex items-center justify-center bg-surface border border-border-sand rounded-lg text-text-secondary hover:bg-page-bg hover:border-sage transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                            </svg>
+                        </button>
+                        <input type="number" name="quantity" id="quantityInput" value="1" min="1" max="{{ is_main.stock|default:99 }}" class="w-16 h-10 text-center bg-surface border border-border-sand rounded-lg text-text-primary font-medium">
+                        <button type="button" data-plus class="w-10 h-10 flex items-center justify-center bg-surface border border-border-sand rounded-lg text-text-secondary hover:bg-page-bg hover:border-sage transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </button>
+                        <span class="text-sm text-text-placeholder">الحد الأقصى: <span id="maxStock">{{ is_main.stock|default:99 }}</span></span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+<div class="flex flex-col sm:flex-row gap-3">
+    {% if is_owner %}
+        <!-- زر تعديل المنتج -->
+        <a href="{% url 'store:product_update' product.pk %}" class="flex-1 btn-primary px-6 py-4 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-all flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            تعديل المنتج
+        </a>
+
+        <!-- زر حذف المنتج (نستخدم Form لحماية CSRF) -->
+        <form method="post" action="{% url 'store:product_delete' product.pk %}" id="deleteProductForm" onsubmit="return confirmDelete(event)">
+            {% csrf_token %}
+            <button type="submit" id="deleteProductBtn" class="w-full sm:flex-1 px-6 py-4 bg-rose text-white rounded-xl font-medium hover:bg-rose-dark transition-all flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                حذف المنتج
+            </button>
+        </form>
+
+    {% else %}
+        <!-- أزرار المستخدم العادي -->
+        <button onclick="addToCartWithQuantity()" id="addToCartBtn" class="flex-1 btn-primary px-6 py-4 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" {% if is_main.stock <= 0 %}disabled{% endif %}>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+            </svg>
+            {% if is_main.stock > 0 %}إضافة للسلة{% else %}نفذ المخزون{% endif %}
+        </button>
+        <button onclick="buyNow()" id="buyNowBtn" class="flex-1 px-6 py-4 bg-text-primary text-white rounded-xl font-medium hover:bg-text-primary/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" {% if is_main.stock <= 0 %}disabled{% endif %}>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            اشتر الآن
+        </button>
+
+        <button onclick="Souq.toggleWishlist({{ product.id }})" class="w-14 h-14 flex items-center justify-center bg-surface border border-border-sand rounded-xl text-rose hover:bg-rose-light transition-all wishlist-btn" data-product-id="{{ product.id }}">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+        </button>
+    {% endif %}
+</div>
+                <!-- Shipping Info -->
+                <div class="bg-surface rounded-2xl p-6 border border-border-sand space-y-4">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 bg-sage-light rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-medium text-text-primary">توصيل سريع</p>
+                            <p class="text-sm text-text-secondary">التوصيل خلال 2-5 أيام عمل</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 bg-rose-light rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-rose" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-medium text-text-primary">استرجاع مجاني</p>
+                            <p class="text-sm text-text-secondary">إمكانية الإرجاع خلال 14 يوم</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 bg-taupe-light rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-taupe" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-medium text-text-primary">ضمان الجودة</p>
+                            <p class="text-sm text-text-secondary">منتجات أصلية 100%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Share -->
+                <div class="flex items-center gap-4">
+                    <span class="text-text-secondary">مشاركة:</span>
+                    <div class="flex gap-2">
+                        <button class="w-10 h-10 bg-surface border border-border-sand rounded-full flex items-center justify-center text-text-secondary hover:bg-status-blue-light hover:text-status-blue hover:border-status-blue transition-all">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg>
+                        </button>
+                        <button class="w-10 h-10 bg-surface border border-border-sand rounded-full flex items-center justify-center text-text-secondary hover:bg-sage-light hover:text-sage hover:border-sage transition-all">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
+                        </button>
+                        <button class="w-10 h-10 bg-surface border border-border-sand rounded-full flex items-center justify-center text-text-secondary hover:bg-sage-light hover:text-sage hover:border-sage transition-all" onclick="copyLink()">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Details Tabs -->
+        <div class="mt-12" data-animate>
+            <div class="border-b border-border-sand">
+                <div class="flex gap-8 overflow-x-auto">
+                    <button class="tab-btn pb-4 border-b-2 border-sage text-sage font-medium whitespace-nowrap" data-tab="description">الوصف</button>
+                    <button class="tab-btn pb-4 border-b-2 border-transparent text-text-secondary hover:text-text-primary font-medium whitespace-nowrap" data-tab="specs">المواصفات</button>
+                    <button class="tab-btn pb-4 border-b-2 border-transparent text-text-secondary hover:text-text-primary font-medium whitespace-nowrap" data-tab="reviews">التقييمات ({{ product.reviews_count|default:"0" }})</button>
+                </div>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="py-8">
+                <!-- Description Tab -->
+                <div id="description" class="tab-content">
+                    <div class="prose prose-lg max-w-none text-text-secondary">
+                        {{ product.description|safe|linebreaks }}
+                    </div>
+                </div>
+
+                <!-- Specs Tab -->
+                <div id="specs" class="tab-content hidden">
+                    <div class="bg-surface rounded-2xl border border-border-sand overflow-hidden">
+                        <table class="w-full">
+                            <tbody>
+                                <tr class="border-b border-border-sand">
+                                    <td class="px-6 py-4 bg-page-bg font-medium text-text-primary w-1/3">الماركة</td>
+                                    <td class="px-6 py-4 text-text-secondary">{{ product.brand|default:"غير محدد" }}</td>
+                                </tr>
+                                <tr class="border-b border-border-sand">
+                                    <td class="px-6 py-4 bg-page-bg font-medium text-text-primary w-1/3">الفئة</td>
+                                    <td class="px-6 py-4 text-text-secondary">{{ product.category.name|default:"غير محدد" }}</td>
+                                </tr>
+                                <tr class="border-b border-border-sand">
+                                    <td class="px-6 py-4 bg-page-bg font-medium text-text-primary w-1/3">المخزون الكلي</td>
+                                    <td class="px-6 py-4 text-text-secondary">{{ product.total_stock }} قطعة</td>
+                                </tr>
+                                <tr class="border-b border-border-sand">
+                                    <td class="px-6 py-4 bg-page-bg font-medium text-text-primary w-1/3">SKU</td>
+                                    <td class="px-6 py-4 text-text-secondary">{{ is_main.sku|default:product.sku|default:"-" }}</td>
+                                </tr>
+                                {% for attr in product_attributes %}
+                                <tr class="border-b border-border-sand last:border-0">
+                                    <td class="px-6 py-4 bg-page-bg font-medium text-text-primary w-1/3">{{ attr.name }}</td>
+                                    <td class="px-6 py-4 text-text-secondary">{{ attr.value }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Variants Table -->
+                    {% if variants|length > 1 %}
+                    <div class="mt-6">
+                        <h3 class="font-semibold text-text-primary text-lg mb-4">المتغيرات المتاحة</h3>
+                        <div class="bg-surface rounded-2xl border border-border-sand overflow-hidden overflow-x-auto">
+                            <table class="w-full min-w-[600px]">
+                                <thead>
+                                    <tr class="bg-page-bg border-b border-border-sand">
+                                        <th class="px-4 py-3 text-right text-sm font-medium text-text-secondary">المتغير</th>
+                                        <th class="px-4 py-3 text-right text-sm font-medium text-text-secondary">SKU</th>
+                                        <th class="px-4 py-3 text-right text-sm font-medium text-text-secondary">السعر</th>
+                                        <th class="px-4 py-3 text-right text-sm font-medium text-text-secondary">المخزون</th>
+                                        <th class="px-4 py-3 text-right text-sm font-medium text-text-secondary">الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for v in variants %}
+                                    <tr class="border-b border-border-sand last:border-0 hover:bg-page-bg/50 transition-colors">
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center gap-2">
+                                                {% if v.image %}
+                                                <img src="{{ v.image.url }}" alt="{{ v.name }}" class="w-8 h-8 rounded object-cover">
+                                                {% endif %}
+                                                <span class="text-sm text-text-primary">{{ v.name|default:v.sku }}</span>
+                                                {% if v.is_main %}
+                                                <span class="text-xs bg-sage-light text-sage px-1.5 py-0.5 rounded">رئيسي</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-text-secondary">{{ v.sku }}</td>
+                                        <td class="px-4 py-3">
+                                            <div>
+                                                <span class="text-sm font-medium text-sage">{{ v.price }} د.ج</span>
+                                                {% if v.old_price and v.old_price > v.price %}
+                                                <span class="text-xs text-text-placeholder line-through mr-2">{{ v.old_price }} د.ج</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-text-secondary">{{ v.stock }}</td>
+                                        <td class="px-4 py-3">
+                                            {% if v.stock > 0 %}
+                                            <span class="text-xs px-2 py-1 bg-sage-mint text-sage rounded-full">متوفر</span>
+                                            {% else %}
+                                            <span class="text-xs px-2 py-1 bg-rose-light text-rose rounded-full">نفذ</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Reviews Tab -->
+                <div id="reviews" class="tab-content hidden">
+                    <!-- Review Summary -->
+                    <div class="bg-surface rounded-2xl border border-border-sand p-6 mb-8">
+                        <div class="flex flex-col md:flex-row md:items-center gap-6">
+                            <div class="text-center">
+                                <p class="font-headline text-5xl font-bold text-text-primary">{{ product.rating|default:"0" }}</p>
+                                <div class="flex items-center justify-center gap-1 mt-2">
+                                    {% for i in "12345" %}
+                                    <svg class="w-5 h-5 {% if forloop.counter <= product.rating|floatformat:0 %}text-taupe{% else %}text-gray-300{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                    {% endfor %}
+                                </div>
+                                <p class="text-sm text-text-secondary mt-1">{{ product.reviews_count|default:"0" }} تقييم</p>
+                            </div>
+
+                            <div class="flex-1 space-y-2">
+                                {% for i in "54321" %}
+                                <div class="flex items-center gap-3">
+                                    <span class="text-sm text-text-secondary w-8">{{ i }} نجوم</span>
+                                    <div class="flex-1 h-2 bg-page-bg rounded-full overflow-hidden">
+                                        <div class="h-full bg-taupe rounded-full" style="width: {% if forloop.first %}70{% elif forloop.counter == 2 %}20{% elif forloop.counter == 3 %}5{% elif forloop.counter == 4 %}3{% else %}2{% endif %}%"></div>
+                                    </div>
+                                    <span class="text-sm text-text-placeholder w-12">
+                                        {% if forloop.first %}70%{% elif forloop.counter == 2 %}20%{% elif forloop.counter == 3 %}5%{% elif forloop.counter == 4 %}3%{% else %}2%{% endif %}
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <div>
+                                <button class="btn-primary px-6 py-3 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors">
+                                    اكتب تقييماً
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reviews List -->
+                    <div class="space-y-6">
+                        {% for review in reviews %}
+                        <div class="bg-surface rounded-2xl border border-border-sand p-6">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-full bg-sage-light flex items-center justify-center flex-shrink-0">
+                                    <span class="text-sage font-semibold">{{ review.user.username|slice:":1"|upper }}</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="font-medium text-text-primary">{{ review.user.username }}</p>
+                                            <div class="flex items-center gap-2 mt-1">
+                                                <div class="flex items-center">
+                                                    {% for i in "12345" %}
+                                                    <svg class="w-4 h-4 {% if forloop.counter <= review.rating %}text-taupe{% else %}text-gray-300{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                                    </svg>
+                                                    {% endfor %}
+                                                </div>
+                                                <span class="text-sm text-text-placeholder">{{ review.created_at|date:"d M Y" }}</span>
+                                            </div>
+                                        </div>
+                                        {% if review.verified %}
+                                        <span class="inline-flex items-center px-2 py-1 bg-sage-mint text-sage text-xs font-medium rounded-full">
+                                            <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            مشتري موثق
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="mt-3 text-text-secondary">{{ review.comment }}</p>
+
+                                    <div class="flex items-center gap-4 mt-4">
+                                        <button class="flex items-center gap-1 text-sm text-text-secondary hover:text-sage transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/>
+                                            </svg>
+                                            مفيد ({{ review.helpful_count|default:"0" }})
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-12">
+                            <svg class="w-16 h-16 mx-auto text-text-placeholder mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            <p class="text-text-secondary text-lg">لا توجد تقييمات بعد</p>
+                            <p class="text-text-placeholder mt-2">كن أول من يقيّم هذا المنتج</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Products -->
+        <div class="mt-16" data-animate>
+            <h2 class="font-headline text-2xl font-bold text-text-primary mb-8">منتجات مشابهة</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {% for related in related_products %}
+                <div class="product-card bg-surface rounded-2xl border border-border-sand overflow-hidden group">
+                    <div class="relative aspect-square overflow-hidden bg-[#F0EBE3]">
+                        <a href="{% url 'store:product_detail' related.slug %}">
+                            <img src="{{ related.image.url }}" alt="{{ related.name }}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/300x300/F0EBE3/5C8A6E?text=Product'">
+                        </a>
+                    </div>
+                    <div class="p-3">
+                        <a href="{% url 'store:product_detail' related.slug %}">
+                            <h3 class="text-sm text-text-primary hover:text-sage transition-colors line-clamp-2">{{ related.name }}</h3>
+                        </a>
+                        <p class="font-price text-sm text-sage font-semibold mt-2">
+                            {% if related.total_stock > 0 %}
+                                {% with first_variant=related.variants.all.0 %}
+                                {{ first_variant.price }} د.ج
+                                {% endwith %}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% empty %}
+                {% for i in "12345" %}
+                <div class="product-card bg-surface rounded-2xl border border-border-sand overflow-hidden group">
+                    <div class="relative aspect-square overflow-hidden bg-[#F0EBE3]">
+                        <img src="https://placehold.co/300x300/F0EBE3/5C8A6E?text=Related" alt="Related Product" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    </div>
+                    <div class="p-3">
+                        <h3 class="text-sm text-text-primary">منتج مشابه</h3>
+                        <p class="font-price text-sm text-sage font-semibold mt-2">149 د.ج</p>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" class="lightbox fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4">
+    <button id="lightboxClose" class="absolute top-4 left-4 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+    </button>
+    <button id="lightboxPrev" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+    </button>
+    <button id="lightboxNext" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+    </button>
+    <img id="lightboxImage" src="" alt="" class="max-w-full max-h-full object-contain">
+</div>
+
+<!-- Video Modal -->
+<div id="videoModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4">
+    <button id="videoModalClose" class="absolute top-4 left-4 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all z-10">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+    </button>
+    <video id="videoPlayer" class="max-w-full max-h-full" controls></video>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // تأكيد حذف المنتج
+    function confirmDelete(event) {
+        event.preventDefault();
+        const form = document.getElementById('deleteProductForm');
+        const btn = document.getElementById('deleteProductBtn');
+        
+        btn.innerHTML = `<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> هل أنت متأكد؟`;
+        btn.classList.replace('bg-rose', 'bg-red-700');
+        
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            btn.disabled = true;
+            btn.innerHTML = 'جاري الحذف...';
+            fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(response => {
+                if (response.ok) {
+                    Souq.showToast('تم حذف المنتج بنجاح', 'success');
+                    setTimeout(() => window.location.href = '{% url "store:merchant_products" %}', 1000);
+                } else throw new Error('فشل');
+            }).catch(() => {
+                Souq.showToast('حدث خطأ أثناء حذف المنتج', 'error');
+                btn.disabled = false;
+                btn.innerHTML = 'حذف المنتج';
+                btn.classList.replace('bg-red-700', 'bg-rose');
+            });
+        };
+        setTimeout(() => {
+            if (!btn.disabled) {
+                btn.innerHTML = 'حذف المنتج';
+                btn.classList.replace('bg-red-700', 'bg-rose');
+                form.onsubmit = (e) => confirmDelete(e);
+            }
+        }, 3000);
+        return false;
+    }
+
+    // ==========================================
+    // State & Variants Logic (النسخة المصححة)
+    // ==========================================
+    let selectedVariantId = {{ is_main.id }};
+    let currentStock = {{ is_main.stock }};
+    const VARIANTS_DATA = {{ variants_json|safe }};
+    let selectedAttrs = {};       
+    const totalAttrGroups = document.querySelectorAll('.variant-group').length;
+
+    function findMatchingVariant() {
+        return VARIANTS_DATA.find(v => Object.entries(selectedAttrs).every(([attr, val]) => v.attributes[attr] === val)) || null;
+    }
+
+    function allAttrsSelected() {
+        return Object.keys(selectedAttrs).length === totalAttrGroups;
+    }
+
+    function updateVariantUI(variant) {
+        const priceEl = document.getElementById('productPrice');
+        const oldPriceEl = document.getElementById('productOldPrice');
+        const discountEl = document.getElementById('productDiscount');
+        const savingsEl = document.getElementById('savingsText');
+        const stockEl = document.getElementById('stockStatus');
+        const maxStockEl = document.getElementById('maxStock');
+        const quantityInput = document.getElementById('quantityInput');
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        const buyNowBtn = document.getElementById('buyNowBtn');
+        const mainImage = document.getElementById('mainImage');
+        const variantIdInput = document.getElementById('selectedVariantId');
+        const variantPrompt = document.getElementById('variantPrompt');
+        const card = document.getElementById('selectedVariantCard');
+        const cardName = document.getElementById('variantCardName');
+        const cardSku = document.getElementById('variantCardSku');
+        const cardPrice = document.getElementById('variantCardPrice');
+        const cardOldPrice = document.getElementById('variantCardOldPrice');
+        const cardImgWrap = document.getElementById('variantCardImage');
+        const cardImg = document.getElementById('variantCardImg');
+
+        if (!variant) {
+            card.classList.add('hidden');
+            variantIdInput.value = '';
+            selectedVariantId = null;
+            currentStock = 0;
+            if (addToCartBtn) addToCartBtn.disabled = true;
+            if (buyNowBtn) buyNowBtn.disabled = true;
+            return;
+        }
+
+        if (variantPrompt) variantPrompt.classList.add('hidden');
+        selectedVariantId = variant.id;
+        currentStock = parseInt(variant.stock) || 0;
+        variantIdInput.value = variant.id;
+
+        priceEl.textContent = variant.price + ' د.ج';
+        if (variant.old_price && parseFloat(variant.old_price) > parseFloat(variant.price)) {
+            oldPriceEl.textContent = variant.old_price + ' د.ج';
+            oldPriceEl.classList.remove('hidden');
+            discountEl.textContent = 'وفر ' + variant.discount + '%';
+            discountEl.classList.remove('hidden');
+            savingsEl.innerHTML = `<span class="text-sage font-medium">وفر ${(parseFloat(variant.old_price) - parseFloat(variant.price)).toFixed(2)} د.ج</span> على هذا المنتج`;
+            savingsEl.classList.remove('hidden');
+        } else {
+            oldPriceEl.classList.add('hidden');
+            discountEl.classList.add('hidden');
+            savingsEl.classList.add('hidden');
+        }
+
+        maxStockEl.textContent = currentStock || 0;
+        quantityInput.max = currentStock;
+        if (parseInt(quantityInput.value) > currentStock) quantityInput.value = Math.max(1, currentStock);
+
+        if (currentStock > 0) {
+            stockEl.innerHTML = currentStock < 5
+                ? `<span class="inline-flex items-center gap-2 px-3 py-1.5 bg-[#FAE5DF] text-rose rounded-full text-sm font-medium"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>متبقي ${currentStock} فقط</span>`
+                : `<span class="inline-flex items-center gap-2 px-3 py-1.5 bg-sage-mint text-sage rounded-full text-sm font-medium"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>متوفر في المخزون</span>`;
+            if (addToCartBtn) { addToCartBtn.disabled = false; addToCartBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg> إضافة للسلة`; }
+            if (buyNowBtn) buyNowBtn.disabled = false;
+        } else {
+            stockEl.innerHTML = `<span class="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-light text-rose rounded-full text-sm font-medium"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>نفذ المخزون</span>`;
+            if (addToCartBtn) { addToCartBtn.disabled = true; addToCartBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg> نفذ المخزون`; }
+            if (buyNowBtn) buyNowBtn.disabled = true;
+        }
+
+        if (variant.image && mainImage) mainImage.src = variant.image;
+
+        card.classList.remove('hidden');
+        cardName.textContent = variant.name;
+        cardSku.textContent = variant.sku || '—';
+        cardPrice.textContent = variant.price + ' د.ج';
+        if (variant.old_price && parseFloat(variant.old_price) > parseFloat(variant.price)) {
+            cardOldPrice.textContent = variant.old_price + ' د.ج';
+            cardOldPrice.classList.remove('hidden');
+        } else { cardOldPrice.classList.add('hidden'); }
+        
+        if (variant.image) { cardImg.src = variant.image; cardImgWrap.classList.remove('hidden'); } 
+        else { cardImgWrap.classList.add('hidden'); }
+    }
+
+    async function addToCartWithQuantity() {
+        if (!selectedVariantId) { Souq.showToast('يرجى اختيار المتغير', 'warning'); return; }
+        const quantity = parseInt(document.getElementById('quantityInput').value) || 1;
+        try {
+            const response = await fetch('{% url "store:add_to_cart" %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ product_id: {{ product.id }}, variant_id: selectedVariantId, quantity: quantity })
+            });
+            const data = await response.json();
+            if (data.success) {
+                const badge = document.getElementById('cartCount');
+                if (badge) { badge.textContent = data.cart_count; badge.classList.remove('hidden'); badge.style.display = 'flex'; }
+                Souq.showToast(data.message || 'تمت إضافة المنتج للسلة', 'success');
+            } else { Souq.showToast(data.message || 'حدث خطأ', 'error'); }
+        } catch (error) { Souq.showToast('حدث خطأ في الاتصال', 'error'); }
+    }
+
+    async function buyNow() {
+        await addToCartWithQuantity();
+        window.location.href = '{% url "store:cart" %}';
+    }
+
+    function copyLink() {
+        navigator.clipboard.writeText(window.location.href);
+        Souq.showToast('تم نسخ الرابط', 'success');
+    }
+
+    // ==========================================
+    // DOMContentLoaded Events
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+        // Tabs
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                tabBtns.forEach(b => { b.classList.remove('border-sage', 'text-sage'); b.classList.add('border-transparent', 'text-text-secondary'); });
+                btn.classList.add('border-sage', 'text-sage'); btn.classList.remove('border-transparent', 'text-text-secondary');
+                tabContents.forEach(c => c.classList.add('hidden'));
+                document.getElementById(btn.dataset.tab).classList.remove('hidden');
+            });
+        });
+
+        // Thumbnails
+        const thumbnails = document.querySelectorAll('.thumbnail');
+        const mainImage = document.getElementById('mainImage');
+        thumbnails.forEach(thumb => {
+            thumb.addEventListener('click', () => {
+                const img = thumb.querySelector('img');
+                if (img && mainImage) {
+                    mainImage.src = img.dataset.image || img.src;
+                    thumbnails.forEach(t => t.classList.remove('ring-2', 'ring-sage'));
+                    thumb.classList.add('ring-2', 'ring-sage');
+                }
+            });
+        });
+
+        // Quantity Controls
+        const quantityInput = document.getElementById('quantityInput');
+        const minusBtn = document.querySelector('[data-minus]');
+        const plusBtn = document.querySelector('[data-plus]');
+
+        if (minusBtn) {
+            const newMinus = minusBtn.cloneNode(true);
+            minusBtn.parentNode.replaceChild(newMinus, minusBtn);
+            newMinus.addEventListener('click', (e) => { e.stopImmediatePropagation(); let val = parseInt(quantityInput.value) || 1; if (val > 1) quantityInput.value = val - 1; });
+        }
+        if (plusBtn) {
+            const newPlus = plusBtn.cloneNode(true);
+            plusBtn.parentNode.replaceChild(newPlus, plusBtn);
+            newPlus.addEventListener('click', (e) => {
+                e.stopImmediatePropagation();
+                let val = parseInt(quantityInput.value) || 1;
+                if (val < currentStock) quantityInput.value = val + 1;
+                else Souq.showToast('الحد الأقصى المتاح: ' + currentStock, 'warning');
+            });
+        }
+        quantityInput?.addEventListener('change', () => {
+            let val = parseInt(quantityInput.value) || 1;
+            if (val < 1) val = 1;
+            if (val > currentStock) { val = currentStock || 1; Souq.showToast('الحد الأقصى المتاح: ' + currentStock, 'warning'); }
+            quantityInput.value = val;
+        });
+
+        // ==========================================
+        // ✅ Multi-Dimensional Variant Buttons Logic
+        // ==========================================
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        const buyNowBtn = document.getElementById('buyNowBtn');
+
+        if (totalAttrGroups > 0) {
+            if (addToCartBtn) addToCartBtn.disabled = true;
+            if (buyNowBtn) buyNowBtn.disabled = true;
+        }
+
+        // Auto-select main variant attributes
+        const mainVariant = VARIANTS_DATA.find(v => v.is_main);
+        if (mainVariant) {
+            Object.entries(mainVariant.attributes).forEach(([attr, val]) => {
+                selectedAttrs[attr] = val;
+                const label = document.querySelector(`.selected-label[data-attr="${attr}"]`);
+                if (label) { label.textContent = val; label.classList.remove('opacity-0'); }
+                const btn = document.querySelector(`.variant-option-btn[data-attr="${attr}"][data-value="${val}"]`);
+                if (btn) { btn.classList.add('bg-sage', 'text-white', 'border-sage'); btn.classList.remove('border-border-sand', 'text-text-secondary'); }
+            });
+            updateVariantUI(mainVariant);
+        }
+
+        // Handle clicking variant buttons
+        document.querySelectorAll('.variant-option-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const attr = btn.dataset.attr;
+                const val = btn.dataset.value;
+
+                document.querySelectorAll(`.variant-option-btn[data-attr="${attr}"]`).forEach(b => {
+                    b.classList.remove('bg-sage', 'text-white', 'border-sage');
+                    b.classList.add('border-border-sand', 'text-text-secondary');
+                });
+                btn.classList.add('bg-sage', 'text-white', 'border-sage');
+                btn.classList.remove('border-border-sand', 'text-text-secondary');
+
+                const label = document.querySelector(`.selected-label[data-attr="${attr}"]`);
+                if (label) { label.textContent = val; label.classList.remove('opacity-0'); }
+
+                if (btn.dataset.image) mainImage.src = btn.dataset.image;
+
+                selectedAttrs[attr] = val;
+
+                if (allAttrsSelected()) {
+                    const matched = findMatchingVariant();
+                    updateVariantUI(matched);
+                    if (!matched) Souq.showToast('هذه التوليفة غير متاحة', 'warning');
+                }
+            });
+        });
+
+        // Lightbox & Video Modals
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImage = document.getElementById('lightboxImage');
+        let lightboxImages = [];
+        let lightboxIndex = 0;
+
+        thumbnails.forEach(thumb => { const img = thumb.querySelector('img'); if (img) lightboxImages.push(img.dataset.image || img.src); });
+
+        document.getElementById('mainImageContainer')?.addEventListener('click', () => {
+            lightboxImages = [];
+            thumbnails.forEach(thumb => { const img = thumb.querySelector('img'); if (img) lightboxImages.push(img.dataset.image || img.src); });
+            lightboxIndex = lightboxImages.indexOf(mainImage.src);
+            if (lightboxIndex === -1) lightboxIndex = 0;
+            lightboxImage.src = lightboxImages[lightboxIndex];
+            lightbox.classList.remove('hidden'); lightbox.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        });
+
+        function closeLightbox() { lightbox.classList.add('hidden'); lightbox.classList.remove('flex'); document.body.style.overflow = ''; }
+        function navigateLightbox(dir) { lightboxIndex += dir; if (lightboxIndex < 0) lightboxIndex = lightboxImages.length - 1; if (lightboxIndex >= lightboxImages.length) lightboxIndex = 0; lightboxImage.src = lightboxImages[lightboxIndex]; }
+
+        document.getElementById('lightboxClose')?.addEventListener('click', closeLightbox);
+        document.getElementById('lightboxPrev')?.addEventListener('click', () => navigateLightbox(-1));
+        document.getElementById('lightboxNext')?.addEventListener('click', () => navigateLightbox(1));
+        lightbox?.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+        document.addEventListener('keydown', (e) => { if (!lightbox.classList.contains('hidden')) { if (e.key === 'Escape') closeLightbox(); if (e.key === 'ArrowLeft') navigateLightbox(-1); if (e.key === 'ArrowRight') navigateLightbox(1); } });
+
+        document.querySelectorAll('.video-thumbnail').forEach(thumb => {
+            thumb.addEventListener('click', () => {
+                const video = thumb.querySelector('video');
+                if (video) {
+                    const videoModal = document.getElementById('videoModal');
+                    const videoPlayer = document.getElementById('videoPlayer');
+                    videoPlayer.src = video.src;
+                    videoModal.classList.remove('hidden'); videoModal.classList.add('flex');
+                    videoPlayer.play();
+                }
+            });
+        });
+
+        const videoModal = document.getElementById('videoModal');
+        const videoPlayer = document.getElementById('videoPlayer');
+        function closeVideoModal() { videoPlayer.pause(); videoPlayer.src = ''; videoModal.classList.add('hidden'); videoModal.classList.remove('flex'); }
+        document.getElementById('videoModalClose')?.addEventListener('click', closeVideoModal);
+        videoModal?.addEventListener('click', (e) => { if (e.target === videoModal) closeVideoModal(); });
+
+        // Animate on scroll
+        const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('fade-in'); observer.unobserve(entry.target); } }); }, { threshold: 0.1 });
+        document.querySelectorAll('[data-animate]').forEach(el => observer.observe(el));
+    });
+</script>
+{% endblock %}

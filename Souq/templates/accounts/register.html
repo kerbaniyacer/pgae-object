@@ -1,0 +1,654 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إنشاء حساب - سوق{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-b from-page-bg to-[#EDE8E1] py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <a href="{% url 'store:home' %}" class="inline-block">
+                <span class="font-headline text-4xl font-bold text-text-primary">سوق</span>
+            </a>
+            <p class="mt-2 text-text-secondary">أنشئ حسابك الجديد</p>
+        </div>
+
+        <!-- Registration Form -->
+        <div class="bg-surface rounded-2xl border border-border-sand p-8 shadow-lg">
+            <h1 class="font-headline text-2xl font-bold text-text-primary text-center mb-6">إنشاء حساب جديد</h1>
+
+            <!-- Progress Steps -->
+            <div class="flex items-center justify-center mb-8">
+                <div class="flex items-center gap-4">
+                    <div id="step1Indicator" class="w-10 h-10 rounded-full bg-sage text-white flex items-center justify-center text-sm font-medium">
+                        1
+                    </div>
+                    <div id="stepLine" class="w-16 h-0.5 bg-border-sand"></div>
+                    <div id="step2Indicator" class="w-10 h-10 rounded-full bg-border-sand text-text-secondary flex items-center justify-center text-sm font-medium">
+                        2
+                    </div>
+                </div>
+            </div>
+
+            {% if messages %}
+            {% for message in messages %}
+            <div class="mb-4 p-3 rounded-lg {% if message.tags == 'error' %}bg-rose-light text-rose{% elif message.tags == 'success' %}bg-sage-mint text-sage{% else %}bg-status-blue-light text-status-blue{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Step 1: Choose Account Type -->
+            {% if not user_type %}
+            <div id="step1" class="space-y-6">
+                <p class="text-center text-text-secondary mb-6">اختر نوع الحساب الذي تريده</p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="choose_type" value="1">
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <!-- Buyer Option -->
+                        <label class="relative cursor-pointer group">
+                            <input type="radio" name="user_type" value="customer" class="peer sr-only" required>
+                            <div class="p-6 bg-page-bg border-2 border-border-sand rounded-2xl peer-checked:border-sage peer-checked:bg-sage-light transition-all group-hover:border-sage/50">
+                                <div class="w-16 h-16 mx-auto bg-sage-light rounded-2xl flex items-center justify-center mb-4 group-hover:bg-sage group-hover:text-white transition-all peer-checked:bg-sage">
+                                    <svg class="w-8 h-8 text-sage group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                                    </svg>
+                                </div>
+                                <h3 class="font-semibold text-text-primary text-lg text-center mb-2">مشتري</h3>
+                                <p class="text-sm text-text-secondary text-center">تسوق واشترِ المنتجات من متاجرنا المتنوعة</p>
+
+                                <div class="mt-4 space-y-2 text-sm text-text-secondary">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        تصفح وشراء المنتجات
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        تتبع طلباتك
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        قائمة المفضلة
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-rose" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        إضافة وإدارة المنتجات
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-rose" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        متابعة المبيعات
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-rose" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        لوحة تحكم خاصة
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- Merchant Option -->
+                        <label class="relative cursor-pointer group">
+                            <input type="radio" name="user_type" value="seller" class="peer sr-only">
+                            <div class="p-6 bg-page-bg border-2 border-border-sand rounded-2xl peer-checked:border-sage peer-checked:bg-sage-light transition-all group-hover:border-sage/50">
+                                <div class="w-16 h-16 mx-auto bg-rose-light rounded-2xl flex items-center justify-center mb-4 group-hover:bg-rose group-hover:text-white transition-all">
+                                    <svg class="w-8 h-8 text-rose group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                </div>
+                                <h3 class="font-semibold text-text-primary text-lg text-center mb-2">تاجر</h3>
+                                <p class="text-sm text-text-secondary text-center">أنشئ متجرك وابدأ ببيع منتجاتك</p>
+
+                                <div class="mt-4 space-y-2 text-sm text-text-secondary">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        تصفح وشراء المنتجات
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        تتبع طلباتك
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        قائمة المفضلة
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        إضافة وإدارة المنتجات
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        متابعة المبيعات
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        لوحة تحكم خاصة
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="w-full mt-6 btn-primary py-3 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors">
+                        التالي
+                    </button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <p class="text-text-secondary">
+                        لديك حساب بالفعل؟
+                        <a href="{% url 'accounts:login' %}" class="text-sage font-medium hover:text-sage-dark transition-colors">تسجيل الدخول</a>
+                    </p>
+                </div>
+            </div>
+            {% else %}
+
+            <!-- Step 2: Registration Form -->
+            <div id="step2">
+                <!-- User Type Badge -->
+                <div class="text-center mb-6">
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium {% if user_type == 'seller' %}bg-rose-light text-rose{% else %}bg-sage-light text-sage{% endif %}">
+                        {% if user_type == 'seller' %}
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        حساب تاجر
+                        {% else %}
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                        </svg>
+                        حساب مشتري
+                        {% endif %}
+                    </span>
+                </div>
+
+                <form method="post" data-validate>
+                    {% csrf_token %}
+
+                    <!-- Common Fields -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-text-secondary mb-2">الاسم الكامل <span class="text-rose">*</span></label>
+                            <input type="text" name="full_name" required class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="أدخل اسمك الكامل">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-text-secondary mb-2">البريد الإلكتروني <span class="text-rose">*</span></label>
+                            <input type="email" name="email" required class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="example@email.com">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-text-secondary mb-2">اسم المستخدم <span class="text-rose">*</span></label>
+                            <input type="text" name="username" required 
+                                pattern="[a-zA-Z0-9_\u0600-\u06FF]+"
+                                title="اسم المستخدم يجب أن يحتوي على أحرف وأرقام فقط (بدون رموز)"
+                                class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" 
+                                placeholder="اختر اسم مستخدم فريد (أحرف وأرقام فقط)">
+                            <p class="text-xs text-text-placeholder mt-1">يجب أن يحتوي على أحرف وأرقام فقط بدون رموز</p>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">كلمة المرور <span class="text-rose">*</span></label>
+                                <div class="relative">
+                                    <input type="password" name="password1" id="password1" required minlength="8" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="8 أحرف على الأقل">
+                                    <button type="button" onclick="togglePassword('password1')" class="absolute left-3 top-1/2 -translate-y-1/2 text-text-placeholder hover:text-text-secondary transition-colors">
+                                        <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">تأكيد كلمة المرور <span class="text-rose">*</span></label>
+                                <div class="relative">
+                                    <input type="password" name="password2" id="password2" required class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="أعد كتابة كلمة المرور">
+                                    <button type="button" onclick="togglePassword('password2')" class="absolute left-3 top-1/2 -translate-y-1/2 text-text-placeholder hover:text-text-secondary transition-colors">
+                                        <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-text-secondary mb-2">رقم الهاتف {% if user_type == 'seller' %}<span class="text-rose">*</span>{% endif %}</label>
+                            <input type="tel" name="phone" {% if user_type == 'seller' %}required{% endif %} class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="05xxxxxxxx">
+                        </div>
+
+                        <!-- قائمة الولايات والبلديات - الجزائر -->
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">الولاية <span class="text-rose">*</span></label>
+                                <select name="wilaya" id="wilaya-select" required class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" onchange="updateCommunes(this.value)">
+                                    <option value=""  >اختر الولاية</option>
+                                    {% for code, name in wilayas %}
+                                        <option value="{{ name }}">{{ code }} - {{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">البلدية <span class="text-rose">*</span></label>
+                                <select name="commune" id="commune-select" required class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" disabled>
+                                    <option value="">اختر الولاية أولاً</option>
+                                </select>
+                            </div>
+                    </div>
+
+                    <!-- Merchant-specific Fields -->
+                    {% if user_type == 'seller' %}
+                    <div class="mt-6 pt-6 border-t border-border-sand">
+                        <h3 class="font-semibold text-text-primary mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-rose" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                            معلومات المتجر
+                        </h3>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">اسم المتجر <span class="text-rose">*</span></label>
+                                <input type="text" name="store_name" required class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="أدخل اسم متجرك">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">وصف المتجر <span class="text-rose">*</span></label>
+                                <textarea name="store_description" required minlength="20" rows="3" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all resize-none" placeholder="اكتب وصفاً مختصراً عن متجرك (20 حرف على الأقل)"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">فئة المتجر <span class="text-rose">*</span></label>
+                                <select name="store_category" required class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all">
+                                    <option value="">اختر الفئة</option>
+                                    {% for category in store_categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">شعار المتجر <span class="text-rose">*</span></label>
+                                <div class="flex items-center gap-4">
+                                    <div class="w-20 h-20 bg-page-bg border-2 border-dashed border-border-sand rounded-xl flex items-center justify-center">
+                                        <svg class="w-8 h-8 text-text-placeholder" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <input type="file" name="store_logo" accept="image/*" class="hidden" id="storeLogo">
+                                        <label for="storeLogo" class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-page-bg border border-border-sand rounded-lg text-text-secondary hover:bg-surface hover:border-sage transition-all">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                            </svg>
+                                            رفع صورة
+                                        </label>
+                                        <p class="text-xs text-text-placeholder mt-1">PNG, JPG حتى 2MB</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm text-text-secondary mb-2">رقم السجل التجاري (اختياري)</label>
+                                <input type="text" name="commercial_register" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="أدخل رقم السجل التجاري">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Profile Photo (Optional) -->
+                    <div class="mt-6">
+                        <label class="block text-sm text-text-secondary mb-2">الصورة الشخصية (اختياري)</label>
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 bg-page-bg border border-border-sand rounded-full flex items-center justify-center">
+                                <svg class="w-6 h-6 text-text-placeholder" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <input type="file" name="profile_photo" accept="image/*" class="hidden" id="profilePhoto">
+                                <label for="profilePhoto" class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-page-bg border border-border-sand rounded-lg text-text-secondary hover:bg-surface hover:border-sage transition-all">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                    </svg>
+                                    رفع صورة
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden user type field -->
+                    <input type="hidden" name="user_type" value="{{ user_type }}">
+
+                    <!-- Terms -->
+                    <div class="mt-6 flex items-start gap-3">
+                        <input type="checkbox" name="terms" required id="terms" class="mt-1 w-5 h-5 rounded border-border-sand text-sage focus:ring-sage/20">
+                        <label for="terms" class="text-sm text-text-secondary">
+                            أوافق على <a href="#" class="text-sage hover:text-sage-dark">الشروط والأحكام</a> و <a href="#" class="text-sage hover:text-sage-dark">سياسة الخصوصية</a>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="w-full mt-6 btn-primary py-3 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors">
+                        إنشاء الحساب
+                    </button>
+                </form>
+                <!-- Social Login -->
+                <div class="mt-8">
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-border-sand"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-4 bg-surface text-text-placeholder">أو التسجيل بواسطة</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-2 gap-4">
+                        <a href="/accounts/google/login/" 
+                            class="flex items-center justify-center gap-2 px-4 py-3 bg-page-bg border border-border-sand rounded-xl text-text-secondary hover:bg-surface hover:border-sage transition-all">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                            </svg>
+                                
+                                Google
+                        </a>
+                        <button type="button" class="flex items-center justify-center gap-2 px-4 py-3 bg-page-bg border border-border-sand rounded-xl text-text-secondary hover:bg-surface hover:border-sage transition-all">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/>
+                            </svg>
+                            Facebook
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-6 text-center">
+                    <a href="{% url 'accounts:register' %}" class="inline-flex items-center gap-2 text-text-secondary hover:text-sage transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                        تغيير نوع الحساب
+                    </a>
+                </div>
+
+                <div class="text-center mt-4">
+                    <p class="text-text-secondary">
+                        لديك حساب بالفعل؟
+                        <a href="{% url 'accounts:login' %}" class="text-sage font-medium hover:text-sage-dark transition-colors">تسجيل الدخول</a>
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Back to Home -->
+        <div class="text-center mt-6">
+            <a href="{% url 'store:home' %}" class="inline-flex items-center gap-2 text-text-secondary hover:text-sage transition-colors">
+                <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+                العودة للرئيسية
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allPostalData = [];
+    let validPostalCodes = [];
+
+    document.addEventListener('DOMContentLoaded', async function () {
+        // جلب العناصر مع التأكد من وجودها لتجنب خطأ Null
+        const wilayaSelect = document.getElementById('wilaya-select');
+        const communeSelect = document.getElementById('commune-select');
+        const postalInput = document.getElementById('postal-code-input');
+        const postalDatalist = document.getElementById('postal-codes-list');
+        const postalError = document.getElementById('postal-error');
+
+        const savedWilaya = wilayaSelect ? wilayaSelect.dataset.wilaya : null;
+        const savedCommune = wilayaSelect ? wilayaSelect.dataset.baladia : null;
+        const savedPostal = wilayaSelect ? wilayaSelect.dataset.postal : null;
+
+        try {
+            const response = await fetch("{% static 'data/algeria_postal_codes.json' %}");
+            if (!response.ok) throw new Error("ملف JSON غير موجود");
+            allPostalData = await response.json();
+
+            const uniqueWilayas = [...new Set(allPostalData.map(item => item.wilaya_name))].sort();
+            
+            if (wilayaSelect) {
+                wilayaSelect.innerHTML = '<option value="" >اختر الولاية</option>';
+                uniqueWilayas.forEach(wilaya => {
+                    const option = document.createElement('option');
+                    option.value = wilaya;
+                    option.textContent = wilaya;
+                    if (savedWilaya === wilaya) option.selected = true;
+                    wilayaSelect.appendChild(option);
+                });
+            }
+
+            if (savedWilaya && communeSelect) {
+                loadCommunes(savedWilaya, savedCommune);
+            }
+
+        } catch (error) {
+            console.error("خطأ في تحميل بيانات الرموز البريدية:", error);
+            if (wilayaSelect) wilayaSelect.innerHTML = '<option value="">خطأ في تحميل الولايات</option>';
+        }
+
+        if (wilayaSelect) {
+            wilayaSelect.addEventListener('change', function () {
+                if (postalInput) postalInput.value = '';
+                if (postalError) postalError.classList.add('hidden');
+                loadCommunes(this.value);
+            });
+        }
+
+        function loadCommunes(selectedWilaya, selectedCommune = null) {
+            const filteredByWilaya = allPostalData.filter(item => item.wilaya_name === selectedWilaya);
+            const uniqueCommunes = [...new Set(filteredByWilaya.map(item => item.commune_name))].sort();
+
+            if (communeSelect) {
+                communeSelect.innerHTML = '<option value="">اختر البلدية</option>';
+                if (uniqueCommunes.length > 0) {
+                    communeSelect.disabled = false;
+                    uniqueCommunes.forEach(commune => {
+                        const option = document.createElement('option');
+                        option.value = commune;
+                        option.textContent = commune;
+                        if (selectedCommune === commune) option.selected = true;
+                        communeSelect.appendChild(option);
+                    });
+                    if (selectedCommune) {
+                        loadPostalCodes(selectedWilaya, selectedCommune, savedPostal);
+                    }
+                } else {
+                    communeSelect.disabled = true;
+                }
+            }
+        }
+
+        if (communeSelect) {
+            communeSelect.addEventListener('change', function () {
+                if (postalInput) postalInput.value = '';
+                if (postalError) postalError.classList.add('hidden');
+                const selectedWilaya = wilayaSelect.value;
+                loadPostalCodes(selectedWilaya, this.value);
+            });
+        }
+
+        function loadPostalCodes(selectedWilaya, selectedCommune, savedPostal = null) {
+            // التحقق من وجود العناصر قبل استخدامها
+            if (!postalDatalist || !postalInput) return; 
+
+            const filteredByCommune = allPostalData.filter(
+                item => item.wilaya_name === selectedWilaya && item.commune_name === selectedCommune
+            );
+            validPostalCodes = [...new Set(filteredByCommune.map(item => item.post_code))];
+            
+            postalDatalist.innerHTML = '';
+            filteredByCommune.forEach(post => {
+                const option = document.createElement('option');
+                option.value = post.post_code;
+                option.textContent = `${post.post_code} - ${post.post_name}`;
+                postalDatalist.appendChild(option);
+            });
+
+            if (savedPostal) {
+                postalInput.value = savedPostal;
+                validatePostalCode(savedPostal);
+            }
+        }
+
+        if (postalInput) {
+            postalInput.addEventListener('input', function () {
+                validatePostalCode(this.value);
+            });
+        }
+
+        function validatePostalCode(code) {
+            if (!postalError || !postalInput) return false;
+            const cleanCode = code.trim();
+            if (cleanCode === '') {
+                postalError.classList.add('hidden');
+                postalInput.classList.remove('border-rose');
+                return false;
+            }
+            if (validPostalCodes.includes(cleanCode)) {
+                postalError.classList.add('hidden');
+                postalInput.classList.remove('border-rose');
+                return true;
+            } else {
+                postalError.classList.remove('hidden');
+                postalInput.classList.add('border-rose');
+                return false;
+            }
+        }
+
+        // التحقق عند الإرسال
+        const profileForm = document.querySelector('form[enctype="multipart/form-data"]');
+        if (profileForm && postalInput) {
+            profileForm.addEventListener('submit', function(e) {
+                if (!validatePostalCode(postalInput.value)) {
+                    e.preventDefault();
+                    if (postalError) {
+                        postalError.textContent = 'يرجى اختيار رمز بريدي صحيح من القائمة المقترحة.';
+                        postalError.classList.remove('hidden');
+                    }
+                }
+            });
+        }
+    });
+// التحقق من اسم المستخدم
+function validateUsername(input) {
+    const value = input.value;
+    const allowedPattern = /^[a-zA-Z0-9_\u0600-\u06FF]*$/;
+    
+    // إزالة أي حرف غير مسموح به
+    if (!allowedPattern.test(value)) {
+        input.value = value.replace(/[^a-zA-Z0-9_\u0600-\u06FF]/g, '');
+        // إظهار رسالة تحذير
+        showInputError(input, 'لا يمكن استخدام الرموز في اسم المستخدم');
+    } else {
+        clearInputError(input);
+    }
+}
+
+function showInputError(input, message) {
+    // إزالة رسالة الخطأ السابقة إن وجدت
+    clearInputError(input);
+    
+    // إضافة حد أحمر
+    input.classList.add('border-rose');
+    input.classList.remove('border-border-sand', 'focus:border-sage');
+    
+    // إنشاء رسالة الخطأ
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'text-rose text-xs mt-1 input-error-message';
+    errorDiv.textContent = message;
+    input.parentNode.appendChild(errorDiv);
+}
+
+function clearInputError(input) {
+    input.classList.remove('border-rose');
+    input.classList.add('border-border-sand');
+    
+    const errorMsg = input.parentNode.querySelector('.input-error-message');
+    if (errorMsg) {
+        errorMsg.remove();
+    }
+}
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        const icon = input.nextElementSibling.querySelector('.eye-icon');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+            `;
+        } else {
+            input.type = 'password';
+            icon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            `;
+        }
+    }
+
+    // Update progress indicators
+    document.addEventListener('DOMContentLoaded', () => {
+        const step2 = document.getElementById('step2');
+        if (step2) {
+            const step1Indicator = document.getElementById('step1Indicator');
+            const stepLine = document.getElementById('stepLine');
+            const step2Indicator = document.getElementById('step2Indicator');
+
+            if (step1Indicator) {
+                step1Indicator.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+                step1Indicator.classList.add('bg-sage');
+            }
+            if (stepLine) {
+                stepLine.classList.remove('bg-border-sand');
+                stepLine.classList.add('bg-sage');
+            }
+            if (step2Indicator) {
+                step2Indicator.classList.remove('bg-border-sand', 'text-text-secondary');
+                step2Indicator.classList.add('bg-sage', 'text-white');
+            }
+        }
+    });
+</script>
+{% endblock %}

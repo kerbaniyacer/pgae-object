@@ -1,0 +1,1327 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if product %}تعديل المنتج{% else %}إضافة منتج{% endif %} - سوق{% endblock %}
+
+{% block content %}
+<div class="bg-page-bg min-h-screen">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Breadcrumb -->
+        <nav class="flex items-center gap-2 text-sm mb-6">
+            <a href="{% url 'store:merchant_dashboard' %}" class="text-text-secondary hover:text-sage transition-colors">لوحة التحكم</a>
+            <svg class="w-4 h-4 text-text-placeholder rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <a href="{% url 'store:merchant_products' %}" class="text-text-secondary hover:text-sage transition-colors">منتجاتي</a>
+            <svg class="w-4 h-4 text-text-placeholder rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <span class="text-text-primary font-medium">{% if product %}تعديل المنتج{% else %}إضافة منتج{% endif %}</span>
+        </nav>
+
+        <h1 class="font-headline text-2xl font-bold text-text-primary mb-6">{% if product %}تعديل المنتج: {{ product.name }}{% else %}إضافة منتج جديد{% endif %}</h1>
+
+        <!-- Errors -->
+        {% if form.errors %}
+        <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-6">
+            <div class="flex items-center gap-2 mb-2">
+                <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <span class="font-semibold text-rose-700">يرجى تصحيح الأخطاء التالية:</span>
+            </div>
+            <ul class="list-disc list-inside space-y-1">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                    <li class="text-sm text-rose-600">{% if field != '__all__' %}<span class="font-medium">{{ field }}:</span>{% endif %} {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" id="productForm" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- ============================================ -->
+            <!-- SECTION 1: Basic Info -->
+            <!-- ============================================ -->
+            <div class="bg-surface rounded-2xl border border-border-sand p-6">
+                <h2 class="font-semibold text-text-primary text-lg mb-6 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    معلومات أساسية
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-text-secondary mb-2">اسم المنتج <span class="text-rose">*</span></label>
+                        <input type="text" name="name" required value="{{ product.name|default:'' }}" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="أدخل اسم المنتج">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-text-secondary mb-2">الوصف <span class="text-rose">*</span></label>
+                        <textarea name="description" required rows="4" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all resize-none" placeholder="اكتب وصفاً تفصيلياً للمنتج">{{ product.description|default:'' }}</textarea>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-text-secondary mb-2">الفئة <span class="text-rose">*</span></label>
+                            <select name="category" required id="categorySelect" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all">
+                                <option value="">اختر الفئة</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}" {% if product.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-text-secondary mb-2">العلامة التجارية</label>
+
+                            <select name="brand" id="brand-select"
+                                class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all">
+                                <option value="">اختر العلامة</option>
+
+                                {% for brand in brands %}
+                                    <option value="{{ brand.id }}" {% if brand.id == product.brand.id %} selected {% endif %} >{{ brand.name }}</option>
+                                {% endfor %}
+                                <option value="other">أخرى</option>
+                            </select>
+                        </div>
+                       
+
+                        <!-- حقل يظهر فقط عند اختيار "أخرى" -->
+                        <div id="other-brand-container" class="mt-3 hidden">
+                            <input type="text" name="other_brand"
+                                class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all"
+                                placeholder="اسم العلامة التجارية">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-text-secondary mb-2">SKU (رمز المنتج)</label>
+                        <input type="text" name="sku" value="{{ product.sku|default:'' }}" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all" placeholder="مثال: PRD-001">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- SECTION 2: Variant Options (IMPROVED SYSTEM) -->
+            <!-- ============================================ -->
+            <div class="bg-surface rounded-2xl border border-border-sand p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <div>
+                        <h2 class="font-semibold text-text-primary text-lg flex items-center gap-2">
+                            <svg class="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                            خيارات المتغيرات
+                        </h2>
+                    </div>
+                </div>
+                
+                <p class="text-sm text-text-secondary mb-4">أضف نوع المتغير (مثل: اللون، الحجم) ثم أضف قيمه (مثل: أحمر، أزرق)</p>
+
+                <!-- ✅ زر إضافة نوع متغير جديد (مثل RAM, اللون) -->
+                <button type="button" id="addOptionTypeBtn" class="w-full py-3 border-2 border-dashed border-border-sand rounded-xl text-text-secondary hover:border-sage hover:text-sage transition-all flex items-center justify-center gap-2 mb-4">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    إضافة نوع متغير جديد (مثل: اللون، RAM، الحجم)
+                </button>
+
+                <!-- Example Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+                    <button type="button" class="example-card p-3 bg-page-bg rounded-xl border border-border-sand hover:border-sage hover:bg-sage/5 transition-all text-right" data-options='[{"name":"اللون","values":["أحمر","أزرق","أخضر","أسود"]},{"name":"الحجم","values":["S","M","L","XL","XXL"]}]'>
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 bg-rose/10 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-rose" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                            </div>
+                            <span class="text-sm font-medium text-text-primary">ملابس</span>
+                        </div>
+                        <p class="text-xs text-text-secondary">اللون + الحجم</p>
+                    </button>
+                    <button type="button" class="example-card p-3 bg-page-bg rounded-xl border border-border-sand hover:border-sage hover:bg-sage/5 transition-all text-right" data-options='[{"name":"RAM","values":["4GB","8GB","16GB"]},{"name":"التخزين","values":["64GB","128GB","256GB","512GB"]}]'>
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            </div>
+                            <span class="text-sm font-medium text-text-primary">هواتف</span>
+                        </div>
+                        <p class="text-xs text-text-secondary">RAM + التخزين</p>
+                    </button>
+                    <button type="button" class="example-card p-3 bg-page-bg rounded-xl border border-border-sand hover:border-sage hover:bg-sage/5 transition-all text-right" data-options='[{"name":"المقاس","values":["40","41","42","43","44"]}]'>
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                            </div>
+                            <span class="text-sm font-medium text-text-primary">أحذية</span>
+                        </div>
+                        <p class="text-xs text-text-secondary">مقاس واحد</p>
+                    </button>
+                </div>
+
+                <!-- Options Container - كل خيار في بطاقة منفصلة -->
+                <div id="optionsContainer" class="space-y-4"></div>
+
+                <!-- No Options Message -->
+                <div id="noOptionsMsg" class="text-center py-8 text-text-secondary border border-dashed border-border-sand rounded-xl">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-text-placeholder" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    <p>لم يتم إضافة خيارات بعد</p>
+                    <p class="text-sm">اضغط الزر أعلاه أو اختر من الأمثلة</p>
+                </div>
+
+                <!-- Generate Button -->
+                <div id="generateSection" class="hidden mt-6 pt-6 border-t border-border-sand">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-text-primary">سيتم إنشاء <span id="combinationsCount" class="text-sage font-bold text-lg">0</span> متغير</p>
+                            <p class="text-xs text-text-secondary">جميع التوليفات الممكنة من الخيارات المحددة</p>
+                        </div>
+                        <button type="button" id="generateBtn" class="px-6 py-3 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            توليد المتغيرات
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- SECTION 3: Generated Variants -->
+            <!-- ============================================ -->
+            <div class="bg-surface rounded-2xl border border-border-sand p-6 hidden" id="variantsSection">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-semibold text-text-primary text-lg flex items-center gap-2">
+                        <svg class="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        المتغيرات المولدة
+                        <span id="variantsCount" class="text-sm font-normal text-text-secondary bg-page-bg px-2 py-1 rounded-lg">0</span>
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="expandAllBtn" class="p-2 text-text-secondary hover:text-sage transition-colors" title="توسيع الكل">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                        </button>
+                        <button type="button" id="collapseAllBtn" class="p-2 text-text-secondary hover:text-sage transition-colors" title="طي الكل">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/></svg>
+                        </button>
+                        <button type="button" id="clearVariantsBtn" class="p-2 text-text-placeholder hover:text-rose transition-colors" title="حذف الكل">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bulk Actions -->
+                <div class="flex items-center gap-3 mb-4 p-3 bg-page-bg rounded-lg">
+                    <span class="text-sm text-text-secondary whitespace-nowrap">تعديل جماعي:</span>
+                    <select id="bulkFilter" class="px-3 py-1.5 border border-border-sand rounded-lg text-sm">
+                        <option value="all">الكل</option>
+                    </select>
+                    <input type="number" id="bulkPrice" placeholder="السعر" class="w-28 px-3 py-1.5 border border-border-sand rounded-lg text-sm focus:border-sage outline-none">
+                    <input type="number" id="bulkOldPrice" placeholder=" السعر الأصلي " class="w-30 px-3 py-1.5 border border-border-sand rounded-lg text-sm focus:border-sage outline-none">
+                    <input type="number" id="bulkStock" placeholder="المخزون" class="w-28 px-3 py-1.5 border border-border-sand rounded-lg text-sm focus:border-sage outline-none">
+                    <div class="w-32 h-32 sm:w-40 sm:h-40 bg-page-bg border border-border-sand rounded-xl flex items-center justify-center cursor-pointer hover:border-sage transition-colors">
+                        <input type="file" accept="image/*" class="hidden" id="bulkImageVariant">
+                        <label for="bulkImageVariant" class="cursor-pointer w-full h-full flex items-center justify-center">
+                            <svg class="w-8 h-8 text-text-placeholder" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
+                        </label>
+                    </div>                    
+                    <button type="button" id="applyBulkBtn" class="px-3 py-1.5 bg-sage/10 text-sage rounded-lg text-sm font-medium hover:bg-sage/20 transition-colors">تطبيق على الكل</button>
+                </div>
+
+                <!-- Variants List -->
+                <div id="variantsList" class="space-y-3"></div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- SECTION 4: Images -->
+            <!-- ============================================ -->
+            <div class="bg-surface rounded-2xl border border-border-sand p-6">
+                <h2 class="font-semibold text-text-primary text-lg mb-6 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    صور المنتج
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-text-secondary mb-2">الصورة الرئيسية <span class="text-rose">*</span></label>
+                        <div class="flex items-start gap-6">
+                            <div class="w-32 h-32 bg-page-bg border-2 border-dashed border-border-sand rounded-xl flex items-center justify-center overflow-hidden" id="mainImagePreview">
+                                {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="Product" class="w-full h-full object-cover">
+                                {% else %}
+                                <svg class="w-12 h-12 text-text-placeholder" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                {% endif %}
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" name="image" accept="image/*" class="hidden" id="mainImage" required>
+                                <label for="mainImage" class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-page-bg border border-border-sand rounded-lg text-text-secondary hover:bg-surface hover:border-sage transition-all">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                    رفع صورة
+                                </label>
+                                <p class="text-xs text-text-placeholder mt-2">PNG, JPG, WEBP حتى 5MB</p>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div >
+                        <label class="block text-sm text-text-secondary mb-2">صور إضافية</label>
+                        <div class="flex flex-wrap gap-4" id="galleryContainer">
+                            <div class="w-32 h-32 sm:w-40 sm:h-40 bg-page-bg border border-border-sand rounded-xl flex items-center justify-center cursor-pointer hover:border-sage transition-colors">
+                                <input type="file" name="images" accept="image/*" multiple class="hidden" id="galleryImages">
+                                <label for="galleryImages" class="cursor-pointer w-full h-full flex items-center justify-center">
+                                    <svg class="w-8 h-8 text-text-placeholder" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
+                                </label>
+                            </div>
+                            {% for img in images %}
+                            <div class="relative w-24 h-24 rounded-xl overflow-hidden border border-border-sand group" data-image-id="{{ img.id }}">
+                                <img src="{{ img.image.url }}" alt="Gallery" class="w-full h-full object-cover">
+                                <button type="button" class="delete-gallery-image absolute top-1 left-1 w-5 h-5 bg-rose rounded-full flex items-center justify-center text-white hover:bg-rose/80 transition-colors opacity-0 group-hover:opacity-100" data-image-id="{{ img.id }}">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div>
+    <label class="block text-sm text-text-secondary mb-2">فيديو المنتج (اختياري)</label>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" id="videoContainer">
+
+        <!-- زر إضافة -->
+        <div class="w-32 h-32 sm:w-40 sm:h-40  aspect-square bg-page-bg border border-border-sand rounded-xl flex items-center justify-center hover:border-sage transition-colors">
+            <input type="file" name="video" accept="video/*" class="hidden" id="videoInput">
+            
+            <label for="videoInput" class="cursor-pointer flex items-center justify-center w-full h-full">
+                <svg class="w-8 h-8 text-text-placeholder" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/>
+                </svg>
+            </label>
+        </div>
+        <div id="uploadProgress" class="hidden w-full mt-2">
+    <div class="w-full bg-gray-200 rounded-full h-2">
+        <div id="progressBar" class="h-2 bg-sage rounded-full" style="width:0%"></div>
+    </div>
+    <p class="text-xs text-text-placeholder mt-1" id="progressText">0%</p>
+</div>
+        {% if video %}
+        <div class="relative w-full aspect-square rounded-xl overflow-hidden border border-border-sand group">
+            
+            <!-- الفيديو -->
+            <video controls class="w-full h-full object-cover">
+                <source src="{{ video.video.url }}" type="video/mp4">
+                متصفحك لا يدعم عرض الفيديو.
+            </video>
+
+            <!-- زر الحذف -->
+            <button type="button"
+                class="delete-video absolute top-1 left-1 w-6 h-6 bg-rose rounded-full flex items-center justify-center text-white hover:bg-rose/80 transition opacity-0 group-hover:opacity-100"
+                data-video-id="{{ video.id }}">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- SECTION 5: Specifications -->
+            <!-- ============================================ -->
+            <div class="bg-surface rounded-2xl border border-border-sand p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <div>
+                        <h2 class="font-semibold text-text-primary text-lg flex items-center gap-2">
+                            <svg class="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            المواصفات
+                        </h2>
+                    </div>
+                </div>
+
+                <p class="text-sm text-text-secondary mb-4">أضف المواصفات التفصيلية للمنتج (مثل: الوزن، المادة، الأبعاد، اللون...)</p>
+
+                <!-- زر إضافة مواصفة -->
+                <button type="button" id="addSpecBtn" class="w-full py-3 border-2 border-dashed border-border-sand rounded-xl text-text-secondary hover:border-sage hover:text-sage transition-all flex items-center justify-center gap-2 mb-4">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    إضافة مواصفة جديدة
+                </button>
+
+                <!-- أمثلة سريعة -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+                    <button type="button" class="spec-example-card p-3 bg-page-bg rounded-xl border border-border-sand hover:border-sage hover:bg-sage/5 transition-all text-right" data-specs='[{"name":"المادة","value":""},{"name":"الوزن","value":""},{"name":"الأبعاد","value":""}]'>
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 bg-rose/10 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-rose" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                            </div>
+                            <span class="text-sm font-medium text-text-primary">ملابس</span>
+                        </div>
+                        <p class="text-xs text-text-secondary">المادة + الوزن + الأبعاد</p>
+                    </button>
+                    <button type="button" class="spec-example-card p-3 bg-page-bg rounded-xl border border-border-sand hover:border-sage hover:bg-sage/5 transition-all text-right" data-specs='[{"name":"المعالج","value":""},{"name":"الشاشة","value":""},{"name":"البطارية","value":""},{"name":"الكاميرا","value":""}]'>
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            </div>
+                            <span class="text-sm font-medium text-text-primary">هواتف</span>
+                        </div>
+                        <p class="text-xs text-text-secondary">المعالج + الشاشة + البطارية</p>
+                    </button>
+                    <button type="button" class="spec-example-card p-3 bg-page-bg rounded-xl border border-border-sand hover:border-sage hover:bg-sage/5 transition-all text-right" data-specs='[{"name":"المقاس","value":""},{"name":"المادة","value":""},{"name":"النوع","value":""}]'>
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                            </div>
+                            <span class="text-sm font-medium text-text-primary">أحذية</span>
+                        </div>
+                        <p class="text-xs text-text-secondary">المقاس + المادة + النوع</p>
+                    </button>
+                </div>
+
+                <!-- حاوية المواصفات -->
+                <div id="specsContainer" class="space-y-3"></div>
+
+                <!-- رسالة عدم وجود مواصفات -->
+                <div id="noSpecsMsg" class="text-center py-8 text-text-secondary border border-dashed border-border-sand rounded-xl">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-text-placeholder" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <p>لم يتم إضافة مواصفات بعد</p>
+                    <p class="text-sm">اضغط الزر أعلاه أو اختر من الأمثلة</p>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- SECTION 6: Additional Options -->
+            <!-- ============================================ -->
+            <div class="bg-surface rounded-2xl border border-border-sand p-6">
+                <h2 class="font-semibold text-text-primary text-lg mb-6 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    خيارات إضافية
+                </h2>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-page-bg rounded-xl">
+                        <div><p class="font-medium text-text-primary">المنتج نشط</p><p class="text-sm text-text-secondary">سيظهر في المتجر</p></div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="is_active" class="sr-only peer" {% if product.is_active or not product %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-border-sand peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sage/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sage"></div>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between p-4 bg-page-bg rounded-xl">
+                        <div><p class="font-medium text-text-primary">منتج مميز</p><p class="text-sm text-text-secondary">سيظهر في الصفحة الرئيسية</p></div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="is_featured" class="sr-only peer" {% if product.is_featured %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-border-sand peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sage/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sage"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden Fields -->
+            <input type="hidden" id="optionsDataInput" name="options_data" value="[]">
+            <input type="hidden" id="specsDataInput" name="specs_data" value="[]">
+
+            <!-- Form Actions -->
+            <div class="flex items-center justify-end gap-4 pb-8">
+                <a href="{% url 'store:merchant_products' %}" class="px-6 py-3 border border-border-sand text-text-secondary rounded-xl font-medium hover:bg-page-bg transition-colors">إلغاء</a>
+                <button type="submit" id="submitBtn" class="btn-primary px-6 py-3 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    {% if product %}حفظ التغييرات{% else %}إضافة المنتج{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+document.addEventListener('DOMContentLoaded', function() {
+    // ============================================
+    // Toast
+    // ============================================
+    function showToast(message, type = 'warning') {
+        const existing = document.getElementById('toastNotification');
+        if (existing) existing.remove();
+        const colors = { warning: 'bg-amber-50 border-amber-400 text-amber-800', error: 'bg-rose-50 border-rose-400 text-rose-800', success: 'bg-green-50 border-green-400 text-green-800' };
+        const icons = { warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>', error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>', success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>' };
+        const toast = document.createElement('div');
+        toast.id = 'toastNotification';
+        toast.className = `fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-xl border shadow-lg ${colors[type]} transition-all duration-300 opacity-0 -translate-y-2`;
+        toast.innerHTML = `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icons[type]}</svg><span class="font-medium text-sm">${message}</span>`;
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => { toast.classList.remove('opacity-0', '-translate-y-2'); toast.classList.add('opacity-100', 'translate-y-0'); });
+        setTimeout(() => { toast.classList.remove('opacity-100', 'translate-y-0'); toast.classList.add('opacity-0', '-translate-y-2'); setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    // ============================================
+    // Elements
+    // ============================================
+    const addOptionTypeBtn = document.getElementById('addOptionTypeBtn');
+    const optionsContainer = document.getElementById('optionsContainer');
+    const noOptionsMsg = document.getElementById('noOptionsMsg');
+    const generateSection = document.getElementById('generateSection');
+    const generateBtn = document.getElementById('generateBtn');
+    const combinationsCount = document.getElementById('combinationsCount');
+    const variantsSection = document.getElementById('variantsSection');
+    const variantsList = document.getElementById('variantsList');
+    const variantsCountEl = document.getElementById('variantsCount');
+    const productForm = document.getElementById('productForm');
+    const optionsDataInput = document.getElementById('optionsDataInput');
+
+    let options = []; 
+    let optionIdCounter = 0;
+    let generatedVariants = []; 
+    const brandSelect = document.getElementById('brand-select');
+    const otherBrandContainer = document.getElementById('other-brand-container');
+
+    brandSelect.addEventListener('change', function () {
+        if (this.value === 'other') {
+            otherBrandContainer.classList.remove('hidden');
+        } else {
+            otherBrandContainer.classList.add('hidden');
+        }
+    });
+    // ============================================
+    // Main Image Preview
+    // ============================================
+    document.getElementById('mainImage').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const preview = document.getElementById('mainImagePreview');
+
+    const reader = new FileReader();
+
+    reader.onload = function(ev) {
+        preview.innerHTML = `
+            <div class="relative w-full h-full">
+                <img src="${ev.target.result}" class="w-full h-full object-cover">
+                <button type="button" id="removeMainImage"
+                    class="absolute top-1 left-1 w-6 h-6 bg-rose text-white rounded-full flex items-center justify-center">
+                    ✕
+                </button>
+            </div>
+        `;
+    };
+
+    reader.readAsDataURL(file);
+});
+    // ============================================
+    // Delete Gallery Image & Video (موحد ومصحح)
+    // ============================================
+    document.addEventListener('click', function(e) {
+        // حذف الصور القديمة
+        if (e.target.closest('.delete-gallery-image')) {
+            const btn = e.target.closest('.delete-gallery-image');
+            const imageId = btn.dataset.imageId;
+            fetch(`/delete-product-image/${imageId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCSRFToken() }
+            }).then(r => r.json()).then(data => {
+                if (data.success) { 
+                    btn.closest('[data-image-id]').remove(); 
+                    showToast('تم حذف الصورة', 'success'); 
+                } else showToast(data.message || 'حدث خطأ', 'error');
+            }).catch(() => showToast('حدث خطأ أثناء حذف الصورة', 'error'));
+        }
+
+        // حذف الفيديو القديم (تم توحيد المسار)
+        if (e.target.closest('.delete-video')) {
+            const btn = e.target.closest('.delete-video');
+            const videoId = btn.dataset.videoId;
+            if (!confirm('هل تريد حذف الفيديو؟')) return;
+            
+            fetch(`/delete-product-video/${videoId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCSRFToken() }
+            }).then(r => r.json()).then(data => {
+                if (data.success) { 
+                    btn.closest('[data-video-id]').remove(); 
+                    showToast('تم حذف الفيديو', 'success'); 
+                } else showToast(data.message || 'حدث خطأ', 'error');
+            }).catch(() => showToast('حدث خطأ أثناء حذف الفيديو', 'error'));
+        }
+    });
+    // ============================================
+    // Example Cards
+    // ============================================
+    document.querySelectorAll('.example-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const exampleOptions = JSON.parse(this.dataset.options);
+            optionsContainer.innerHTML = '';
+            options = [];
+            optionIdCounter = 0;
+            exampleOptions.forEach(opt => {
+                createOptionBlock(opt.name, opt.values);
+            });
+            updateUI();
+        });
+    });
+
+    // ============================================
+    // ✅ زر إضافة نوع متغير جديد (RAM, اللون, الحجم...)
+    // ============================================
+    addOptionTypeBtn.addEventListener('click', () => {
+        createOptionBlock();
+    });
+
+    // ============================================
+    // ✅ إنشاء بطاقة خيار جديد بالكامل
+    // ============================================
+    function createOptionBlock(name = '', values = []) {
+        const id = `opt_${optionIdCounter++}`;
+        const option = { id, name, values };
+        options.push(option);
+        
+        const index = options.length;
+        
+        const html = `
+        <!-- ✅ بطاقة نوع المتغير (مثل RAM) -->
+        <div class="option-block border-2 border-border-sand rounded-xl overflow-hidden bg-page-bg" data-option-id="${id}">
+            
+            <!-- رأس البطاقة: اسم الخيار + حذف -->
+            <div class="flex items-center gap-3 p-4 bg-sage/5 border-b border-border-sand">
+                <div class="w-8 h-8 bg-sage text-white rounded-lg flex items-center justify-center font-bold text-sm">${index}</div>
+                <input type="text" 
+                       class="option-name-input flex-1 px-3 py-2 bg-surface border border-border-sand rounded-lg focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none text-sm font-semibold" 
+                       value="${name}" 
+                       placeholder="اسم الخيار (مثل: RAM، اللون، الحجم، التخزين)"
+                       data-option-id="${id}">
+                <button type="button" class="delete-option-btn p-2 text-text-placeholder hover:text-rose hover:bg-rose/10 rounded-lg transition-all" data-option-id="${id}" title="حذف هذا الخيار">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+            </div>
+            
+            <!-- جسم البطاقة: القيم -->
+            <div class="p-4">
+                <!-- ✅ زر إضافة قيمة داخل هذا الخيار -->
+                <div class="flex gap-2 mb-4">
+                    <input type="text" 
+                           class="value-input flex-1 px-3 py-2.5 bg-surface border border-border-sand rounded-lg focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none text-sm" 
+                           placeholder="اكتب القيمة هنا (مثل: 8GB، أحمر، XL) ثم اضغط Enter أو الزر"
+                           data-option-id="${id}">
+                    <button type="button" class="add-value-btn px-4 py-2.5 bg-sage text-white rounded-lg text-sm font-medium hover:bg-sage-dark transition-colors flex items-center gap-1.5 whitespace-nowrap" data-option-id="${id}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        إضافة قيمة
+                    </button>
+                </div>
+                
+                <!-- ✅ عرض القيم المضافة -->
+                <div class="values-list flex flex-wrap gap-2" data-option-id="${id}">
+                    ${values.map((val, idx) => `
+                    <div class="value-chip flex items-center gap-2 bg-sage/10 text-sage px-3 py-2 rounded-lg group" data-option-id="${id}" data-value-index="${idx}">
+                        <span class="text-sm font-medium">${val}</span>
+                        <button type="button" class="remove-value-btn opacity-0 group-hover:opacity-100 p-0.5 hover:text-rose transition-all" data-option-id="${id}" data-value-index="${idx}">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                    `).join('')}
+                </div>
+                
+                <!-- رسالة إذا لم توجد قيم -->
+                <div class="no-values-msg text-center py-4 text-text-placeholder text-sm ${values.length > 0 ? 'hidden' : ''}" data-option-id="${id}">
+                    لم يتم إضافة قيم بعد - اكتب قيمة فوق واضغط "إضافة قيمة"
+                </div>
+            </div>
+        </div>`;
+        
+        optionsContainer.insertAdjacentHTML('beforeend', html);
+        
+        // ✅ ربط الأحداث لهذه البطاقة
+        bindOptionEvents(id, option);
+        updateUI();
+    }
+
+    // ============================================
+    // ✅ ربط الأحداث لبطاقة خيار محددة
+    // ============================================
+    function bindOptionEvents(id, option) {
+        const block = optionsContainer.querySelector(`[data-option-id="${id}"].option-block`);
+        
+        // 1. تغيير اسم الخيار
+        const nameInput = block.querySelector('.option-name-input');
+        nameInput.addEventListener('input', function() {
+            option.name = this.value.trim();
+            updateUI();
+        });
+        
+        // 2. إضافة قيمة جديدة
+        const valueInput = block.querySelector('.value-input');
+        const addValueBtn = block.querySelector('.add-value-btn');
+        
+        function addNewValue() {
+            const val = valueInput.value.trim();
+            if (!val) {
+                showToast('يرجى كتابة قيمة أولاً', 'warning');
+                valueInput.focus();
+                return;
+            }
+            if (option.values.includes(val)) {
+                showToast('هذه القيمة موجودة مسبقاً في هذا الخيار', 'warning');
+                valueInput.focus();
+                return;
+            }
+            
+            // ✅ إضافة القيمة للخيار الحالي فقط
+            option.values.push(val);
+            valueInput.value = '';
+            valueInput.focus();
+            
+            // إعادة رسم القيم فقط (بدون إعادة إنشاء البطاقة)
+            refreshValuesDisplay(id, option);
+            updateUI();
+        }
+        
+        addValueBtn.addEventListener('click', addNewValue);
+        valueInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addNewValue();
+            }
+        });
+        
+        // 3. حذف الخيار بالكامل
+        const deleteBtn = block.querySelector('.delete-option-btn');
+        deleteBtn.addEventListener('click', function() {
+            if (option.values.length > 0) {
+                if (!confirm(`هل تريد حذف خيار "${option.name || 'بدون اسم'}" وجميع قيمه (${option.values.length} قيمة)؟`)) {
+                    return;
+                }
+            }
+            
+            options = options.filter(o => o.id !== id);
+            block.remove();
+            
+            // إعادة ترقيم البطاقات
+            renumberOptions();
+            updateUI();
+            
+            // مسح المتغيرات المولدة إذا تغيرت الخيارات
+            if (generatedVariants.length > 0) {
+                generatedVariants = [];
+                variantsSection.classList.add('hidden');
+            }
+        });
+        
+        // 4. حذف قيمة واحدة (using event delegation)
+        const valuesList = block.querySelector('.values-list');
+        valuesList.addEventListener('click', function(e) {
+            const removeBtn = e.target.closest('.remove-value-btn');
+            if (removeBtn) {
+                const valueIndex = parseInt(removeBtn.dataset.valueIndex);
+                option.values.splice(valueIndex, 1);
+                refreshValuesDisplay(id, option);
+                updateUI();
+                
+                // مسح المتغيرات المولدة
+                if (generatedVariants.length > 0) {
+                    generatedVariants = [];
+                    variantsSection.classList.add('hidden');
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // ✅ تحديث عرض القيم فقط (بدون إعادة إنشاء البطاقة)
+    // ============================================
+    function refreshValuesDisplay(id, option) {
+        const block = optionsContainer.querySelector(`[data-option-id="${id}"].option-block`);
+        const valuesList = block.querySelector('.values-list');
+        const noValuesMsg = block.querySelector('.no-values-msg');
+        
+        valuesList.innerHTML = option.values.map((val, idx) => `
+        <div class="value-chip flex items-center gap-2 bg-sage/10 text-sage px-3 py-2 rounded-lg group">
+            <span class="text-sm font-medium">${val}</span>
+            <button type="button" class="remove-value-btn opacity-0 group-hover:opacity-100 p-0.5 hover:text-rose transition-all" data-option-id="${id}" data-value-index="${idx}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        `).join('');
+        
+        noValuesMsg.classList.toggle('hidden', option.values.length > 0);
+    }
+
+    // ============================================
+    // ✅ إعادة ترقيم الخيارات
+    // ============================================
+    function renumberOptions() {
+        optionsContainer.querySelectorAll('.option-block').forEach((block, idx) => {
+            const numEl = block.querySelector('.w-8.bg-sage');
+            if (numEl) numEl.textContent = idx + 1;
+        });
+    }
+
+    // ============================================
+    // ✅ تحديث واجهة المستخدم
+    // ============================================
+    function updateUI() {
+        const hasOptions = options.length > 0;
+        noOptionsMsg.classList.toggle('hidden', hasOptions);
+
+        const validOptions = options.filter(o => o.name.trim() && o.values.length > 0);
+        const hasValidOptions = validOptions.length > 0;
+
+        if (hasValidOptions) {
+            const count = validOptions.reduce((acc, o) => acc * o.values.length, 1);
+            combinationsCount.textContent = count;
+            generateSection.classList.remove('hidden');
+        } else {
+            generateSection.classList.add('hidden');
+        }
+        
+        // إخفاء/إظهار رسالة "لا توجد قيم" لكل خيار
+        options.forEach(opt => {
+            const noMsg = optionsContainer.querySelector(`.no-values-msg[data-option-id="${opt.id}"]`);
+            if (noMsg) {
+                noMsg.classList.toggle('hidden', opt.values.length > 0);
+            }
+        });
+    }
+
+    // ============================================
+    // Generate Combinations
+    // ============================================
+    generateBtn.addEventListener('click', function() {
+        const validOptions = options.filter(o => o.name.trim() && o.values.length > 0);
+        if (validOptions.length === 0) {
+            showToast('يرجى إضافة خيار واحد على الأقل مع قيمة واحدة', 'warning');
+            return;
+        }
+
+        generatedVariants = generateCombinations(validOptions);
+        populateBulkFilter(validOptions);
+        renderVariants(validOptions);
+        
+        variantsSection.classList.remove('hidden');
+        variantsCountEl.textContent = `${generatedVariants.length} متغير`;
+        variantsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    function generateCombinations(opts) {
+        if (opts.length === 0) return [];
+        let result = opts[0].values.map(v => ({ [opts[0].name]: v }));
+        for (let i = 1; i < opts.length; i++) {
+            const newResult = [];
+            result.forEach(existing => {
+                opts[i].values.forEach(val => {
+                    newResult.push({ ...existing, [opts[i].name]: val });
+                });
+            });
+            result = newResult;
+        }
+        return result;
+    }
+    function populateBulkFilter(opts) {
+    const filter = document.getElementById('bulkFilter');
+    filter.innerHTML = '<option value="all">الكل</option>';
+
+    opts.forEach(o => {
+        o.values.forEach(val => {
+            const option = document.createElement('option');
+            option.value = `${o.name}:${val}`;
+            option.textContent = `${o.name}: ${val}`;
+            filter.appendChild(option);
+        });
+    });
+}
+    function renderVariants(opts) {
+        const optionNames = opts.map(o => o.name);
+        variantsList.innerHTML = generatedVariants.map((variant, idx) => {
+            const name = optionNames.map(n => variant[n]).join(' / ');
+            const key = `v_${idx}`;
+            return `
+            <div class="variant-card border border-border-sand rounded-xl overflow-hidden" data-variant-key="${key}">
+                <div class="variant-header flex items-center justify-between p-4 bg-page-bg cursor-pointer hover:bg-sage/5 transition-colors" data-key="${key}">
+                    <div class="flex items-center gap-3">
+                        <div class="v-img-preview w-12 h-12 rounded-lg overflow-hidden border border-border-sand bg-surface flex items-center justify-center">
+                            <svg class="w-6 h-6 text-text-placeholder" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <div>
+                            <p class="font-medium text-text-primary text-sm">${name}</p>
+                            <div class="flex flex-wrap gap-1 mt-1">
+                                ${optionNames.map(n => `<span class="text-xs bg-sage/10 text-sage px-1.5 py-0.5 rounded">${n}: ${variant[n]}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <label class="flex items-center gap-2 text-sm text-text-secondary cursor-pointer" onclick="event.stopPropagation()">
+                            <input type="radio" class="main-variant-cb rounded" name="is_main" value="${key}">
+                            <span>رئيسي</span>
+                        </label>
+                        <svg class="v-chevron w-5 h-5 text-text-placeholder transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+                </div>
+                <div class="variant-body hidden border-t border-border-sand" data-key="${key}">
+                    <div class="p-4 space-y-4">
+                        <div class="flex items-center gap-4">
+                            <div class="v-img-upload w-16 h-16 rounded-lg overflow-hidden border border-border-sand bg-surface flex items-center justify-center cursor-pointer">
+                                <input type="file" id="${key}_img" name="${key}_image" accept="image/*" class="hidden v-img-input">
+<label for="${key}_img" class="cursor-pointer w-full h-full flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-text-placeholder" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                </label>
+                            </div>
+                            <span class="text-xs text-text-placeholder">صورة المتغير (اختياري)</span>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div>
+                                <label class="block text-xs text-text-secondary mb-1">SKU</label>
+                                <input type="text" name="${key}_sku" class="v-sku w-full px-3 py-2 border border-border-sand rounded-lg focus:border-sage outline-none text-sm" placeholder="SKU(يتم ملئه تلقائيا اذا تركته فارغا)">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-text-secondary mb-1">السعر <span class="text-rose">*</span></label>
+                                <div class="relative">
+                                    <input type="number" name="${key}_price" required step="0.01" min="0" class="v-price w-full px-3 py-2 border border-border-sand rounded-lg focus:border-sage outline-none text-sm pr-10" placeholder="0.00">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-text-placeholder">دج</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-text-secondary mb-1">السعر قبل الخصم</label>
+                                <div class="relative">
+                                    <input type="number" name="${key}_old_price" step="0.01" min="0" class="v-old-price w-full px-3 py-2 border border-border-sand rounded-lg focus:border-sage outline-none text-sm pr-10" placeholder="0.00">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-text-placeholder">دج</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-text-secondary mb-1">المخزون <span class="text-rose">*</span></label>
+                                <input type="number" name="${key}_stock" required min="0" class="v-stock w-full px-3 py-2 border border-border-sand rounded-lg focus:border-sage outline-none text-sm" placeholder="0">
+                            </div>
+                        </div>
+                        <input type="hidden" name="${key}_combination" value='${JSON.stringify(variant)}'>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+
+        // Event Listeners
+        variantsList.querySelectorAll('.variant-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const key = this.dataset.key;
+                const body = variantsList.querySelector(`.variant-body[data-key="${key}"]`);
+                const chevron = this.querySelector('.v-chevron');
+                body.classList.toggle('hidden');
+                chevron.classList.toggle('rotate-180');
+            });
+        });
+
+        variantsList.querySelectorAll('.v-img-input').forEach(input => {
+            input.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        this.closest('.variant-card').querySelector('.v-img-preview').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                    }.bind(this);
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+    }
+    document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('v-img-input')) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        const container = e.target.closest('.variant-card');
+        const preview = container.querySelector('.v-img-preview');
+
+        reader.onload = function(ev) {
+            preview.innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover">`;
+        };
+
+        reader.readAsDataURL(file);
+    }
+});
+    // ============================================
+    // Bulk Actions (مصحح لدعم الصور)
+    // ============================================
+    document.getElementById('applyBulkBtn').addEventListener('click', function() {
+        const price = document.getElementById('bulkPrice').value;
+        const stock = document.getElementById('bulkStock').value;
+        const old_price = document.getElementById('bulkOldPrice').value;
+        
+        // ✅ نأخذ كائن الملف نفسه وليس قيمة الحقل
+        const bulkFileInput = document.getElementById('bulkImageVariant');
+        const selectedFile = bulkFileInput.files[0]; 
+        
+        const filter = document.getElementById('bulkFilter').value;
+
+        document.querySelectorAll('.variant-card').forEach(card => {
+            const name = card.querySelector('.variant-header p').textContent;
+            let match = false;
+
+            if (filter === 'all') {
+                match = true;
+            } else {
+                const filterVal = filter.split(':')[1];
+                if (filterVal && name.includes(filterVal)) {
+                    match = true;
+                }
+            }
+
+            if (match) {
+                if (price) card.querySelector('.v-price').value = price;
+                if (stock) card.querySelector('.v-stock').value = stock;
+                if (old_price) card.querySelector('.v-old-price').value = old_price;
+                
+                // ✅ طريقة آمنة ومسموحة لتمرير الصور لحقول الإدخال
+                if (selectedFile) {
+                    const targetInput = card.querySelector('.v-img-input');
+                    
+                    // استخدام DataTransfer لحقن الملف في حقل الرفع
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(selectedFile);
+                    targetInput.files = dataTransfer.files;
+                    
+                    // تحديث المعاينة (Preview) أيضاً
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        card.querySelector('.v-img-preview').innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover">`;
+                    };
+                    reader.readAsDataURL(selectedFile);
+                }
+            }
+        });
+        
+        if (selectedFile) {
+            showToast('تم تطبيق الصورة على المتغيرات المحددة', 'success');
+        }
+    });
+
+    // ============================================
+    // Expand/Collapse/Clear
+    // ============================================
+    document.getElementById('expandAllBtn').addEventListener('click', () => {
+        variantsList.querySelectorAll('.variant-body').forEach(b => b.classList.remove('hidden'));
+        variantsList.querySelectorAll('.v-chevron').forEach(c => c.classList.add('rotate-180'));
+    });
+    document.getElementById('collapseAllBtn').addEventListener('click', () => {
+        variantsList.querySelectorAll('.variant-body').forEach(b => b.classList.add('hidden'));
+        variantsList.querySelectorAll('.v-chevron').forEach(c => c.classList.remove('rotate-180'));
+    });
+    document.getElementById('clearVariantsBtn').addEventListener('click', () => {
+        if (confirm('هل تريد حذف جميع المتغيرات المولدة؟')) {
+            generatedVariants = [];
+            variantsList.innerHTML = '';
+            variantsSection.classList.add('hidden');
+        }
+    });
+
+    // ============================================
+    // Delete Gallery Image
+    // ============================================
+    document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-new-image')) {
+        e.target.closest('.new-image').remove();
+
+        // ⚠️ لا يمكن تعديل input.files مباشرة
+        // الحل: إعادة تعيين input
+        document.getElementById('galleryImages').value = "";
+    }
+});
+
+    document.getElementById('galleryImages').addEventListener('change', function(e) {
+    const files = e.target.files;
+    const container = document.getElementById('galleryContainer');
+
+    // نحذف previews القديمة (اختياري)
+    container.querySelectorAll('.new-image').forEach(el => el.remove());
+
+    Array.from(files).forEach((file, index) => {
+        const reader = new FileReader();
+
+        reader.onload = function(ev) {
+            const div = document.createElement('div');
+            div.className = "relative w-24 h-24 rounded-xl overflow-hidden border border-border-sand group new-image";
+
+            div.innerHTML = `
+                <img src="${ev.target.result}" class="w-full h-full object-cover">
+                <button type="button" class="remove-new-image absolute top-1 left-1 w-5 h-5 bg-rose rounded-full flex items-center justify-center text-white">
+                    ✕
+                </button>
+            `;
+
+            container.appendChild(div);
+        };
+
+        reader.readAsDataURL(file);
+    });
+});
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-gallery-image')) {
+            const btn = e.target.closest('.delete-gallery-image');
+            const imageId = btn.dataset.imageId;
+            fetch(`/delete-product-image/${imageId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': document.querySelector('[name="csrfmiddlewaretoken"]').value }
+            }).then(r => r.json()).then(data => {
+                if (data.success) { btn.closest('[data-image-id]').remove(); showToast('تم حذف الصورة', 'success'); }
+                else showToast(data.message || 'حدث خطأ', 'error');
+            }).catch(() => showToast('حدث خطأ أثناء حذف الصورة', 'error'));
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-video')) {
+            const btn = e.target.closest('.delete-video');
+            const videoId = btn.dataset.videoId;
+            fetch(`/delete-product-video/${videoId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': document.querySelector('[name="csrfmiddlewaretoken"]').value }
+            }).then(r => r.json()).then(data => {
+                if (data.success) { btn.closest('[data-video-id]').remove(); showToast('تم حذف الفيديو', 'success'); }
+                else showToast(data.message || 'حدث خطأ', 'error');
+            }).catch(() => showToast('حدث خطأ أثناء حذف الفيديو', 'error'));
+        }
+    });
+document.addEventListener('click', function(e) {
+    if (e.target.id === 'removeMainImage') {
+        document.getElementById('mainImage').value = "";
+
+        document.getElementById('mainImagePreview').innerHTML = `
+            <svg class="w-12 h-12 text-text-placeholder" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16"/>
+            </svg>
+        `;
+    }
+});
+document.getElementById('videoInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const container = document.getElementById('videoContainer');
+
+    // حذف preview القديم
+    container.querySelectorAll('.new-video').forEach(el => el.remove());
+
+    const url = URL.createObjectURL(file);
+
+    const div = document.createElement('div');
+    div.className = "relative w-24 h-24 rounded-xl overflow-hidden border border-border-sand new-video";
+
+    div.innerHTML = `
+        <video class="w-full h-full object-cover" controls>
+            <source src="${url}">
+        </video>
+        <button type="button" class="remove-video absolute top-1 left-1 w-5 h-5 bg-rose text-white rounded-full flex items-center justify-center">
+            ✕
+        </button>
+    `;
+
+    container.appendChild(div);
+});
+    // ============================================
+    // Form Submission
+    // ============================================
+    productForm.addEventListener('submit', function(e) {
+        const validOptions = options.filter(o => o.name.trim() && o.values.length > 0);
+        optionsDataInput.value = JSON.stringify(validOptions.map(o => ({ name: o.name, values: o.values })));
+
+        if (generatedVariants.length > 0) {
+            let isValid = true;
+            let firstInvalid = null;
+            variantsList.querySelectorAll('.variant-card').forEach(card => {
+                const price = card.querySelector('.v-price');
+                const stock = card.querySelector('.v-stock');
+                if (price && (!price.value || parseFloat(price.value) <= 0)) {
+                    price.classList.add('border-rose');
+                    isValid = false;
+                    if (!firstInvalid) firstInvalid = card;
+                } else if (price) {
+                    price.classList.remove('border-rose');
+                }
+                if (stock && (!stock.value || parseInt(stock.value) < 0)) {
+                    stock.classList.add('border-rose');
+                    isValid = false;
+                    if (!firstInvalid) firstInvalid = card;
+                } else if (stock) {
+                    stock.classList.remove('border-rose');
+                }
+            });
+            if (!isValid) {
+                e.preventDefault();
+                showToast('يرجى ملء حقول السعر والمخزون لجميع المتغيرات', 'error');
+                if (firstInvalid) {
+                    firstInvalid.querySelector('.variant-body').classList.remove('hidden');
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+    });
+    // ============================================
+    // Specifications System
+    // ============================================
+    const addSpecBtn = document.getElementById('addSpecBtn');
+    const specsContainer = document.getElementById('specsContainer');
+    const noSpecsMsg = document.getElementById('noSpecsMsg');
+    const specsDataInput = document.getElementById('specsDataInput');
+
+    let specs = [];
+    let specIdCounter = 0;
+
+    function updateSpecsUI() {
+        noSpecsMsg.classList.toggle('hidden', specs.length > 0);
+        specsDataInput.value = JSON.stringify(
+            specs.filter(s => s.name.trim()).map(s => ({ name: s.name, value: s.value }))
+        );
+    }
+
+    function createSpecRow(name = '', value = '') {
+        const id = `spec_${specIdCounter++}`;
+        const spec = { id, name, value };
+        specs.push(spec);
+
+        const row = document.createElement('div');
+        row.className = 'spec-row flex items-center gap-3 p-3 bg-page-bg border border-border-sand rounded-xl';
+        row.dataset.specId = id;
+        row.innerHTML = `
+            <div class="w-7 h-7 bg-sage/10 text-sage rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+            </div>
+            <input type="text"
+                   class="spec-name flex-1 min-w-0 px-3 py-2 bg-surface border border-border-sand rounded-lg focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none text-sm font-medium"
+                   placeholder="اسم المواصفة (مثل: الوزن، المادة)"
+                   value="${name}">
+            <span class="text-text-placeholder text-sm flex-shrink-0">:</span>
+            <input type="text"
+                   class="spec-value flex-[2] min-w-0 px-3 py-2 bg-surface border border-border-sand rounded-lg focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none text-sm"
+                   placeholder="القيمة (مثل: 250 غرام، قطن 100%)"
+                   value="${value}">
+            <button type="button" class="delete-spec-btn p-2 text-text-placeholder hover:text-rose hover:bg-rose/10 rounded-lg transition-all flex-shrink-0" data-spec-id="${id}" title="حذف">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>`;
+
+        specsContainer.appendChild(row);
+
+        row.querySelector('.spec-name').addEventListener('input', function() {
+            spec.name = this.value;
+            updateSpecsUI();
+        });
+        row.querySelector('.spec-value').addEventListener('input', function() {
+            spec.value = this.value;
+            updateSpecsUI();
+        });
+        row.querySelector('.delete-spec-btn').addEventListener('click', function() {
+            specs = specs.filter(s => s.id !== id);
+            row.remove();
+            updateSpecsUI();
+        });
+
+        updateSpecsUI();
+        row.querySelector('.spec-name').focus();
+    }
+
+    addSpecBtn.addEventListener('click', () => createSpecRow());
+
+    document.querySelectorAll('.spec-example-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const exampleSpecs = JSON.parse(this.dataset.specs);
+            specsContainer.innerHTML = '';
+            specs = [];
+            specIdCounter = 0;
+            exampleSpecs.forEach(s => createSpecRow(s.name, s.value));
+            updateSpecsUI();
+        });
+    });
+
+    // Include specs in form submission
+    productForm.addEventListener('submit', function() {
+        specsDataInput.value = JSON.stringify(
+            specs.filter(s => s.name.trim()).map(s => ({ name: s.name, value: s.value }))
+        );
+    }, true); // capture phase so it runs before variant validation
+    // ============================================
+    // ✅ تهيئة بيانات التعديل (إعادة ملء الحقول)
+    // ============================================
+    const isEditMode = "{{ product.id|default:'' }}" !== "";
+
+    if (isEditMode) {
+        const existingOptions = {{ options_json|safe }};
+        const existingVariants = {{ existing_variants_json|safe }};
+        const existingSpecs = {{ specs_json|safe }};
+
+        // 1. تعبئة المواصفات القديمة
+        if (existingSpecs && existingSpecs.length > 0) {
+            existingSpecs.forEach(s => createSpecRow(s.name, s.value));
+        }
+
+        // 2. تعبئة خيارات المتغيرات القديمة (مثل: اللون، الحجم)
+        if (existingOptions && existingOptions.length > 0) {
+            existingOptions.forEach(opt => {
+                createOptionBlock(opt.name, opt.values);
+            });
+
+            // 3. توليد المتغيرات برمجياً بعد تحميل الخيارات
+            setTimeout(() => {
+                const validOptions = options.filter(o => o.name.trim() && o.values.length > 0);
+                generatedVariants = generateCombinations(validOptions);
+                populateBulkFilter(validOptions);
+                renderVariants(validOptions);
+                
+                variantsSection.classList.remove('hidden');
+                variantsCountEl.textContent = `${generatedVariants.length} متغير`;
+
+                // 4. ملء بيانات الأسعار والمخزون للمتغيرات القديمة
+                if (existingVariants && existingVariants.length > 0) {
+                    existingVariants.forEach(ev => {
+                        const card = variantsList.querySelector(`[data-variant-key="${ev.key}"]`);
+                        if (card) {
+                            if (ev.sku) card.querySelector('.v-sku').value = ev.sku;
+                            if (ev.price) card.querySelector('.v-price').value = ev.price;
+                            if (ev.old_price) card.querySelector('.v-old-price').value = ev.old_price;
+                            if (ev.stock) card.querySelector('.v-stock').value = ev.stock;
+                            if (ev.is_main) card.querySelector('.main-variant-cb').checked = true;
+                            
+                            // عرض صورة المتغير إن وُجدت
+                            if (ev.image_url) {
+                                const imgPreview = card.querySelector('.v-img-preview');
+                                imgPreview.innerHTML = `<img src="${ev.image_url}" class="w-full h-full object-cover">`;
+                            }
+                        }
+                    });
+                }
+            }, 200); // تأخير بسيط لضمان تحميل الـ DOM
+        }
+    }
+
+});
+// ============================================
+// ✅ تهيئة Select2 بطريقة آمنة (تنتظر jQuery)
+// ============================================
+function initializeSelect2() {
+    // التحقق من أن jQuery و Select2 قد تم تحميلهما بالكامل
+    if (typeof window.jQuery === 'undefined' || typeof jQuery.fn.select2 === 'undefined') {
+        // إذا لم يتم تحميلهما بعد، ننتظر 100 مللي ثانية ونحاول مرة أخرى
+        setTimeout(initializeSelect2, 100);
+        return;
+    }
+
+    // الآن يمكننا تشغيل Select2 بأمان
+    jQuery(document).ready(function($) {
+        $('#brand-select').select2({
+            placeholder: "اختر أو اكتب علامة تجارية",
+            tags: true, // يسمح بكتابة اسم جديد
+            width: '100%',
+            dir: "rtl", // دعم اللغة العربية
+            allowClear: true, // إضافة زر مسح (X)
+            language: {
+                noResults: function() {
+                    return "لا توجد نتائج. اكتب واضغط Enter لإضافة علامة جديدة.";
+                },
+                searching: function() {
+                    return "جاري البحث...";
+                }
+            },
+            createTag: function (params) {
+                let term = $.trim(params.term);
+                if (term === '') {
+                    return null;
+                }
+                // إرجاع العلامة الجديدة كخيار
+                return {
+                    id: term,
+                    text: term,
+                    newTag: true 
+                };
+            }
+        });
+
+        // ✅ إصلاح إضافي: إذا كان المنتج يحتوي على علامة تجارية عند التعديل
+        // نقوم بتعيين قيمتها بشكل صحيح لتظهر في القائمة
+        
+    });
+}
+
+// بدء عملية التهيئة
+initializeSelect2();
+    
+</script>
+{% endblock %}
