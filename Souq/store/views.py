@@ -2,6 +2,7 @@ import json
 import uuid
 import re
 import random
+import hashlib
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -13,11 +14,10 @@ from django.http import JsonResponse
 from django.db.models import Q, Count, Min, Max, Sum
 from django.core.paginator import Paginator
 from django.utils.text import slugify
-
 from .models import (
     Category, Product, ProductVariant, ProductAttribute, 
-    Wishlist, Cart, CartItem, Order, OrderItem, 
-    ProductImage, ProductVideo, Brand, WishlistItem
+    Wishlist, Cart, CartItem, Order, OrderItem, Brand,
+    ProductVideo, Brand, WishlistItem, SubscriptEmail, VariantImage
 )
 from .forms import ProductForm, ProductVariantForm
 
@@ -49,7 +49,13 @@ def home(request):
         wishlist_product_ids = list(
             Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)
         )
-
+    subscriptEmail = request.GET.get('subscriptEmail')
+    if subscriptEmail:
+        obj, created = SubscriptEmail.objects.get_or_create(
+            email=subscriptEmail
+        )
+        if created :
+            send_newsletter_welcome(to_email=subscriptEmail, username= request.user.username or 'صديقنا')
     context = {
         'categories': categories,
         'featured_products': featured_products,
@@ -58,6 +64,32 @@ def home(request):
         'wishlist_product_ids': wishlist_product_ids,
     }
     return render(request, 'store/home.html', context)
+
+def send_newsletter_welcome(to_email, username=None):
+    """Send newsletter subscription welcome email"""
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+    from django.utils.html import strip_tags
+    from django.conf import settings
+    import threading
+
+    subject = '📩 مرحباً بك في النشرة اليومية!'
+    
+    html_message = render_to_string('emails/newsletter.html', {
+        'username': username or 'صديقنا',
+    })
+    
+    plain_message = strip_tags(html_message)
+
+    kwargs = {
+        'subject': subject,
+        'message': plain_message,
+        'from_email': settings.DEFAULT_FROM_EMAIL,
+        'recipient_list': [to_email],
+        'html_message': html_message,
+    }
+    
+    threading.Thread(target=send_mail, kwargs=kwargs, daemon=True).start()
 # ============================================
 # PRODUCT VIEWS
 # ============================================
@@ -150,38 +182,27 @@ def product_detail(request, slug):
 
     attr_map = {}     
     variants_json = []
+    variant_images = VariantImage.objects.filter(
+        product=product
+    ).prefetch_related('variants')
 
+    # صور في gallery (كل الصور)
+    all_images = [
+        {
+            'id': img.id,
+            'url': img.image.url,
+            'is_main': img.is_main,
+            'variant_ids': list(img.variants.values_list('id', flat=True)),
+        }
+        for img in variant_images
+    ]
     for v in variants:
-        # ✅ التأكد من أن attributes قاموس، وإذا كان نصاً نتعامل معه
         raw_attrs = v.attributes if isinstance(v.attributes, dict) else {}
-        
-        for attr_name, attr_value in raw_attrs.items():
-            
-            # ✅ معالجة مرنة لقيمة الخاصية (لتجنب الخطأ الحالي)
-            if isinstance(attr_value, dict):
-                # إذا كانت القيمة نفسها قاموساً (مثال: {"value": "أحمر", "id": 5})
-                actual_value = attr_value.get('value', str(attr_value))
-            else:
-                # إذا كانت القيمة نصاً عادياً (مثال: "أحمر")
-                actual_value = str(attr_value)
 
-            if attr_name not in attr_map:
-                attr_map[attr_name] = {}
-                
-            # ✅ استخدام النص المستخرص بدلاً من الكائن المعقد
-            if actual_value not in attr_map[attr_name]:
-                attr_map[attr_name][actual_value] = {
-                    'value': actual_value,
-                    'variant_id': v.id,
-                    'price': str(v.price),
-                    'old_price': str(v.old_price) if v.old_price else None,
-                    'discount': v.discount or 0,
-                    'stock': v.stock,
-                    'sku': v.sku,
-                    'image': v.image.url if v.image else None,
-                }
+        # صورة المتغير من الموديل الجديد
+        main_img = v.images.filter(is_main=True).first() or v.images.first()
+        v_image = main_img.image.url if main_img else None
 
-        # تجهيز بيانات الـ JSON للجافاسكربت (يجب أن يحتوي attributes على أزواج نصية)
         clean_attributes_for_json = {}
         for attr_name, attr_value in raw_attrs.items():
             if isinstance(attr_value, dict):
@@ -197,10 +218,22 @@ def product_detail(request, slug):
             'old_price': str(v.old_price) if v.old_price else None,
             'discount': v.discount or 0,
             'stock': v.stock,
-            'image': v.image.url if v.image else None,
+            'image': v_image,
+            'image_id': main_img.id if main_img else None,
             'is_main': v.is_main,
-            'attributes': clean_attributes_for_json,  
+            'attributes': clean_attributes_for_json,
         })
+
+        # ✅ تعبئة attr_map بالخيارات المتاحة لتعرض في القالب
+        for attr_name, attr_value in clean_attributes_for_json.items():
+            if attr_name not in attr_map:
+                attr_map[attr_name] = {}
+            
+            if attr_value not in attr_map[attr_name]:
+                attr_map[attr_name][attr_value] = {
+                    'value': attr_value,
+                    'image': main_img,  # سنستخدم أول صورة نجدها لهذه القيمة (مثل لون معين)
+                }
 
     variant_attributes = {
         attr_name: list(values.values())
@@ -212,7 +245,7 @@ def product_detail(request, slug):
     max_price = max(prices) if prices else None
     has_price_range = min_price != max_price
 
-    images  = ProductImage.objects.filter(product=product)
+    
     videos = ProductVideo.objects.filter(product=product)
     reviews = product.reviews.all().order_by('-created_at')[:10]
     related_products = Product.objects.filter(
@@ -230,15 +263,18 @@ def product_detail(request, slug):
         'has_price_range': has_price_range,
         'min_price': min_price,
         'max_price': max_price,
-        'images': images,
         'videos': videos,
         'reviews': reviews,
         'related_products': related_products,
         'product_attributes': product_attributes,
         'is_owner': request.user == product.seller if request.user.is_authenticated else False,
+        'all_images': json.dumps(all_images, ensure_ascii=False),
+        'variant_images': variant_images,
     }
     
     return render(request, 'store/product_detail.html', context)
+
+
 
 @login_required
 def product_copy(request, pk):
@@ -306,12 +342,133 @@ def get_default_variant(product):
 def cart(request):
     cart_obj, created = get_or_create_cart(request)
     cart_items = cart_obj.items.select_related('variant__product').all()
-    context = {
-        'cart': cart_obj,
-        'cart_items': cart_items,
-    }
-    return render(request, 'store/cart.html', context)
 
+    for item in cart_items:
+        variant = item.variant
+        product = variant.product
+
+        # جلب كل متغيرات نفس المنتج
+        all_variants = ProductVariant.objects.filter(product=product)
+
+        # === بناء attr_map بنفس طريقة product_detail بالضبط ===
+        attr_map = {}
+        main_img = variant.images.filter(is_main=True).first() or variant.images.first()
+        item.variant_image = main_img.image.url if main_img else None
+        for v in all_variants:
+            raw_attrs = v.attributes if isinstance(v.attributes, dict) else {}
+
+            for attr_name, attr_value in raw_attrs.items():
+                if isinstance(attr_value, dict):
+                    actual_value = attr_value.get('value', str(attr_value))
+                else:
+                    actual_value = str(attr_value)
+
+                if attr_name not in attr_map:
+                    attr_map[attr_name] = {}
+
+                if actual_value not in attr_map[attr_name]:
+                    attr_map[attr_name][actual_value] = {
+                        'value': actual_value,
+                        'variant_id': v.id,
+                        'price': str(v.price),
+                        'old_price': str(v.old_price) if v.old_price else None,
+                        'discount': v.discount or 0,
+                        'stock': v.stock,
+                        'sku': v.sku,
+                        'image': main_img.image.url if main_img else None,
+                    }
+
+        # === استخراج القيم الحالية للمتغير المختار ===
+        current_raw = variant.attributes if isinstance(variant.attributes, dict) else {}
+        clean_current = {}
+        for attr_name, attr_value in current_raw.items():
+            if isinstance(attr_value, dict):
+                clean_current[attr_name] = attr_value.get('value', str(attr_value))
+            else:
+                clean_current[attr_name] = str(attr_value)
+
+        # === بناء القائمة النهائية لكل خاصية ===
+        variant_attributes = []
+        for attr_name, values in attr_map.items():
+            current_value = clean_current.get(attr_name, '')
+
+            options = []
+            for val_data in values.values():
+                option = dict(val_data)
+                option['current'] = (option['value'] == current_value)
+                options.append(option)
+
+            variant_attributes.append({
+                'name': attr_name,
+                'value': current_value,
+                'options': options,
+            })
+
+        item.variant_attributes = variant_attributes
+
+    return render(request, 'store/' \
+    'cart.html', {'cart_items': cart_items})
+
+import json
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_protect
+
+@require_POST
+@csrf_protect
+def update_cart_variant(request):
+    try:
+        data = json.loads(request.body)
+        current_variant_id = data.get('current_variant_id')
+        new_variant_id = data.get('new_variant_id')
+
+        if not current_variant_id or not new_variant_id:
+            return JsonResponse({'error': 'بيانات ناقصة'}, status=400)
+
+        if str(current_variant_id) == str(new_variant_id):
+            return JsonResponse({'success': True})
+
+        cart, created = get_or_create_cart(request)
+
+        # عنصر السلة الحالي
+        cart_item = CartItem.objects.get(
+            cart=cart, variant_id=current_variant_id
+        )
+
+        # المتغير الجديد
+        new_variant = ProductVariant.objects.select_related('product').get(
+            id=new_variant_id
+        )
+
+        # التحقق من التوفر
+        if new_variant.stock <= 0:
+            return JsonResponse({'error': 'هذا المتغير غير متوفر في المخزن'})
+
+        # التحقق أنه نفس المنتج
+        if new_variant.product_id != cart_item.variant.product_id:
+            return JsonResponse({'error': 'متغير غير صالح'})
+
+        # هل المتغير الجديد موجود أصلاً في السلة؟
+        existing_item = CartItem.objects.filter(
+            cart=cart, variant_id=new_variant_id
+        ).first()
+
+        if existing_item:
+            existing_item.quantity += cart_item.quantity
+            existing_item.save(update_fields=['quantity'])
+            cart_item.delete()
+        else:
+            cart_item.variant = new_variant
+            cart_item.save(update_fields=['variant'])
+
+        return JsonResponse({'success': True})
+
+    except CartItem.DoesNotExist:
+        return JsonResponse({'error': 'العنصر غير موجود في السلة'}, status=404)
+    except ProductVariant.DoesNotExist:
+        return JsonResponse({'error': 'المتغير غير موجود'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 def cart_count(request):
     try:
@@ -333,6 +490,11 @@ def add_to_cart(request):
                 return JsonResponse({'success': False, 'message': 'الكمية غير صالحة'})
 
             product = get_object_or_404(Product, pk=product_id, is_active=True)
+            
+            # منع صاحب المنتج من إضافة منتجه للسلة
+            if request.user.is_authenticated and product.seller == request.user:
+                return JsonResponse({'success': False, 'message': 'لا يمكنك إضافة منتجك الخاص إلى السلة'})
+                
             variant = get_object_or_404(ProductVariant, pk=variant_id, product=product) if variant_id else get_default_variant(product)
             
             if variant.stock < quantity:
@@ -576,7 +738,7 @@ def orders(request):
 
 
 def order_detail(request, pk):
-    order = get_object_or_404(Order, pk=pk)
+    order = get_object_or_404(Order, id=pk)
     
     has_access = False
     if request.user.is_authenticated and order.user == request.user:
@@ -618,7 +780,7 @@ def track_order(request):
 def cancel_order(request, pk):
     if request.method == 'POST':
         try:
-            order = get_object_or_404(Order, pk=pk, user=request.user)
+            order = get_object_or_404(Order, id=pk, user=request.user)
             if order.status != 'pending':
                 return JsonResponse({'success': False, 'message': 'لا يمكن إلغاء هذا الطلب في حالته الحالية'})
             order.status = 'cancelled'
@@ -673,7 +835,7 @@ def merchant_order_detail(request, pk):
     # جلب الطلب بشرط أن يحتوي على منتج من هذا التاجر
     order = get_object_or_404(
         Order, 
-        pk=pk, 
+        id=pk, 
         items__product__seller=request.user
     )
     
@@ -715,7 +877,7 @@ def merchant_update_order_status(request, pk):
             if new_status not in valid_statuses:
                 return JsonResponse({'success': False, 'message': 'حالة غير صالحة'})
             
-            order = get_object_or_404(Order, pk=pk, items__product__seller=request.user)
+            order = get_object_or_404(Order, id=pk, items__product__seller=request.user)
             order.status = new_status
             
             # حفظ رقم التتبع إذا تم إرساله
@@ -832,54 +994,108 @@ def product_create(request):
             product = form.save(commit=False)
             product.seller = request.user
             
-            # ✅ التعامل مع العلامة التجارية (Select2 tags)
-            brand_val = request.POST.get('brand')
-            if brand_val:
-                if brand_val.isdigit():
-                    product.brand_id = int(brand_val)
-                else:
-                    brand_obj, _ = Brand.objects.get_or_create(
-                        name=brand_val, 
-                        defaults={'slug': slugify(brand_val)}
-                    )
-                    product.brand = brand_obj
+            # ✅ معالجة brand
+            brand_id = request.POST.get('brand')
+            other_brand = request.POST.get('other_brand')
+            
+            if brand_id and brand_id != '' and brand_id != 'other':
+                try:
+                    product.brand_id = int(brand_id)
+                except (ValueError, TypeError):
+                    product.brand_id = None
+            elif other_brand:
+                obj, _ = Brand.objects.get_or_create(name=other_brand)
+                product.brand = obj
+            else:
+                default_brand, _ = Brand.objects.get_or_create(
+                    name='غير محدد', defaults={'name': 'غير محدد'}
+                )
+                product.brand = default_brand
             
             product.save()
+            form.save_m2m()
             
-            if request.FILES.get('image'):
-                ProductImage.objects.create(product=product, image=request.FILES['image'], is_main=True)
-            for image in request.FILES.getlist('images'):
-                ProductImage.objects.create(product=product, image=image, is_main=False)
             if request.FILES.get('video'):
                 ProductVideo.objects.create(product=product, video=request.FILES['video'])
 
             specs_data = json.loads(request.POST.get('specs_data', '[]'))
             for spec in specs_data:
-                ProductAttribute.objects.create(product=product, name=spec.get('name'), value=spec.get('value'))
+                ProductAttribute.objects.create(
+                    product=product, 
+                    name=spec.get('name'), 
+                    value=spec.get('value')
+                )
 
-            # ✅ إصلاح: حفظ المتغيرات باستخدام JSONField
-            variant_keys = [key.replace('_combination', '') for key in request.POST.keys() if key.endswith('_combination')]
+            # ✅ إنشاء المتغيرات مع صور مشتركة
+            import random
+            variant_keys = [
+                key.replace('_combination', '') 
+                for key in request.POST.keys() 
+                if key.endswith('_combination')
+            ]
+
+            # الخطوة 1: إنشاء المتغيرات بدون صور
+            created_variants = []
             for idx, key in enumerate(variant_keys):
-                import random
                 i = str(random.randint(10, 20))
                 j = str(random.randint(1, 10))
                 combination = json.loads(request.POST.get(f'{key}_combination', '{}'))
                 price = float(request.POST.get(f'{key}_price', 0))
                 old_price = float(request.POST.get(f'{key}_old_price', 0)) or None
                 stock = int(request.POST.get(f'{key}_stock', 0))
-                sku = request.POST.get(f'{key}_sku', f'{product.sku}-{i,j}')
-                image = request.FILES.get(f'{key}_image')
+                sku = request.POST.get(f'{key}_sku', f'{product.sku}-{i},{j}')
+                image_file = request.FILES.get(f'{key}_image')
                 is_main = request.POST.get('is_main') == key
                 
                 variant = ProductVariant.objects.create(
-                    product=product, name=' / '.join(combination.values()),
+                    product=product,
+                    name=' / '.join(combination.values()),
                     sku=sku or f'{product.id}-V{idx+1}',
-                    price=price, old_price=old_price, stock=stock,
-                    is_main=is_main, image=image, attributes=combination
+                    price=price,
+                    old_price=old_price,
+                    stock=stock,
+                    is_main=is_main,
+                    attributes=combination
                 )
                 if old_price and old_price > price:
                     variant.discount = int(((old_price - price) / old_price) * 100)
                     variant.save(update_fields=['discount'])
+                
+                created_variants.append({
+                    'variant': variant,
+                    'combination': combination,
+                    'image_file': image_file,
+                    'is_main': is_main,
+                })
+
+            # الخطوة 2: تجميع الصور حسب المحتوى (Deduplication by Hash) لضمان عدم تكرار الملفات
+            hash_to_vi = {}
+            first_image_created = False
+
+            for item in created_variants:
+                variant = item['variant']
+                image_file = item['image_file']
+
+                if image_file:
+                    # حساب الهاش للملف للتأكد من عدم تكراره وتقليل مساحة التخزين
+                    hasher = hashlib.md5()
+                    for chunk in image_file.chunks():
+                        hasher.update(chunk)
+                    f_hash = hasher.hexdigest()
+
+                    if f_hash in hash_to_vi:
+                        variant_image = hash_to_vi[f_hash]
+                    else:
+                        variant_image = VariantImage.objects.create(
+                            product=product,
+                            image=image_file,
+                            is_main=(not first_image_created),
+                        )
+                        hash_to_vi[f_hash] = variant_image
+                        first_image_created = True
+
+                    # ربط المتغير بالصورة
+                    variant_image.variants.add(variant)
 
             messages.success(request, 'تم إنشاء المنتج بنجاح')
             return redirect('store:merchant_products')
@@ -887,10 +1103,11 @@ def product_create(request):
         form = ProductForm()
     
     return render(request, 'store/product_form.html', {
-        'form': form, 
+        'form': form,
         'categories': Category.objects.filter(is_active=True),
-        'brands': Brand.objects.all(), # ✅ إرسال العلامات التجارية للقالب
+        'brands': Brand.objects.all(),
     })
+
 
 @login_required
 def product_update(request, pk):
@@ -903,50 +1120,154 @@ def product_update(request, pk):
 
             # ✅ التعامل مع العلامة التجارية
             brand_val = request.POST.get('brand')
-            if brand_val:
+            other_brand = request.POST.get('other_brand')
+            
+            if brand_val and brand_val != '' and brand_val != 'other':
                 if brand_val.isdigit():
                     product.brand_id = int(brand_val)
                 else:
                     brand_obj, _ = Brand.objects.get_or_create(
-                        name=brand_val, 
+                        name=brand_val,
                         defaults={'slug': slugify(brand_val)}
                     )
                     product.brand = brand_obj
+            elif other_brand:
+                obj, _ = Brand.objects.get_or_create(name=other_brand)
+                product.brand = obj
             else:
                 product.brand = None
             product.save(update_fields=['brand'])
-
-            for image in request.FILES.getlist('images'):
-                ProductImage.objects.create(product=product, image=image)
 
             specs_data = json.loads(request.POST.get('specs_data', '[]'))
             if specs_data:
                 ProductAttribute.objects.filter(product=product).delete()
                 for spec in specs_data:
-                    ProductAttribute.objects.create(product=product, name=spec.get('name'), value=spec.get('value'))
+                    ProductAttribute.objects.create(
+                        product=product,
+                        name=spec.get('name'),
+                        value=spec.get('value')
+                    )
 
-            # ✅ تحديث المتغيرات
-            variant_keys = [key.replace('_combination', '') for key in request.POST.keys() if key.endswith('_combination')]
+            # ✅ تحديث المتغيرات مع الحفاظ على الصور القديمة
+            variant_keys = [
+                key.replace('_combination', '') 
+                for key in request.POST.keys() 
+                if key.endswith('_combination')
+            ]
+
             if variant_keys:
+                # حفظ خريطة الصور القديمة قبل الحذف
+                # first_attr_value -> VariantImage
+                old_image_map = {}
+                for v in product.variants.all():
+                    attrs = v.attributes if isinstance(v.attributes, dict) else {}
+                    first_attr = list(attrs.values())[0] if attrs else None
+                    if first_attr and first_attr not in old_image_map:
+                        try:
+                            old_img = (
+                                v.images.filter(is_main=True).first() 
+                                or v.images.first()
+                            )
+                        except:
+                            old_img = None
+                        if old_img:
+                            old_image_map[first_attr] = old_img
+
+                # حذف المتغيرات القديمة (الربط M2M يزول تلقائياً)
                 product.variants.all().delete()
+
+                # إنشاء المتغيرات الجديدة
+                import random
+                created_variants = []
                 for idx, key in enumerate(variant_keys):
                     combination = json.loads(request.POST.get(f'{key}_combination', '{}'))
                     price = float(request.POST.get(f'{key}_price', 0))
                     old_price = float(request.POST.get(f'{key}_old_price', 0)) or None
                     stock = int(request.POST.get(f'{key}_stock', 0))
                     sku = request.POST.get(f'{key}_sku', '')
-                    image = request.FILES.get(f'{key}_image')
+                    image_file = request.FILES.get(f'{key}_image')
                     is_main = request.POST.get('is_main') == key
 
                     variant = ProductVariant.objects.create(
-                        product=product, name=' / '.join(combination.values()),
+                        product=product,
+                        name=' / '.join(combination.values()),
                         sku=sku or f'{product.id}-V{idx+1}',
-                        price=price, old_price=old_price, stock=stock,
-                        is_main=is_main, image=image, attributes=combination
+                        price=price,
+                        old_price=old_price,
+                        stock=stock,
+                        is_main=is_main,
+                        attributes=combination
                     )
                     if old_price and old_price > price:
                         variant.discount = int(((old_price - price) / old_price) * 100)
                         variant.save(update_fields=['discount'])
+
+                    created_variants.append({
+                        'variant': variant,
+                        'combination': combination,
+                        'image_file': image_file,
+                        'is_main': is_main,
+                        'key': key,  # إضافة المفتاح لاسترجاع البيانات الإضافية من POST
+                    })
+
+                # ربط الصور: الجديدة أولاً (بالاعتماد على الهاش) ثم القديمة كبديل
+                hash_to_vi = {}
+                first_image_created = VariantImage.objects.filter(product=product, is_main=True).exists()
+
+                for item in created_variants:
+                    variant = item['variant']
+                    combination = item['combination']
+                    image_file = item['image_file']
+                    key = item['key']
+                    
+                    # محاولة جلب معرف الصورة القديم من الطلب
+                    existing_img_id = request.POST.get(f'{key}_image_id')
+
+                    if image_file:
+                        # جلب هاش الصورة الجديدة لمنع التكرار
+                        hasher = hashlib.md5()
+                        for chunk in image_file.chunks():
+                            hasher.update(chunk)
+                        f_hash = hasher.hexdigest()
+
+                        if f_hash in hash_to_vi:
+                            variant_image = hash_to_vi[f_hash]
+                        else:
+                            variant_image = VariantImage.objects.create(
+                                product=product,
+                                image=image_file,
+                                is_main=(not first_image_created),
+                            )
+                            hash_to_vi[f_hash] = variant_image
+                            first_image_created = True
+                        
+                        variant_image.variants.add(variant)
+                    
+                    elif existing_img_id and str(existing_img_id).isdigit():
+                        # استخدام الصورة القديمة بناءً على المعرف الصريح (الأكثر دقة)
+                        try:
+                            old_img = VariantImage.objects.get(id=existing_img_id, product=product)
+                            old_img.variants.add(variant)
+                        except VariantImage.DoesNotExist:
+                            pass
+                    
+                    else:
+                        # محاولة أخيرة بناءً على الخاصية الأولى (للخلف)
+                        first_attr_value = (
+                            list(combination.values())[0]
+                            if combination else None
+                        )
+                        if first_attr_value and first_attr_value in old_image_map:
+                            old_img = old_image_map[first_attr_value]
+                            old_img.variants.add(variant)
+
+                # حذف الصور اليتيمة (غير مربوطة بأي متغير)
+                from django.db.models import Count
+                VariantImage.objects.filter(
+                    product=product
+                ).annotate(
+                    v_count=Count('variants')
+                ).filter(v_count=0).delete()
 
             messages.success(request, 'تم تحديث المنتج بنجاح')
             return redirect('store:merchant_products')
@@ -954,20 +1275,27 @@ def product_update(request, pk):
     else:
         form = ProductForm(instance=product)
 
-    # ✅ تجهيز بيانات الخيارات القديمة لملء الواجهة
+    # ✅ تجهيز بيانات الخيارات القديمة
     existing_options = {}
-    for variant in ProductVariant.objects.filter(product=product):
+    for variant in product.variants.all():
         attrs = variant.attributes if isinstance(variant.attributes, dict) else {}
         for key, val in attrs.items():
             if key not in existing_options:
                 existing_options[key] = set()
             existing_options[key].add(val)
-    
-    options_json = json.dumps([{"name": k, "values": list(v)} for k, v in existing_options.items()], ensure_ascii=False)
 
-    # ✅ تجهيز بيانات المتغيرات القديمة لملء الأسعار والمخزون
+    options_json = json.dumps(
+        [{"name": k, "values": list(v)} for k, v in existing_options.items()],
+        ensure_ascii=False
+    )
+    # ✅ تجهيز بيانات المتغيرات القديمة
     existing_variants = []
-    for idx, v in enumerate(ProductVariant.objects.filter(product=product)):
+    for idx, v in enumerate(product.variants.all()):
+        # جلب أول صورة مرتبطة بهذا المتغير
+        img_obj = v.images.first()
+        img_id = img_obj.id if img_obj else None
+        img_url = img_obj.image.url if img_obj else 'https://placehold.co/600x600/F0EBE3/5C8A6E?text=No+Image'
+
         existing_variants.append({
             "key": f"v_{idx}",
             "sku": v.sku or "",
@@ -975,25 +1303,26 @@ def product_update(request, pk):
             "old_price": str(v.old_price) if v.old_price else "",
             "stock": v.stock,
             "is_main": v.is_main,
-            "image_url": v.image.url if v.image else None
+            "image_id": img_id,
+            "image_url": img_url,
         })
 
     # ✅ تجهيز المواصفات القديمة
-    specs_list = list(ProductAttribute.objects.filter(product=product).values('name', 'value'))
+    specs_list = list(
+        ProductAttribute.objects.filter(product=product).values('name', 'value')
+    )
     
     return render(request, 'store/product_form.html', {
-        'form': form, 'product': product,
+        'form': form,
+        'product': product,
         'categories': Category.objects.filter(is_active=True),
         'brands': Brand.objects.all(),
-        'images': ProductImage.objects.filter(product=product),
         'video': ProductVideo.objects.filter(product=product).first(),
-        'variants': ProductVariant.objects.filter(product=product),
+        'variants': product.variants.all(),
         'specs_json': json.dumps(specs_list, ensure_ascii=False),
         'options_json': options_json,
         'existing_variants_json': json.dumps(existing_variants, ensure_ascii=False),
     })
-
-
 
 @login_required
 def product_delete(request, pk):
@@ -1072,6 +1401,13 @@ def toggle_wishlist(request):
             })
 
         product = get_object_or_404(Product, pk=product_id, is_active=True)
+        
+        # ✅ منع صاحب المنتج من إضافة منتجه للمفضلة
+        if product.seller == request.user:
+            return JsonResponse({
+                'success': False,
+                'message': 'لا يمكنك إضافة منتجك الخاص إلى المفضلة'
+            })
         
         if variant_id:
             variant = get_object_or_404(ProductVariant, pk=variant_id, product=product)
@@ -1219,15 +1555,6 @@ def upload_video(request):
 
     return JsonResponse({'success': False})
 
-# ✅ إضافة دوال حذف الصور والفيديو المفقودة
-@csrf_exempt
-def delete_product_image(request, pk):
-    try:
-        image = ProductImage.objects.get(pk=pk)
-        image.delete()
-        return JsonResponse({'success': True})
-    except ProductImage.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'الصورة غير موجودة'})
 
 @csrf_exempt
 def delete_product_video(request, pk):
@@ -1394,3 +1721,50 @@ def admin_delete_product(request, product_id):
         return JsonResponse({'success': True, 'message': 'تم حذف المنتج بنجاح'})
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
+    
+
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.conf import settings
+from django.shortcuts import redirect
+
+def send_help(request):
+    if request.method == "POST":
+        issue_type = request.POST.get('issue_type')
+        description = request.POST.get('description')
+        page_url = request.POST.get('page_url')
+
+        # بيانات المرسل (إذا كان مسجل دخول)
+        user = request.user if request.user.is_authenticated else None
+        username = user.username if user else "زائر"
+        email = user.email if user else "غير متوفر"
+        issue_map = {
+            "bug": "خطأ تقني",
+            "payment": "مشكلة في الدفع",
+            "order": "مشكلة في الطلب",
+            "account": "مشكلة في الحساب",
+            "other": "أخرى",
+        }
+
+        issue_type = issue_map.get(issue_type, issue_type)
+        # توليد HTML
+        html_message = render_to_string('emails/support_email.html', {
+            'username': username,
+            'email': email,
+            'issue_type': issue_type,
+            'description': description,
+            'page_url': page_url,
+        })
+
+        plain_message = strip_tags(html_message)
+
+        send_mail(
+            subject="🛠️ طلب مساعدة جديد",
+            message=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=['souqsupport@gmail.com'],
+            html_message=html_message,
+        )
+
+    return redirect(request.META.get('HTTP_REFERER', '/'))

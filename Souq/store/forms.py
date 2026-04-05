@@ -10,7 +10,7 @@ class ProductForm(forms.ModelForm):
     
     class Meta:
         model = Product
-        fields = ['name', 'category', 'description', 'image', 'brand', 'sku', 'is_active', 'is_featured']
+        fields = ['name', 'category', 'description', 'brand', 'sku', 'is_active', 'is_featured']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all',
@@ -41,7 +41,6 @@ class ProductForm(forms.ModelForm):
         self.fields['brand'].required = False
         self.fields['brand'].queryset = Brand.objects.all() # ✅ إضافة قائمة العلامات التجارية
         self.fields['sku'].required = False
-        self.fields['image'].required = False
         self.fields['is_active'].initial = True
 
 
@@ -50,7 +49,7 @@ class ProductVariantForm(forms.ModelForm):
     
     class Meta:
         model = ProductVariant
-        fields = ['name', 'sku', 'price', 'old_price', 'stock', 'image', 'is_active']
+        fields = ['name', 'sku', 'price', 'old_price', 'stock', 'is_active']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all',

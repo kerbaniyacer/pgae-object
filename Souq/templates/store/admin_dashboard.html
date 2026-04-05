@@ -9,7 +9,7 @@
         <h1 class="font-headline text-3xl font-bold text-text-primary mb-8">لوحة تحكم الإدارة</h1>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div class="bg-surface p-6 rounded-2xl border border-border-sand">
                 <p class="text-text-secondary text-sm">إجمالي المبيعات</p>
                 <p class="text-2xl font-bold text-sage mt-2">{{ total_revenue|floatformat:0 }} د.ج</p>
@@ -34,8 +34,8 @@
             <div class="lg:col-span-2 bg-surface rounded-2xl border border-border-sand p-6">
                 <h2 class="font-semibold text-lg text-text-primary mb-4">المستخدمون المسجلون</h2>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="bg-page-bg text-text-secondary">
+                    <table class="w-full text-sm min-w-[700px]">
+                        <thead class="bg-page-bg text-text-secondary border-b border-border-sand">
                             <tr>
                                 <th class="px-4 py-3 text-right">المستخدم</th>
                                 <th class="px-4 py-3 text-right">النوع</th>
@@ -76,7 +76,7 @@
             </div>
 
             <!-- Side Panels -->
-            <div class="space-y-6">
+            <div class="space-y-6 hidden lg:block">
                 <!-- Guests -->
                 <div class="bg-surface rounded-2xl border border-border-sand p-6">
                     <h2 class="font-semibold text-lg text-text-primary mb-4">الزوار (غير مسجلين)</h2>

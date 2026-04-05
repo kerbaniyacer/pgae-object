@@ -384,7 +384,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmCancelBtn = document.getElementById('confirmCancelBtn');
 
     if (cancelBtn && cancelModal) {
-        cancelBtn.addEventListener('click', () => {
+        cancelBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             cancelModal.classList.remove('hidden');
             cancelModal.classList.add('flex');
         });
@@ -395,7 +397,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         closeCancelModal?.addEventListener('click', hideModal);
-        cancelModal.addEventListener('click', (e) => { if (e.target === cancelModal) hideModal(); });
+        cancelModal.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+             if (e.target === cancelModal) hideModal(); 
+        });
 
         if (confirmCancelBtn) {
             confirmCancelBtn.addEventListener('click', async () => {

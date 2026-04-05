@@ -136,9 +136,8 @@ class Product(models.Model):
     name = models.CharField(max_length=255, verbose_name='اسم المنتج')
     slug = models.SlugField(unique=True, blank=True, verbose_name='الرابط')
     description = models.TextField(verbose_name='الوصف')
-    image = models.ImageField(upload_to='products/', verbose_name='الصورة الرئيسية')
     sku = models.CharField(max_length=50, blank=True, verbose_name='رمز المنتج')
-    brand = models.ForeignKey(Brand, on_delete=models.CASCADE, related_name='products', verbose_name='العلامة التجارية')
+    brand = models.ForeignKey(Brand,null=True,blank=True, on_delete=models.CASCADE, related_name='products', verbose_name='العلامة التجارية')
     is_active = models.BooleanField(default=True, verbose_name='نشط')
     is_featured = models.BooleanField(default=False, verbose_name='مميز')
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0, verbose_name='التقييم')
@@ -185,6 +184,23 @@ class Product(models.Model):
     def get_absolute_url(self):
         return reverse('store:product_detail', args=[self.slug])
 
+    @property
+    def image(self):
+        """جلب الصورة الرئيسية للمنتج من متغيراته - لإرجاع كائن صورة متوافق مع القوالب القديمة"""
+        v = self.variants.filter(is_main=True).first()
+        if not v:
+            v = self.variants.filter(stock__gt=0).first()
+        if not v:
+            v = self.variants.first()
+        
+        if v:
+            # نحاول جلب الصورة الرئيسية للمتغير
+            img = v.images.filter(is_main=True).first()
+            if not img:
+                img = v.images.first()
+            return img.image if img else None
+        return None
+
 class ProductAttribute(models.Model): #Specification    
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='attributes')
     name = models.CharField(max_length=100)
@@ -193,7 +209,7 @@ class ProductAttribute(models.Model): #Specification
     def __str__(self):
         return f"{self.name}: {self.value}"
         
-class ProductVariant(models.Model):#ProductOptions
+class ProductVariant(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants', verbose_name='المنتج')
     name = models.CharField(max_length=100, verbose_name='اسم المتغير', blank=True, default='')
     sku = models.CharField(max_length=100, verbose_name='رمز المتغير')
@@ -201,11 +217,14 @@ class ProductVariant(models.Model):#ProductOptions
     old_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name='السعر القديم')
     discount = models.PositiveIntegerField(default=0, verbose_name='نسبة الخصم')
     stock = models.PositiveIntegerField(default=0, verbose_name='المخزون')
-    image = models.ImageField(upload_to='products/variants/', blank=True, null=True, verbose_name='صورة المتغير')
+    
+    # ✅ تم إزالة حقل image القديم نهائياً
+    
     is_active = models.BooleanField(default=True, verbose_name='نشط')
     attributes = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
     is_main = models.BooleanField(default=False, verbose_name='المتغير الرئيسي')
+
     class Meta:
         unique_together = ['product', 'sku']
         verbose_name = 'متغير المنتج'
@@ -219,13 +238,69 @@ class ProductVariant(models.Model):#ProductOptions
     @property
     def is_in_stock(self):
         return self.stock > 0
+    
+    @property
+    def get_image(self):
+        """أول صورة مرتبطة بهذا المتغير من جدول VariantImage"""
+        img = self.images.filter(is_main=True).first()
+        if not img:
+            img = self.images.first()
+        return img.image.url if img else None
 
-class ProductImage(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='products/')
+    @property
+    def get_main_image_obj(self):
+        """كائن الصورة الرئيسية"""
+        img = self.images.filter(is_main=True).first()
+        if not img:
+            img = self.images.first()
+        return img
+
+class VariantImage(models.Model):
+    product = models.ForeignKey(
+        'Product', 
+        on_delete=models.CASCADE, 
+        related_name='variant_images',
+        verbose_name='المنتج'
+    )
+    image = models.ImageField(
+        upload_to='variants/%Y/%m/', 
+        verbose_name='الصورة'
+    )
+    alt_text = models.CharField(
+        max_length=255, 
+        blank=True, 
+        verbose_name='النص البديل'
+    )
+    variants = models.ManyToManyField(
+        'ProductVariant', 
+        blank=True, 
+        related_name='images',
+        verbose_name='المتغيرات المرتبطة'
+    )
+    is_main = models.BooleanField(
+        default=False, 
+        verbose_name='صورة رئيسية'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'صورة متغير'
+        verbose_name_plural = 'صور المتغيرات'
+        ordering = ['-is_main', 'id']
 
     def __str__(self):
-        return f"Image of {self.product.name}"
+        variant_names = ', '.join(
+            self.variants.values_list('name', flat=True)[:3]
+        )
+        return f"{self.product.name} → {variant_names or 'بدون متغيرات'}"
+
+    def save(self, *args, **kwargs):
+        # لو فعّلناها كرئيسية، نلغي الرئيسية الأخرى لنفس المنتج
+        if self.is_main:
+            VariantImage.objects.filter(
+                product=self.product
+            ).exclude(pk=self.pk).update(is_main=False)
+        super().save(*args, **kwargs)
 
 class ProductVideo(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='videos')
@@ -480,3 +555,10 @@ class Review(models.Model):
 
     def __str__(self):
         return f"تقييم {self.user.username} لـ {self.product.name}"
+
+
+class SubscriptEmail(models.Model):
+    email = models.EmailField(unique=True, verbose_name='البريد الإلكتروني')
+    def __str__(self):
+        return {self.email}
+

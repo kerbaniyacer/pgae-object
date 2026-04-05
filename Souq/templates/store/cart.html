@@ -29,7 +29,7 @@
                 <div class="bg-surface rounded-2xl border border-border-sand p-4 md:p-6 flex gap-4 md:gap-6" data-item-id="{{ item.get_product.id }}">
                     <!-- Product Image -->
                     <div class="w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-[#F0EBE3] flex-shrink-0">
-                        <img src="{{ item.get_product.image.url }}" alt="{{ item.get_product.name }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product'">
+                        <img src="{{ item.variant.image.url }}" alt="{{ item.get_product.name }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product'">
                     </div>
 
                     <!-- Product Info -->
@@ -39,7 +39,53 @@
                                 <a href="{% url 'store:product_detail' item.get_product.slug %}" class="font-medium text-text-primary hover:text-sage transition-colors">
                                     {{ item.get_product.name }}
                                 </a>
-                                <p class="text-sm text-text-secondary mt-1">السعر: <span class="font-price text-sage">{{ item.get_product.price }} د.ج</span></p>
+                                <p class="text-sm text-text-secondary mt-1">السعر: <span class="font-price text-sage">{{ item.variant.price }} د.ج</span></p>
+                                <!-- ويدج اختيار المتغيرات -->
+<div class="variant-selector mt-3 space-y-2 relative" data-current-variant="{{ item.variant.id }}">
+    {% for attr in item.variant_attributes %}
+    <div class="relative">
+        <button type="button" 
+                onclick="toggleVariantDropdown(this)"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-page-bg border border-border-sand rounded-lg text-sm hover:border-sage hover:bg-sage-light/50 transition-all group">
+            <span class="text-text-secondary">{{ attr.name }}:</span>
+            <span class="font-medium text-text-primary group-hover:text-sage transition-colors">{{ attr.value }}</span>
+            <svg class="w-3 h-3 text-text-placeholder group-hover:text-sage transition-colors transform group-hover:rotate-180 duration-200" 
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+        </button>
+
+        <div class="variant-dropdown hidden absolute top-full left-0 mt-2 z-50 bg-white border border-border-sand rounded-xl shadow-lg shadow-black/5 min-w-[220px] py-1.5 overflow-hidden animate-dropdown">
+            {% for option in attr.options %}
+            <button type="button" 
+                    onclick="changeVariant('{{ item.variant.id|escapejs }}', {{ option.variant_id|default:0 }}, this)"
+                    class="w-full text-right px-4 py-2.5 text-sm transition-colors flex items-center justify-between gap-3
+                    {% if option.current %}bg-sage-light/60 text-sage font-medium{% else %}text-text-primary hover:bg-sage-light/30 hover:text-sage{% endif %}
+                    {% if not option.in_stock and not option.current %}opacity-40 cursor-not-allowed{% endif %}"
+                    {% if option.stock <= 0 and not option.current %}disabled{% endif %}>
+                <div class="flex flex-col">
+                    <span>{{ option.value }}</span>
+                    {% if not option.current %}
+                        <span class="text-xs {% if option.stock > 0 %}text-text-placeholder{% else %}text-rose/70{% endif %}">
+                            {% if option.stock > 0 %}
+                                {{ option.price }} د.ج
+                            {% else %}
+                                نفذ المخزن
+                            {% endif %}
+                        </span>
+                    {% endif %}
+                </div>
+                {% if option.current %}
+                    <svg class="w-4 h-4 text-sage flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                {% endif %}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
                             </div>
                             <button onclick="removeItem('{{ item.variant.id }}')" class="text-text-placeholder hover:text-rose transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,13 +97,13 @@
                         <div class="mt-auto flex items-center justify-between pt-4">
                             <!-- Quantity -->
                             <div class="quantity-selector flex items-center gap-2">
-                                <button type="button" onclick="updateQuantity('{{ item.variant.id }}', {{ item.quantity|add:'-1' }})" class="w-8 h-8 flex items-center justify-center bg-page-bg border border-border-sand rounded-lg text-text-secondary hover:bg-sage-light hover:border-sage hover:text-sage transition-all">
+                                <button type="button" onclick="updateQuantity('{{ item.variant.id|escapejs }}', {{ item.quantity|add:'-1'|default:0 }})" class="w-8 h-8 flex items-center justify-center bg-page-bg border border-border-sand rounded-lg text-text-secondary hover:bg-sage-light hover:border-sage hover:text-sage transition-all">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
                                     </svg>
                                 </button>
                                 <input type="number" id="qty_{{ item.variant.id }}" name="quantity_{{ item.variant.id }}" value="{{ item.quantity }}" min="1" data-variant-id="{{ item.variant.id }}" class="w-12 h-8 text-center bg-page-bg border border-border-sand rounded-lg text-text-primary font-medium text-sm quantity-input">
-                                <button type="button" onclick="updateQuantity('{{ item.variant.id }}', {{ item.quantity|add:'1' }})" class="w-8 h-8 flex items-center justify-center bg-page-bg border border-border-sand rounded-lg text-text-secondary hover:bg-sage-light hover:border-sage hover:text-sage transition-all">
+                                <button type="button" onclick="updateQuantity('{{ item.variant.id|escapejs }}', {{ item.quantity|add:'1'|default:0 }})" class="w-8 h-8 flex items-center justify-center bg-page-bg border border-border-sand rounded-lg text-text-secondary hover:bg-sage-light hover:border-sage hover:text-sage transition-all">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                     </svg>
@@ -208,5 +254,138 @@
     // ✅ تأكيد إضافي
     setTimeout(updateCartBadgeNow, 100);
     setTimeout(updateCartBadgeNow, 500);
+
+function toggleVariantDropdown(button) {
+    const dropdown = button.nextElementSibling;
+    const isHidden = dropdown.classList.contains('hidden');
+
+    closeAllVariantDropdowns();
+
+    if (isHidden) {
+        dropdown.classList.remove('hidden');
+    }
+}
+
+function closeAllVariantDropdowns() {
+    document.querySelectorAll('.variant-dropdown').forEach(d => {
+        d.classList.add('hidden');
+    });
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.variant-selector')) {
+        closeAllVariantDropdowns();
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAllVariantDropdowns();
+});
+
+function showVariantLoader(container) {
+    if (getComputedStyle(container).position === 'static') {
+        container.style.position = 'relative';
+    }
+    const overlay = document.createElement('div');
+    overlay.className = 'variant-loading-overlay';
+    overlay.innerHTML = '<div class="variant-loading-spinner"></div>';
+    container.appendChild(overlay);
+    return overlay;
+}
+
+function hideVariantLoader(overlay) {
+    if (overlay && overlay.parentElement) overlay.remove();
+}
+
+async function changeVariant(currentVariantId, newVariantId, buttonEl) {
+    if (buttonEl.disabled) return;
+    if (String(currentVariantId) === String(newVariantId)) {
+        closeAllVariantDropdowns();
+        return;
+    }
+
+    closeAllVariantDropdowns();
+
+    const cartItemEl = buttonEl.closest('[class*="flex-1"]');
+    const loader = showVariantLoader(cartItemEl);
+
+    try {
+        const response = await fetch('/cart/update-variant/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({
+                current_variant_id: parseInt(currentVariantId),
+                new_variant_id: parseInt(newVariantId),
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            if (data.html) {
+                const cartContainer = document.querySelector('[data-cart-container]') || document.querySelector('main');
+                if (cartContainer) {
+                    cartContainer.innerHTML = data.html;
+                } else {
+                    location.reload();
+                }
+            } else {
+                location.reload();
+            }
+        } else {
+            showToast(data.error || 'حدث خطأ أثناء تحديث المتغير', 'error');
+        }
+    } catch (error) {
+        console.error('Variant update error:', error);
+        showToast('تعذر الاتصال بالخادم', 'error');
+    } finally {
+        hideVariantLoader(loader);
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        document.cookie.split(';').forEach(cookie => {
+            cookie = cookie.trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            }
+        });
+    }
+    return cookieValue;
+}
+
+function showToast(message, type = 'info') {
+    const existing = document.querySelector('.toast-notification');
+    if (existing) existing.remove();
+
+    const colors = {
+        error: 'bg-rose text-white',
+        success: 'bg-sage text-white',
+        info: 'bg-gray-800 text-white',
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notification fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-xl shadow-lg text-sm font-medium ${colors[type] || colors.info}`;
+    toast.style.cssText = 'opacity:0; transform:translateX(-50%) translateY(16px); transition:all 0.3s';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+    });
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(16px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 </script>
 {% endblock %}

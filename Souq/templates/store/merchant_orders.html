@@ -9,8 +9,8 @@
         <div class="grid lg:grid-cols-4 gap-8">
             
             <!-- Sidebar -->
-            <div class="lg:col-span-1">
-                <div class="bg-surface rounded-2xl border border-border-sand p-6 sticky top-24">
+            <div class="lg:col-span-1 hidden lg:block">
+                <div class="bg-surface rounded-2xl border border-border-sand p-6 lg:sticky lg:top-24 shadow-sm">
                     <div class="text-center mb-6">
                         <div class="w-20 h-20 mx-auto bg-rose-light rounded-full flex items-center justify-center mb-4">
                             <span class="text-rose font-bold text-2xl">{{ user.username|slice:":1"|upper }}</span>
@@ -110,7 +110,7 @@
                 <!-- Orders Table -->
                 <div class="bg-surface rounded-2xl border border-border-sand overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="w-full">
+                        <table class="w-full min-w-[1000px]">
                             <thead class="bg-page-bg border-b border-border-sand">
                                 <tr>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase">الطلب</th>
@@ -195,12 +195,12 @@
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                             </a>
                                             <!-- Update Status -->
-                                            <button type="button" onclick="openStatusModal('{{ order.pk }}', '{{ order.status }}', '{{ order.tracking_number|default:"" }}')" class="p-2 text-text-secondary hover:text-status-blue hover:bg-status-blue-light rounded-lg transition-colors" title="تحديث الحالة">
+                                            <button type="button" onclick="openStatusModal('{{ order.pk|escapejs }}', '{{ order.status|default:''|escapejs }}', '{{ order.tracking_number|default:''|escapejs }}')" class="p-2 text-text-secondary hover:text-status-blue hover:bg-status-blue-light rounded-lg transition-colors" title="تحديث الحالة">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                             </button>
                                             <!-- Copy Tracking -->
                                             {% if order.tracking_number %}
-                                            <button type="button" onclick="copyTracking('{{ order.tracking_number }}')" class="p-2 text-text-secondary hover:text-taupe hover:bg-taupe-light rounded-lg transition-colors" title="نسخ رقم التتبع: {{ order.tracking_number }}">
+                                            <button type="button" onclick="copyTracking('{{ order.tracking_number|default:''|escapejs }}')" class="p-2 text-text-secondary hover:text-taupe hover:bg-taupe-light rounded-lg transition-colors" title="نسخ رقم التتبع: {{ order.tracking_number }}">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M4 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2m0 0h2a2 2 0 012-2M9 5H7m0 0a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>
                                             </button>
                                             {% endif %}
@@ -267,7 +267,7 @@
         
         <div class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-text-secondary mb-2">الحالة الجديدة</label>
+                <label for="modalStatus" class="block text-sm font-medium text-text-secondary mb-2">الحالة الجديدة</label>
                 <select id="modalStatus" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage outline-none text-sm transition-colors">
                     <option value="pending">قيد الانتظار</option>
                     <option value="confirmed">مؤكد</option>
@@ -280,7 +280,7 @@
             </div>
 
             <div id="trackingNumberField" >
-                <label class="block text-sm font-medium text-text-secondary mb-2">رقم التتبع (مطلوب عند الشحن)</label>
+                <label for="modalTrackingNumber" class="block text-sm font-medium text-text-secondary mb-2">رقم التتبع (مطلوب عند الشحن)</label>
                 <input type="text" id="modalTrackingNumber" class="w-full px-4 py-3 bg-page-bg border border-border-sand rounded-xl focus:border-sage outline-none text-sm" placeholder="أدخل رقم التتبع هنا">
             </div>
         </div>

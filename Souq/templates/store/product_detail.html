@@ -32,15 +32,21 @@
         <div class="grid lg:grid-cols-2 gap-8 lg:gap-12">
             <!-- Product Images -->
             <div class="space-y-4" data-animate>
-                <!-- Main Image -->
+                <!-- Main Media (Image/Video) -->
                 <div class="relative aspect-square bg-[#F0EBE3] rounded-2xl overflow-hidden cursor-zoom-in" id="mainImageContainer">
-                    {% if is_main.image %}
-                    <img id="mainImage" src="{{ is_main.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain" data-lightbox onerror="this.src='https://placehold.co/600x600/F0EBE3/5C8A6E?text=Product'">
+                    {% if is_main.get_image %}
+                    <img id="mainImage" src="{{ is_main.get_image }}" alt="{{ product.name }}" class="w-full h-full object-contain" data-lightbox onerror="this.src='https://placehold.co/600x600/F0EBE3/5C8A6E?text=Product'">
                     {% elif product.image %}
                     <img id="mainImage" src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain" data-lightbox onerror="this.src='https://placehold.co/600x600/F0EBE3/5C8A6E?text=Product'">
                     {% else %}
                     <img id="mainImage" src="https://placehold.co/600x600/F0EBE3/5C8A6E?text=Product" alt="{{ product.name }}" class="w-full h-full object-contain" data-lightbox>
                     {% endif %}
+
+                    <!-- Video Support -->
+                    <video id="mainVideo" class="hidden w-full h-full object-contain focus:outline-none" controls playsinline preload="metadata">
+                        <source src="" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
 
                     {% if is_main.discount > 0 %}
                     <span class="absolute top-4 right-4 px-3 py-1 bg-rose text-white text-sm font-medium rounded-lg">
@@ -56,38 +62,30 @@
                     </div>
                 </div>
 
-                <!-- Videos -->
-                {% if videos %}
-                <div class="flex gap-3 overflow-x-auto pb-2">
-                    {% for video in videos %}
-                    <button class="video-thumbnail flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border-sand hover:border-sage transition-all relative">
-                        <video src="{{ video.video.url }}" class="w-full h-full object-cover" muted></video>
-                        <div class="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z"/>
-                            </svg>
-                        </div>
-                    </button>
-                    {% endfor %}
-                </div>
-                {% endif %}
-
-                <!-- Thumbnails -->
-                <div class="flex gap-3 overflow-x-auto pb-2">
-                    <button class="thumbnail flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 ring-2 ring-sage border-border-sand">
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain" data-image="{{ product.image.url }}">
-                    </button>
-                    {% for img in images %}
-                    <button class="thumbnail flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border-sand hover:border-sage transition-all">
-                        <img src="{{ img.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain" data-image="{{ img.image.url }}">
-                    </button>
-                    {% endfor %}
-                    {% for v in variants %}
-                    {% if v.image %}
-                    <button class="thumbnail variant-image-thumb flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border-sand hover:border-sage transition-all" data-variant-id="{{ v.id }}">
-                        <img src="{{ v.image.url }}" alt="{{ v.name }}" class="w-full h-full object-contain" data-image="{{ v.image.url }}">
-                    </button>
+                <!-- Unified Media Thumbnails (Videos + Images) -->
+                <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide" id="mediaThumbnails">
+                    <!-- Videos First -->
+                    {% if videos %}
+                        {% for video in videos %}
+                        <button class="thumbnail media-thumb flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border-sand hover:border-sage transition-all relative" 
+                                data-type="video" data-src="{{ video.video.url }}">
+                            <video src="{{ video.video.url }}" class="w-full h-full object-cover" muted></video>
+                            <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                </svg>
+                            </div>
+                        </button>
+                        {% endfor %}
                     {% endif %}
+
+                    <!-- Then Images -->
+                    {% for img in variant_images %}
+                    <button class="thumbnail media-thumb flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-border-sand hover:border-sage transition-all" 
+                            data-type="image" data-src="{{ img.image.url }}"
+                            data-variant-ids="{{ img.variants.all|join:',' }}">
+                        <img src="{{ img.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain">
+                    </button>
                     {% endfor %}
                 </div>
             </div>
@@ -277,24 +275,50 @@
                 <!-- Action Buttons -->
 <div class="flex flex-col sm:flex-row gap-3">
     {% if is_owner %}
-        <!-- زر تعديل المنتج -->
-        <a href="{% url 'store:product_update' product.pk %}" class="flex-1 btn-primary px-6 py-4 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-all flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-            تعديل المنتج
-        </a>
+        <!-- أزرار المالك (تعديل وحذف) -->
+        <div class="flex-1 flex flex-col gap-3">
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a href="{% url 'store:product_update' product.pk %}" class="flex-1 btn-primary px-6 py-4 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-all flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    تعديل المنتج
+                </a>
 
-        <!-- زر حذف المنتج (نستخدم Form لحماية CSRF) -->
-        <form method="post" action="{% url 'store:product_delete' product.pk %}" id="deleteProductForm" onsubmit="return confirmDelete(event)">
-            {% csrf_token %}
-            <button type="submit" id="deleteProductBtn" class="w-full sm:flex-1 px-6 py-4 bg-rose text-white rounded-xl font-medium hover:bg-rose-dark transition-all flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-                حذف المنتج
-            </button>
-        </form>
+                <form method="post" action="{% url 'store:product_delete' product.pk %}" class="flex-1" id="deleteProductForm" onsubmit="return confirmDelete(event)">
+                    {% csrf_token %}
+                    <button type="submit" id="deleteProductBtn" class="w-full px-6 py-4 bg-rose text-white rounded-xl font-medium hover:bg-rose-dark transition-all flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        حذف المنتج
+                    </button>
+                </form>
+            </div>
+
+            <!-- أزرار الشراء المعطلة للمالك -->
+            <div class="flex flex-col sm:flex-row gap-3 opacity-50">
+                <button disabled class="flex-1 px-6 py-4 bg-gray-200 text-gray-500 rounded-xl font-medium cursor-not-allowed flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                    إضافة للسلة
+                </button>
+                <button disabled class="flex-1 px-6 py-4 bg-gray-200 text-gray-500 rounded-xl font-medium cursor-not-allowed flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    اشتر الآن
+                </button>
+            </div>
+            <p class="text-xs text-rose font-medium text-center">هذا منتجك الخاص، لا يمكنك شراؤه أو إضافته للسلة.</p>
+        </div>
+
+        <div class="w-14 h-14 flex items-center justify-center bg-sage text-white rounded-xl shadow-sm" title="أنت صاحب هذا المنتج">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
 
     {% else %}
         <!-- أزرار المستخدم العادي -->
@@ -445,8 +469,8 @@
                                     <tr class="border-b border-border-sand last:border-0 hover:bg-page-bg/50 transition-colors">
                                         <td class="px-4 py-3">
                                             <div class="flex items-center gap-2">
-                                                {% if v.image %}
-                                                <img src="{{ v.image.url }}" alt="{{ v.name }}" class="w-8 h-8 rounded object-cover">
+                                                {% if v.get_image %}
+                                                <img src="{{ v.get_image }}" alt="{{ v.name }}" class="w-8 h-8 rounded object-cover">
                                                 {% endif %}
                                                 <span class="text-sm text-text-primary">{{ v.name|default:v.sku }}</span>
                                                 {% if v.is_main %}
@@ -774,7 +798,16 @@
             if (buyNowBtn) buyNowBtn.disabled = true;
         }
 
-        if (variant.image && mainImage) mainImage.src = variant.image;
+        if (variant.image && mainImage) {
+            mainImage.src = variant.image;
+            // عند اختيار متغير، نعود لوضع الصور ونخفي الفيديو
+            const mainVideo = document.getElementById('mainVideo');
+            if (mainVideo) {
+                mainVideo.pause();
+                mainVideo.classList.add('hidden');
+                mainImage.classList.remove('hidden');
+            }
+        }
 
         card.classList.remove('hidden');
         cardName.textContent = variant.name;
@@ -842,19 +875,44 @@
             });
         });
 
-        // Thumbnails
-        const thumbnails = document.querySelectorAll('.thumbnail');
+        // Media Gallery (Unified Thumbnails)
+        const thumbnails = document.querySelectorAll('.media-thumb');
         const mainImage = document.getElementById('mainImage');
+        const mainVideo = document.getElementById('mainVideo');
+
         thumbnails.forEach(thumb => {
-            thumb.addEventListener('click', () => {
-                const img = thumb.querySelector('img');
-                if (img && mainImage) {
-                    mainImage.src = img.dataset.image || img.src;
-                    thumbnails.forEach(t => t.classList.remove('ring-2', 'ring-sage'));
-                    thumb.classList.add('ring-2', 'ring-sage');
+            thumb.addEventListener('click', function(e) {
+                e.preventDefault();
+                const type = this.dataset.type;
+                const src = this.dataset.src;
+
+                thumbnails.forEach(t => t.classList.remove('ring-2', 'ring-sage', 'border-sage'));
+                this.classList.add('ring-2', 'ring-sage', 'border-sage');
+
+                if (type === 'video') {
+                    if (mainImage) mainImage.classList.add('hidden');
+                    if (mainVideo) {
+                        mainVideo.classList.remove('hidden');
+                        mainVideo.src = src;
+                        mainVideo.play();
+                    }
+                } else {
+                    if (mainVideo) {
+                        mainVideo.pause();
+                        mainVideo.classList.add('hidden');
+                    }
+                    if (mainImage) {
+                        mainImage.classList.remove('hidden');
+                        mainImage.src = src;
+                    }
                 }
             });
         });
+
+        // Auto-select first thumbnail (Video is first if exists)
+        if (thumbnails.length > 0) {
+            thumbnails[0].click();
+        }
 
         // Quantity Controls
         const quantityInput = document.getElementById('quantityInput');
@@ -909,7 +967,9 @@
 
         // Handle clicking variant buttons
         document.querySelectorAll('.variant-option-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click',function(e) {
+        e.preventDefault();
+        e.stopPropagation();
                 const attr = btn.dataset.attr;
                 const val = btn.dataset.value;
 
@@ -943,7 +1003,9 @@
 
         thumbnails.forEach(thumb => { const img = thumb.querySelector('img'); if (img) lightboxImages.push(img.dataset.image || img.src); });
 
-        document.getElementById('mainImageContainer')?.addEventListener('click', () => {
+        document.getElementById('mainImageContainer')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
             lightboxImages = [];
             thumbnails.forEach(thumb => { const img = thumb.querySelector('img'); if (img) lightboxImages.push(img.dataset.image || img.src); });
             lightboxIndex = lightboxImages.indexOf(mainImage.src);
@@ -963,7 +1025,9 @@
         document.addEventListener('keydown', (e) => { if (!lightbox.classList.contains('hidden')) { if (e.key === 'Escape') closeLightbox(); if (e.key === 'ArrowLeft') navigateLightbox(-1); if (e.key === 'ArrowRight') navigateLightbox(1); } });
 
         document.querySelectorAll('.video-thumbnail').forEach(thumb => {
-            thumb.addEventListener('click', () => {
+            thumb.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 const video = thumb.querySelector('video');
                 if (video) {
                     const videoModal = document.getElementById('videoModal');

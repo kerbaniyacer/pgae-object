@@ -8,7 +8,6 @@ urlpatterns = [
     # HOME
     # ============================================
     path('', views.home, name='home'),
-
     # ============================================
     # PRODUCTS
     # ============================================
@@ -18,7 +17,6 @@ urlpatterns = [
     path('brand/<slug:slug>/', views.brand_detail, name='brand_detail'),
     path('product/copy/<int:pk>/', views.product_copy, name='product_copy'),
     path('upload-video/', views.upload_video, name='upload_video'),
-    path('delete-product-image/<int:pk>/', views.delete_product_image, name='delete_product_image'),
     path('delete-product-video/<int:pk>/', views.delete_product_video, name='delete_product_video'),
     # ============================================
     # ATTRIBUTES API (للمواصفات)
@@ -32,6 +30,7 @@ urlpatterns = [
     path('cart/add/', views.add_to_cart, name='add_to_cart'),
     path('cart/update/', views.update_cart, name='update_cart'),
     path('cart/remove/', views.remove_from_cart, name='remove_from_cart'),
+    path('cart/update-variant/', views.update_cart_variant, name='cart_update_variant'),
 
     # ============================================
     # CHECKOUT
@@ -75,7 +74,7 @@ urlpatterns = [
     path('admin-panel/user/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
     path('admin-panel/user/<int:user_id>/delete/', views.admin_delete_user, name='admin_delete_user'),
     path('admin-panel/product/<int:product_id>/delete/', views.admin_delete_product, name='admin_delete_product'),
-
+    path('send-help/', views.send_help, name='send_help'),
 ]  
 urlpatterns += [
     path('error/<int:error_code>/', views.error_view, name='error_page'),

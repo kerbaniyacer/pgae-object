@@ -1,8 +1,3 @@
-/**
- * UI Components JavaScript - متجر سوق
- * Handles: Truck Loader, Help Button, Cart Button, Search Loading
- */
-
 (function() {
     'use strict';
 
@@ -24,7 +19,9 @@
         overlay: null,
 
         init: function() {
-            // Create loader HTML
+            // Check if already exists
+            if (document.getElementById('truckLoaderOverlay')) return;
+            
             const loaderHTML = `
                 <div id="truckLoaderOverlay" class="truck-loader-overlay">
                     <div class="truck-wrapper">
@@ -79,124 +76,98 @@
     };
 
     // ============================================
-    // Help Button Functions
+    // Help Modal Functions
     // ============================================
 
-    const HelpButton = {
-        container: null,
+    const HelpModal = {
+        modal: null,
+        closeBtn: null,
+        pageUrlInput: null,
+        initialized: false,
 
         init: function() {
-            // Don't show on auth pages
+            // Don't initialize on auth pages
             if (isAuthPage()) return;
             
-            // Check if already exists
-            if (document.getElementById('helpBtnContainer')) return;
+            // Prevent double initialization
+            if (this.initialized) return;
+            this.initialized = true;
 
-            const helpHTML = `
-                <div id="helpBtnContainer" class="help-btn-container">
-                    <button class="help-btn" id="helpBtn" title="طلب المساعدة" aria-label="طلب المساعدة">
-                        <div class="sparkles">
-                            <span class="sparkle"></span>
-                            <span class="sparkle"></span>
-                            <span class="sparkle"></span>
-                            <span class="sparkle"></span>
-                            <span class="sparkle"></span>
-                            <span class="sparkle"></span>
-                        </div>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                        </svg>
-                        <span class="help-tooltip">تحتاج مساعدة؟</span>
-                    </button>
-                </div>
-            `;
-
-            document.body.insertAdjacentHTML('beforeend', helpHTML);
-            this.container = document.getElementById('helpBtnContainer');
-
-            const btn = document.getElementById('helpBtn');
-            if (btn) {
-                btn.addEventListener('click', this.handleClick);
+            this.modal = document.getElementById('helpModal');
+            this.closeBtn = this.modal ? this.modal.querySelector('.close-btn') : null;
+            this.pageUrlInput = document.getElementById('page_url');
+            
+            if (!this.modal) {
+                console.warn('helpModal not found!');
+                return;
             }
-        },
 
-        handleClick: function(e) {
-            e.preventDefault();
-            if (typeof Souq !== 'undefined' && Souq.showToast) {
-                Souq.showToast('للمساعدة، تواصل معنا عبر WhatsApp أو البريد الإلكتروني', 'info');
+            // Set current page URL
+            if (this.pageUrlInput) {
+                this.pageUrlInput.value = window.location.href;
+            }
+
+            // Close button handler
+            if (this.closeBtn) {
+                this.closeBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.hide();
+                });
+            }
+
+            // Click outside modal to close
+            this.modal.addEventListener('click', (e) => {
+                if (e.target === this.modal) {
+                    this.hide();
+                }
+            });
+
+            // ESC key to close
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.modal.style.display === 'flex') {
+                    this.hide();
+                }
+            });
+
+            // Attach click handler to help button
+            const helpBtn = document.getElementById('helpBtn');
+            if (helpBtn) {
+                helpBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.show();
+                });
+                console.log('Help button handler attached');
             } else {
-                alert('للمساعدة، تواصل معنا عبر:\nWhatsApp: +966 50 000 0000\nالبريد: support@souq.com');
+                console.warn('helpBtn not found!');
             }
         },
 
         show: function() {
-            if (this.container) {
-                this.container.style.display = 'block';
+            if (this.modal) {
+                this.modal.style.display = 'flex';
+                // Update page URL when showing
+                if (this.pageUrlInput) {
+                    this.pageUrlInput.value = window.location.href;
+                }
             }
         },
 
         hide: function() {
-            if (this.container) {
-                this.container.style.display = 'none';
+            if (this.modal) {
+                this.modal.style.display = 'none';
             }
         }
     };
 
     // ============================================
-    // Floating Cart Button Functions
+    // Cart Badge Update Functions
     // ============================================
 
-    const FloatingCartButton = {
-        container: null,
-
+    const CartBadge = {
         init: function() {
-            // Don't show on auth pages
             if (isAuthPage()) return;
-            
-            // Check if already exists
-            if (document.getElementById('floatingCartBtnContainer')) return;
-
-            const cartHTML = `
-                <div id="floatingCartBtnContainer" class="floating-cart-btn-container">
-                    <button class="floating-cart-btn" id="floatingCartBtn" title="عرض السلة" aria-label="عرض السلة">
-                        <div class="sparkles-cart">
-                            <span class="sparkle_cart"></span>
-                            <span class="sparkle_cart"></span>
-                            <span class="sparkle_cart"></span>
-                            <span class="sparkle_cart"></span>
-                            <span class="sparkle_cart"></span>
-                            <span class="sparkle_cart"></span>
-                        </div>
-                        <!-- Cart Icon -->
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                            <line x1="3" y1="6" x2="21" y2="6"></line>
-                            <path d="M16 10a4 4 0 0 1-8 0"></path>
-                        </svg>
-                        <!-- Cart Badge -->
-                        <span class="floating-cart-badge" id="floatingCartBadge">0</span>
-                        <span class="cart-tooltip">السلة</span>
-                    </button>
-                </div>
-            `;
-
-            document.body.insertAdjacentHTML('beforeend', cartHTML);
-            this.container = document.getElementById('floatingCartBtnContainer');
-
-            const btn = document.getElementById('floatingCartBtn');
-            if (btn) {
-                btn.addEventListener('click', this.handleClick);
-            }
-
-            // Fetch initial cart count
             this.updateBadge();
-        },
-
-        handleClick: function(e) {
-            e.preventDefault();
-            window.location.href = '/cart/';
         },
 
         updateBadge: async function() {
@@ -205,57 +176,64 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Update floating badge injected via JS
-                    const badge = document.getElementById('floatingCartBadge');
-                    if (badge) {
-                        badge.textContent = data.count;
-                        badge.style.display = data.count > 0 ? 'flex' : 'none';
-                    }
+                    const count = data.count;
                     
-                    // Update all HTML badges (top nav and base floating)
-                    const badges = document.querySelectorAll('#cartCount, #cartCount_2');
-                    badges.forEach(b => {
-                        b.textContent = data.count;
-                        if (data.count > 0) {
-                            b.classList.remove('hidden');
-                            b.style.display = 'flex';
+                    // Update all cart badges in the page
+                    const badges = document.querySelectorAll('#cartCount, #cartCount_2, #floatingCartBadge');
+                    badges.forEach(badge => {
+                        badge.textContent = count;
+                        if (count > 0) {
+                            badge.classList.remove('hidden');
+                            badge.style.display = 'flex';
                         } else {
-                            b.classList.add('hidden');
-                            b.style.display = 'none';
+                            badge.classList.add('hidden');
+                            badge.style.display = 'none';
                         }
                     });
                 }
             } catch (error) {
                 console.error('Error fetching cart count:', error);
             }
-        },
-
-        show: function() {
-            if (this.container) {
-                this.container.style.display = 'block';
-            }
-        },
-
-        hide: function() {
-            if (this.container) {
-                this.container.style.display = 'none';
-            }
         }
     };
 
     // ============================================
-    // Search Loading State
+    // Search Modal Functions
     // ============================================
 
-    const SearchLoading = {
+    const SearchModal = {
         init: function() {
+            const searchBtn = document.getElementById('searchBtn');
+            const searchModal = document.getElementById('searchModal');
+            const closeSearch = document.getElementById('closeSearch');
             const searchInput = document.getElementById('searchInput');
 
-            if (searchInput) {
-                searchInput.addEventListener('input', debounce(function() {
-                    // Search logic here
-                }, 300));
+            if (!searchBtn || !searchModal) return;
+
+            searchBtn.addEventListener('click', () => {
+                searchModal.style.display = 'flex';
+                if (searchInput) {
+                    setTimeout(() => searchInput.focus(), 100);
+                }
+            });
+
+            if (closeSearch) {
+                closeSearch.addEventListener('click', () => {
+                    searchModal.style.display = 'none';
+                });
             }
+
+            searchModal.addEventListener('click', (e) => {
+                if (e.target === searchModal) {
+                    searchModal.style.display = 'none';
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && searchModal.style.display === 'flex') {
+                    searchModal.style.display = 'none';
+                }
+            });
         }
     };
 
@@ -298,11 +276,13 @@
     // ============================================
 
     function init() {
+        console.log('SouqUI initializing...');
         TruckLoader.init();
-        HelpButton.init();
-        FloatingCartButton.init();
-        SearchLoading.init();
+        HelpModal.init();
+        CartBadge.init();
+        SearchModal.init();
         setupOrderConfirmation();
+        console.log('SouqUI initialized');
     }
 
     // Run initialization
@@ -318,8 +298,8 @@
 
     window.SouqUI = {
         TruckLoader: TruckLoader,
-        HelpButton: HelpButton,
-        FloatingCartButton: FloatingCartButton,
+        HelpModal: HelpModal,
+        CartBadge: CartBadge,
         showLoading: function(message) {
             TruckLoader.show(message);
         },
@@ -330,8 +310,15 @@
             return TruckLoader.showFor(duration, message);
         },
         updateCartBadge: function() {
-            FloatingCartButton.updateBadge();
+            CartBadge.updateBadge();
+        },
+        showHelpModal: function() {
+            HelpModal.show();
+        },
+        hideHelpModal: function() {
+            HelpModal.hide();
         }
     };
 
 })();
+

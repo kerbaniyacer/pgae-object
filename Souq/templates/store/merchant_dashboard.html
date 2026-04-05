@@ -8,8 +8,8 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="grid lg:grid-cols-4 gap-8">
             <!-- Sidebar -->
-            <div class="lg:col-span-1">
-                <div class="bg-surface rounded-2xl border border-border-sand p-6 sticky top-24">
+            <div class="lg:col-span-1 hidden lg:block">
+                <div class="bg-surface rounded-2xl border border-border-sand p-6 lg:sticky lg:top-24 shadow-sm">
                     <!-- Profile Header -->
                     <div class="text-center mb-6">
                         <div class="w-20 h-20 mx-auto bg-rose-light rounded-full flex items-center justify-center mb-4">
@@ -75,7 +75,7 @@
                 </div>
 
                 <!-- Stats Cards -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <div class="bg-surface rounded-2xl border border-border-sand p-6">
                         <div class="flex items-center justify-between">
                             <div>
@@ -144,7 +144,7 @@
                         <a href="{% url 'store:merchant_orders' %}" class="text-sm text-sage hover:text-sage-dark transition-colors">عرض الكل</a>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full">
+                        <table class="w-full min-w-[700px]">
                             <thead class="bg-page-bg">
                                 <tr>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">رقم الطلب</th>

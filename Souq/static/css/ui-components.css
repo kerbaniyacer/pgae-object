@@ -2,9 +2,6 @@
    UI Components Styles - متجر سوق
    ============================================ */
 
-/* ============================================
-   1. Shiny Button Component - الزر اللامع
-   ============================================ */
 
 .shiny-btn {
   position: relative;
@@ -388,14 +385,15 @@
 
 .help-btn-container {
   position: fixed;
-  bottom: 100px;  /* رفع للمسافة بين الزرين */
-  left: 24px;
-  z-index: 1000;
+  bottom: 120px;  /* Significantly higher than cart fab */
+  right: 24px;
+  left: auto;
+  z-index: 995; /* Above cart, below menu */
 }
 
 [dir="rtl"] .help-btn-container {
-  left: auto;
   right: 24px;
+  left: auto;
 }
 
 .help-btn {
@@ -622,247 +620,6 @@
   border-top-color: #4a4a4a;
 }
 
-/* ============================================
-   4. Floating Cart Button - زر السلة العائم
-   ============================================ */
-
-.floating-cart-btn-container {
-  position: fixed;
-  bottom: 100px;
-  right: 24px;
-  z-index: 1000;
-}
-
-[dir="rtl"] .floating-cart-btn-container {
-  right: auto;
-  left: 24px;
-}
-
-.floating-cart-btn {
-  position: relative;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  border: none;
-  background: linear-gradient(135deg, #C9897A 0%, #B57A6A 100%);
-  color: white;
-  cursor: pointer;
-  overflow: visible;
-  box-shadow: 
-    0 4px 15px rgba(201, 137, 122, 0.4),
-    0 2px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.floating-cart-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 
-    0 6px 20px rgba(201, 137, 122, 0.5),
-    0 4px 10px rgba(0, 0, 0, 0.15);
-}
-
-.floating-cart-btn:active {
-  transform: scale(0.95);
-}
-
-.floating-cart-btn svg {
-  position: relative;
-  z-index: 2;
-  width: 26px;
-  height: 26px;
-}
-
-/* Cart Sparkles Container */
-.floating-cart-btn .sparkles-cart {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-/* Cart Sparkle */
-.sparkle_cart {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  background: #5C8A6E;
-  border-radius: 50%;
-  animation: sparkleFloat 2s ease-in-out infinite;
-}
-
-.sparkle_cart::before,
-.sparkle_cart::after {
-  content: '';
-  position: absolute;
-  background: #5C8A6E;
-}
-
-.sparkle_cart::before {
-  width: 2px;
-  height: 10px;
-  top: -2px;
-  left: 2px;
-  border-radius: 2px;
-}
-
-.sparkle_cart::after {
-  width: 10px;
-  height: 2px;
-  top: 2px;
-  left: -2px;
-  border-radius: 2px;
-}
-
-.sparkle_cart:nth-child(1) {
-  top: -5px;
-  left: 50%;
-  animation-delay: 0s;
-}
-
-.sparkle_cart:nth-child(2) {
-  top: 50%;
-  right: -5px;
-  animation-delay: 0.3s;
-}
-
-.sparkle_cart:nth-child(3) {
-  bottom: -5px;
-  left: 50%;
-  animation-delay: 0.6s;
-}
-
-.sparkle_cart:nth-child(4) {
-  top: 50%;
-  left: -5px;
-  animation-delay: 0.9s;
-}
-
-.sparkle_cart:nth-child(5) {
-  top: 0;
-  right: 0;
-  animation-delay: 0.2s;
-}
-
-.sparkle_cart:nth-child(6) {
-  bottom: 0;
-  left: 0;
-  animation-delay: 0.5s;
-}
-
-/* Pulse Ring for Cart */
-.floating-cart-btn::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  background: rgba(201, 137, 122, 0.3);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  animation: pulseRing 2s ease-out infinite;
-  z-index: 0;
-}
-
-/* Cart Badge */
-.floating-cart-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  width: 22px;
-  height: 22px;
-  background: #EF4444;
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-[dir="rtl"] .floating-cart-badge {
-  right: auto;
-  left: -5px;
-}
-
-/* Cart Tooltip */
-.cart-tooltip {
-  position: absolute;
-  bottom: 70px;
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: #2D2D2D;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-[dir="rtl"] .cart-tooltip {
-  left: auto;
-  right: 50%;
-  transform: translateX(50%) translateY(10px);
-}
-
-.cart-tooltip::after {
-  content: '';
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 6px solid #2D2D2D;
-}
-
-[dir="rtl"] .cart-tooltip::after {
-  left: auto;
-  right: 50%;
-  transform: translateX(50%);
-}
-
-.floating-cart-btn:hover .cart-tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-
-[dir="rtl"] .floating-cart-btn:hover .cart-tooltip {
-  transform: translateX(50%) translateY(0);
-}
-
-.dark .cart-tooltip {
-  background: #4a4a4a;
-}
-
-.dark .cart-tooltip::after {
-  border-top-color: #4a4a4a;
-}
-
-/* Dark Mode Cart Button */
-.dark .floating-cart-btn {
-  background: linear-gradient(135deg, #D4A69A 0%, #C9897A 100%);
-  box-shadow: 
-    0 4px 15px rgba(201, 137, 122, 0.3),
-    0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-.dark .floating-cart-btn:hover {
-  box-shadow: 
-    0 6px 20px rgba(201, 137, 122, 0.4),
-    0 4px 10px rgba(0, 0, 0, 0.4);
-}
 
 /* ============================================
    5. Search Loading State - حالة تحميل البحث
@@ -906,12 +663,12 @@
 @media (max-width: 640px) {
   .help-btn-container {
     bottom: 90px;
-    left: 16px;
+    right: 16px;
   }
   
   [dir="rtl"] .help-btn-container {
-    left: auto;
     right: 16px;
+    left: auto;
   }
   
   .floating-cart-btn-container {
@@ -941,4 +698,816 @@
     height: 18px;
     font-size: 10px;
   }
+}
+
+/* Help button styles consolidated above */
+
+.help-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(92, 138, 110, 0.5);
+}
+
+.help-btn-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 40;
+}
+
+[dir="rtl"] .help-btn-container {
+    right: 24px;
+    left: auto;
+}
+
+.help-btn {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5C8A6E, #7bb391);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(92, 138, 110, 0.4);
+    transition: all 0.3s ease;
+}
+
+
+.help-btn svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+    position: relative;
+    z-index: 2;
+}
+
+.help-tooltip {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    right: 50%;
+    transform: translateX(50%);
+    background: #2F3E35;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+
+.help-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    right: 50%;
+    transform: translateX(50%);
+    border: 5px solid transparent;
+    border-top-color: #2F3E35;
+}
+
+.help-btn:hover .help-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Sparkles Animation */
+.sparkles {
+    position: absolute;
+    inset: -5px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.sparkle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #FFD700;
+    box-shadow: 0 0 6px #FFD700;
+    animation: sparkle 1.5s infinite ease-in-out;
+}
+
+.sparkle:nth-child(1) { top: -2px; left: 50%; animation-delay: 0s; }
+.sparkle:nth-child(2) { top: 15%; right: -2px; animation-delay: 0.25s; }
+.sparkle:nth-child(3) { bottom: 15%; right: -2px; animation-delay: 0.5s; }
+.sparkle:nth-child(4) { bottom: -2px; left: 50%; animation-delay: 0.75s; }
+.sparkle:nth-child(5) { bottom: 15%; left: -2px; animation-delay: 1s; }
+.sparkle:nth-child(6) { top: 15%; left: -2px; animation-delay: 1.25s; }
+
+@keyframes sparkle {
+    0%, 100% { 
+        opacity: 0; 
+        transform: scale(0); 
+    }
+    50% { 
+        opacity: 1; 
+        transform: scale(1); 
+    }
+}
+
+/* ============================================
+   Help Modal Styles
+   ============================================ */
+
+.help-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(4px);
+}
+
+.help-content {
+    background: #F8F6F2;
+    border-radius: 20px;
+    padding: 32px;
+    max-width: 500px;
+    width: 100%;
+    position: relative;
+    animation: modalSlideUp 0.3s ease;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.dark .help-content {
+    background: #2d2d2d;
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.help-content h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: #2F3E35;
+}
+
+.dark .help-content h2 {
+    color: #f5f5f5;
+}
+
+.help-content label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    color: #2F3E35;
+}
+
+.dark .help-content label {
+    color: #f5f5f5;
+}
+
+.help-content select,
+.help-content textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #E8E2D9;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    background: white;
+    color: #2F3E35;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.help-content select:focus,
+.help-content textarea:focus {
+    outline: none;
+    border-color: #5C8A6E;
+    box-shadow: 0 0 0 3px rgba(92, 138, 110, 0.1);
+}
+
+.dark .help-content select,
+.dark .help-content textarea {
+    background: #363636;
+    border-color: #4a4a4a;
+    color: #f5f5f5;
+}
+
+.dark .help-content select option {
+    background: #363636;
+    color: #f5f5f5;
+}
+
+.help-content textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.help-content button[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    background: #5C8A6E;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.help-content button[type="submit"]:hover {
+    background: #4a7a5c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(92, 138, 110, 0.3);
+}
+
+.help-content button[type="submit"]:active {
+    transform: translateY(0);
+}
+
+.close-btn {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #E8E2D9;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #2F3E35;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.dark .close-btn {
+    background: #4a4a4a;
+    color: #f5f5f5;
+}
+
+.close-btn:hover {
+    background: #C9897A;
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* ============================================
+   Floating Cart Button Styles
+   ============================================ */
+
+.cart-btn-container {
+    position: fixed;
+    bottom: 32px;
+    left: 24px;
+    z-index: 990;
+}
+
+.cart-btn {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5C8A6E, #7bb391);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(92, 138, 110, 0.4);
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.cart-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(92, 138, 110, 0.5);
+}
+
+.cart-btn svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+    position: relative;
+    z-index: 2;
+}
+
+.cart-tooltip {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2F3E35;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+
+.cart-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #2F3E35;
+}
+
+.cart-btn:hover .cart-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Cart Sparkles */
+.sparkles_cart {
+    position: absolute;
+    inset: -5px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.sparkle_cart {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #FFD700;
+    box-shadow: 0 0 6px #FFD700;
+    animation: sparkle 1.5s infinite ease-in-out;
+}
+
+.sparkle_cart:nth-child(1) { top: -2px; left: 50%; animation-delay: 0s; }
+.sparkle_cart:nth-child(2) { top: 15%; right: -2px; animation-delay: 0.25s; }
+.sparkle_cart:nth-child(3) { bottom: 15%; right: -2px; animation-delay: 0.5s; }
+.sparkle_cart:nth-child(4) { bottom: -2px; left: 50%; animation-delay: 0.75s; }
+.sparkle_cart:nth-child(5) { bottom: 15%; left: -2px; animation-delay: 1s; }
+.sparkle_cart:nth-child(6) { top: 15%; left: -2px; animation-delay: 1.25s; }
+
+/* Cart Badge */
+.cart-badge {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    background: #C9897A;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    z-index: 3;
+    border: 2px solid #F8F6F2;
+}
+
+.dark .cart-badge {
+    border-color: #242424;
+}
+
+/* ============================================
+   Truck Loader Styles
+   ============================================ */
+
+.truck-loader-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    backdrop-filter: blur(4px);
+}
+
+.truck-loader-overlay.active {
+    display: flex;
+}
+
+.truck-wrapper {
+    position: relative;
+    width: 200px;
+    height: 80px;
+    overflow: hidden;
+}
+
+.truck-loader-text {
+    text-align: center;
+    color: white;
+    margin-top: 30px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.dots::after {
+    content: '';
+    animation: dots 1.5s infinite;
+}
+
+@keyframes dots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+}
+
+/* Truck Animation */
+.truck {
+    position: absolute;
+    bottom: 15px;
+    left: -100px;
+    animation: truckMove 2.5s infinite ease-in-out;
+}
+
+.cargo {
+    width: 55px;
+    height: 32px;
+    background: linear-gradient(135deg, #5C8A6E, #4a7a5c);
+    border-radius: 4px 4px 0 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.cabin {
+    width: 22px;
+    height: 26px;
+    background: linear-gradient(135deg, #4a7a5c, #3d6b50);
+    border-radius: 4px 10px 0 0;
+    position: absolute;
+    top: 6px;
+    left: 55px;
+}
+
+.wheel {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #555;
+    border: 2px solid #888;
+    position: absolute;
+    bottom: -6px;
+    animation: wheelSpin 0.4s infinite linear;
+}
+
+.wheel-front { left: 58px; }
+.wheel-back { left: 8px; }
+
+.smoke {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    bottom: 40px;
+    left: 70px;
+    animation: smokeMove 1s infinite;
+}
+
+.smoke:nth-child(2) { animation-delay: 0.3s; }
+.smoke:nth-child(3) { animation-delay: 0.6s; }
+
+.road {
+    position: absolute;
+    bottom: 5px;
+    left: -20px;
+    right: -20px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+}
+
+@keyframes truckMove {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(300px); }
+}
+
+@keyframes wheelSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes smokeMove {
+    0% { opacity: 0.6; transform: translate(0, 0) scale(1); }
+    100% { opacity: 0; transform: translate(15px, -25px) scale(2.5); }
+}
+
+/* ============================================
+   Mobile Responsive
+   ============================================ */
+
+@media (max-width: 640px) {
+    .help-btn-container {
+        bottom: 85px; /* Stay above cart fab on mobile too */
+        right: 20px;
+        left: auto;
+    }
+    
+    .help-btn {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .cart-btn-container {
+        bottom: 16px;
+        left: 16px;
+    }
+    
+    .cart-btn {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .help-content {
+        padding: 24px;
+        margin: 16px;
+    }
+}
+/* ============================================
+   Bulk Image Preview Styles
+   ============================================ */
+
+.bulk-upload-label {
+    transition: all 0.2s ease;
+}
+
+.bulk-upload-label:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(92, 138, 110, 0.15);
+}
+
+/* حركة ظهور المعاينة */
+#bulkImagePreview {
+    animation: bulkPreviewIn 0.3s ease-out;
+}
+
+@keyframes bulkPreviewIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateX(0);
+    }
+}
+
+/* حركة الحذف */
+#bulkImagePreview.removing {
+    animation: bulkPreviewOut 0.2s ease-in forwards;
+}
+
+@keyframes bulkPreviewOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+/* Dark Mode */
+.dark .bulk-upload-label:hover {
+    border-color: #5C8A6E;
+    background-color: rgba(92, 138, 110, 0.1);
+}
+
+.dark #bulkImagePreview img {
+    border-color: #5C8A6E;
+}
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.animate-dropdown {
+    animation: dropdownFadeIn 0.2s ease-out forwards;
+    transform-origin: top left;
+}
+
+.variant-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+    z-index: 40;
+}
+
+.variant-loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2.5px solid var(--color-border-sand, #e5e0d8);
+    border-top-color: var(--color-sage, #8fa89a);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ========================================
+   زر السلة العائم - برتقالي
+   ======================================== */
+
+.cart-fab {
+    position: fixed;
+    bottom: 28px;
+    left: 28px;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #f59e42, #e07b20);
+    color: #fff;
+    box-shadow:
+        0 4px 14px rgba(240, 123, 32, 0.45),
+        0 1px 3px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cart-fab:hover {
+    transform: scale(1.08) translateY(-2px);
+    box-shadow:
+        0 8px 24px rgba(240, 123, 32, 0.5),
+        0 2px 6px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.cart-fab:active {
+    transform: scale(0.95);
+    box-shadow:
+        0 2px 8px rgba(240, 123, 32, 0.35),
+        inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.cart-fab svg {
+    width: 26px;
+    height: 26px;
+    stroke-width: 1.8;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.12));
+}
+
+/* ========================================
+   شارة العدد - بدون إطار أبيض
+   ======================================== */
+
+.cart-fab-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 11px;
+    background: linear-gradient(145deg, #f43f5e, #e11d48);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 22px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(244, 63, 94, 0.5);
+    pointer-events: none;
+    animation: badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes badgePop {
+    0% {
+        transform: scale(0) rotate(-30deg);
+        opacity: 0;
+    }
+    60% {
+        transform: scale(1.2) rotate(5deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes badgeBounce {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(1.3); }
+    50%  { transform: scale(0.9); }
+    70%  { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.cart-fab-badge.bounce {
+    animation: badgeBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cart-fab-badge.hidden {
+    display: none;
+}
+
+/* ========================================
+   النقاط الذهبية
+   ======================================== */
+
+.cart-fab::before,
+.cart-fab::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.cart-fab::before {
+    width: 6px;
+    height: 6px;
+    background: radial-gradient(circle, #d4a853, #c49a3c);
+    top: 4px;
+    left: 6px;
+    box-shadow:
+        14px 18px 0 1px rgba(212, 168, 83, 0.7),
+        -6px 20px 0 0px rgba(212, 168, 83, 0.4);
+}
+
+.cart-fab::after {
+    width: 4px;
+    height: 4px;
+    background: radial-gradient(circle, #e0be6a, #d4a853);
+    bottom: 8px;
+    right: 0px;
+    box-shadow:
+        8px -14px 0 0.5px rgba(224, 190, 106, 0.6),
+        -10px -8px 0 0px rgba(224, 190, 106, 0.3);
+}
+
+.cart-fab:hover::before,
+.cart-fab:hover::after {
+    opacity: 1;
+}
+
+/* ========================================
+   موبايل
+   ======================================== */
+
+@media (max-width: 640px) {
+    .cart-fab {
+        width: 54px;
+        height: 54px;
+        bottom: 20px;
+        left: 20px;
+    }
+
+    .cart-fab svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .cart-fab-badge {
+        min-width: 20px;
+        height: 20px;
+        font-size: 11px;
+        line-height: 20px;
+        padding: 0 5px;
+    }
 }

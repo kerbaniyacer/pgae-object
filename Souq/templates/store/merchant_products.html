@@ -8,8 +8,8 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="grid lg:grid-cols-4 gap-8">
             <!-- Sidebar -->
-            <div class="lg:col-span-1">
-                <div class="bg-surface rounded-2xl border border-border-sand p-6 sticky top-24">
+            <div class="lg:col-span-1 hidden lg:block">
+                <div class="bg-surface rounded-2xl border border-border-sand p-6 lg:sticky lg:top-24 shadow-sm">
                     <!-- Profile Header -->
                     <div class="text-center mb-6">
                         <div class="w-20 h-20 mx-auto bg-rose-light rounded-full flex items-center justify-center mb-4">
@@ -100,9 +100,9 @@
 
                 <!-- Filters -->
                 <div class="bg-surface rounded-2xl border border-border-sand p-4 mb-6">
-                    <form method="get" class="flex flex-col md:flex-row gap-4">
+                    <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <!-- Search -->
-                        <div class="flex-1 relative">
+                        <div class="lg:col-span-1 relative">
                             <input type="text" name="search" value="{{ request.GET.search }}" placeholder="ابحث في المنتجات..." class="w-full pl-4 pr-10 py-2.5 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm">
                             <svg class="w-5 h-5 text-text-placeholder absolute right-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -110,41 +110,36 @@
                         </div>
                         
                         <!-- Category Filter -->
-                        <select name="category" class="px-4 py-2.5 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm text-text-primary">
+                        <select name="category" class="w-full px-4 py-2.5 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm text-text-primary">
                             <option value="">جميع الفئات</option>
                             {% for cat in categories %}
                             <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
-                            {% empty %}
-                            <option value="1">إلكترونيات</option>
-                            <option value="2">أزياء</option>
-                            <option value="3">المنزل</option>
-                            <option value="4">الجمال</option>
                             {% endfor %}
                         </select>
 
                         <!-- Status Filter -->
-                        <select name="status" class="px-4 py-2.5 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm text-text-primary">
+                        <select name="status" class="w-full px-4 py-2.5 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm text-text-primary">
                             <option value="">جميع الحالات</option>
                             <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>نشط</option>
                             <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>غير نشط</option>
                             <option value="low_stock" {% if request.GET.status == 'low_stock' %}selected{% endif %}>مخزون منخفض</option>
                         </select>
 
-                        <!-- Sort -->
-                        <select name="sort" class="px-4 py-2.5 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm text-text-primary">
-                            <option value="-created_at" {% if request.GET.sort == '-created_at' or not request.GET.sort %}selected{% endif %}>الأحدث</option>
-                            <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>الأقدم</option>
-                            <option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>الاسم (أ-ي)</option>
-                            <option value="-name" {% if request.GET.sort == '-name' %}selected{% endif %}>الاسم (ي-أ)</option>
-                            <option value="-price" {% if request.GET.sort == '-price' %}selected{% endif %}>السعر (الأعلى)</option>
-                            <option value="price" {% if request.GET.sort == 'price' %}selected{% endif %}>السعر (الأقل)</option>
-                            <option value="-stock" {% if request.GET.sort == '-stock' %}selected{% endif %}>المخزون (الأكثر)</option>
-                            <option value="stock" {% if request.GET.sort == 'stock' %}selected{% endif %}>المخزون (الأقل)</option>
-                        </select>
-
-                        <button type="submit" class="px-4 py-2.5 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors text-sm">
-                            تصفية
-                        </button>
+                        <!-- Sort & Action -->
+                        <div class="flex gap-2 lg:col-span-1">
+                            <select name="sort" class="flex-1 px-4 py-2.5 bg-page-bg border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm text-text-primary">
+                                <option value="-created_at" {% if request.GET.sort == '-created_at' or not request.GET.sort %}selected{% endif %}>الأحدث</option>
+                                <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>الأقدم</option>
+                                <option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>الاسم (أ-ي)</option>
+                                <option value="-price" {% if request.GET.sort == '-price' %}selected{% endif %}>السعر (الأعلى)</option>
+                                <option value="price" {% if request.GET.sort == 'price' %}selected{% endif %}>السعر (الأقل)</option>
+                            </select>
+                            <button type="submit" class="px-6 py-2.5 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors text-sm">
+                                تصفية
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
                         {% if request.GET.search or request.GET.category or request.GET.status %}
                         <a href="{% url 'store:merchant_products' %}" class="px-4 py-2.5 border border-border-sand text-text-secondary rounded-xl font-medium hover:bg-page-bg transition-colors text-sm">
@@ -173,7 +168,7 @@
 
                     <!-- Table -->
                     <div class="overflow-x-auto">
-                        <table class="w-full">
+                        <table class="w-full min-w-[900px]">
                             <thead class="bg-page-bg">
                                 <tr>
                                     <th class="px-4 py-3 w-12"></th>

@@ -888,7 +888,7 @@ def password_change_notification(to_email, username):
     threading.Thread(target=send_mail, kwargs=kwargs, daemon=True).start()
 
 import threading
-from django.shortcuts import get_object_or_404
+
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.utils.dateformat import format as date_format
