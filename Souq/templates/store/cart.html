@@ -120,7 +120,7 @@
 
             <!-- Order Summary -->
             <div class="lg:col-span-1">
-                <div class="bg-surface rounded-2xl border border-border-sand p-6 sticky top-24">
+                <div class="bg-surface rounded-2xl border border-border-sand p-6 lg:sticky lg:top-24">
                     <h2 class="font-semibold text-text-primary text-lg mb-6">ملخص الطلب</h2>
 
                     <div class="space-y-4">
@@ -130,7 +130,7 @@
                         </div>
                         <div class="flex justify-between text-text-secondary">
                             <span>الشحن</span>
-                            <span class="font-price">{% if cart.total >= 200 %}مجاني{% else %}25 د.ج{% endif %}</span>
+                            <span class="font-price">{% if cart.total >= 5000 %}مجاني{% else %}500 د.ج{% endif %}</span>
                         </div>
 
                         <hr class="border-border-sand">
@@ -138,7 +138,7 @@
                         <div class="flex justify-between text-text-primary">
                             <span class="font-semibold">المجموع</span>
                             <span class="font-price text-xl font-bold text-sage">
-                                {% if cart.total >= 200 %}{{ cart.total }}{% else %}{{ cart.total|add:"25" }}{% endif %} د.ج
+                                {% if cart.total >= 5000 %}{{ cart.total }}{% else %}{{ cart.total|add:"500" }}{% endif %} د.ج
                             </span>
                         </div>
                     </div>

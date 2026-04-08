@@ -214,7 +214,7 @@
 
                     <!-- Wishlist/Owner Badge -->
                     <div
-                        class="absolute top-3 left-3 flex flex-col gap-2 {% if request.user.is_authenticated and product.seller_id == request.user.id %}opacity-100{% else %}opacity-0 group-hover:opacity-100{% endif %} transition-opacity">
+                        class="absolute top-3 left-3 flex flex-col gap-2 {% if request.user.is_authenticated and product.seller_id == request.user.id %}opacity-100{% else %}opacity-100 sm:opacity-0 sm:group-hover:opacity-100{% endif %} transition-opacity">
                         {% if request.user.is_authenticated and product.seller_id == request.user.id %}
                         <span
                             class="inline-flex items-center gap-1 px-2.5 py-1 bg-sage text-white rounded-full text-[10px] font-bold shadow-sm">
@@ -222,7 +222,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                     d="M5 13l4 4L19 7" />
                             </svg>
-                            Owner
+                            أنت التاجر
                         </span>
                         {% else %}
                         {% if product.id in wishlist_product_ids %}
@@ -253,7 +253,7 @@
                         {% else %}
                         onclick="Souq.addToCart({id: '{{ product.id|default:''|escapejs }}', variant_id: '{{ variant.id|default:''|escapejs }}', name: '{{ product.name|default:''|escapejs }}', price: {{ variant.price|default:0 }}, image: '{% if variant.image %}{{ variant.image.url|escapejs }}{% else %}https://placehold.co/400x400{% endif %}'})"
                         {% endif %}
-                        class="absolute bottom-3 left-3 right-3 py-2 bg-sage text-white rounded-lg text-sm font-medium transition-all transform translate-y-2 group-hover:translate-y-0 {% if request.user.is_authenticated and product.seller_id == request.user.id %}opacity-50 cursor-not-allowed translate-y-0{% else %}opacity-0 group-hover:opacity-100{% endif %}">
+                        class="absolute bottom-3 left-3 right-3 py-2 bg-sage text-white rounded-lg text-sm font-medium transition-all transform translate-y-0 opacity-100 sm:translate-y-2 sm:group-hover:translate-y-0 {% if request.user.is_authenticated and product.seller_id == request.user.id %}opacity-50 cursor-not-allowed translate-y-0{% else %}sm:opacity-0 sm:group-hover:opacity-100{% endif %}">
                         إضافة للسلة
                     </button>
                 </div>
@@ -277,9 +277,9 @@
 
                     <!-- Price -->
                     <div class="flex items-center gap-2 mt-3">
-                        <span class="font-price text-lg font-semibold text-sage">{{ variant.price }} ر.س</span>
+                        <span class="font-price text-lg font-semibold text-sage">{{ variant.price }} د.ج</span>
                         {% if variant.old_price %}
-                        <span class="font-price text-sm text-text-placeholder line-through">{{ variant.old_price }} ر.س</span>
+                        <span class="font-price text-sm text-text-placeholder line-through">{{ variant.old_price }} د.ج</span>
                         {% endif %}
                     </div>
                 </div>
@@ -321,8 +321,8 @@
                         <span class="text-xs text-text-secondary mr-1">(24)</span>
                     </div>
                     <div class="flex items-center gap-2 mt-3">
-                        <span class="font-price text-lg font-semibold text-sage">199 ر.س</span>
-                        <span class="font-price text-sm text-text-placeholder line-through">249 ر.س</span>
+                        <span class="font-price text-lg font-semibold text-sage">199 د.ج</span>
+                        <span class="font-price text-sm text-text-placeholder line-through">249 د.ج</span>
                     </div>
                 </div>
             </div>
@@ -411,7 +411,7 @@
                     </svg>
                 </div>
                 <h3 class="font-semibold text-text-primary text-lg mb-2">توصيل سريع</h3>
-                <p class="text-text-secondary text-sm">توصيل لجميع مناطق المملكة خلال 2-5 أيام عمل</p>
+                <p class="text-text-secondary text-sm">توصيل لجميع مناطق الجزائر خلال 2-5 أيام عمل</p>
             </div>
 
             <div class="text-center" data-animate>
@@ -445,13 +445,20 @@
         <h2 class="font-headline text-2xl font-bold text-text-primary mb-4">اشترك في نشرتنا البريدية</h2>
         <p class="text-text-secondary mb-6">احصل على أحدث العروض والخصومات مباشرة في بريدك</p>
 
-        <form  class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <input id="subscriptEmail" name="subscriptEmail" type="email" placeholder="أدخل بريدك الإلكتروني"
-                class="flex-1 px-4 py-3 bg-surface border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all">
-            <button type="submit" class="shiny-btn shiny-btn-primary">
-                اشترك
-            </button>
-        </form>
+        <div class="relative max-w-md mx-auto">
+            <form id="newsletterForm" class="flex flex-col sm:flex-row gap-3">
+                <input id="subscriptEmail" name="email" type="email" required placeholder="أدخل بريدك الإلكتروني"
+                    class="flex-1 px-4 py-3 bg-surface border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all">
+                <button type="submit" class="shiny-btn shiny-btn-primary" id="newsletterSubmit">
+                    <span>اشترك</span>
+                    <svg class="hidden animate-spin h-5 w-5 text-white" id="newsletterSpinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </form>
+            <div id="newsletterMessage" class="hidden mt-4 p-3 rounded-xl text-sm font-medium border animate-fade-in"></div>
+        </div>
     </div>
 </section>
 {% endblock %}
@@ -473,6 +480,43 @@
         }, { threshold: 0.1 });
 
         document.querySelectorAll('[data-animate]').forEach(el => observer.observe(el));
+
+        // Newsletter form handling
+        const newsletterForm = document.getElementById('newsletterForm');
+        if (newsletterForm) {
+            newsletterForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('subscriptEmail').value;
+                const submitBtn = document.getElementById('newsletterSubmit');
+                const spinner = document.getElementById('newsletterSpinner');
+                const btnText = submitBtn.querySelector('span');
+                const messageDiv = document.getElementById('newsletterMessage');
+
+                // Loading state
+                submitBtn.disabled = true;
+                spinner.classList.remove('hidden');
+                btnText.classList.add('hidden');
+                messageDiv.classList.add('hidden');
+
+                try {
+                    // Simulate AJAX call (you should replace with actual endpoint)
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    messageDiv.textContent = 'تم الاشتراك بنجاح! شكراً لك.';
+                    messageDiv.className = 'mt-4 p-3 rounded-xl text-sm font-medium border bg-sage-light text-sage border-sage/20';
+                    messageDiv.classList.remove('hidden');
+                    newsletterForm.reset();
+                } catch (error) {
+                    messageDiv.textContent = 'حدث خطأ ما، يرجى المحاولة لاحقاً.';
+                    messageDiv.className = 'mt-4 p-3 rounded-xl text-sm font-medium border bg-rose-light text-rose border-rose/20';
+                    messageDiv.classList.remove('hidden');
+                } finally {
+                    submitBtn.disabled = false;
+                    spinner.classList.add('hidden');
+                    btnText.classList.remove('hidden');
+                }
+            });
+        }
     });
 </script>
 {% endblock %}

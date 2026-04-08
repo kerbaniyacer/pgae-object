@@ -61,7 +61,6 @@
                                 <h3 class="font-semibold text-text-primary text-lg text-center mb-2">مشتري</h3>
                                 <p class="text-sm text-text-secondary text-center">تسوق واشترِ المنتجات من متاجرنا المتنوعة</p>
 
-                                <div class="mt-4 space-y-2 text-sm text-text-secondary">
                                     <div class="flex items-center gap-2">
                                         <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -72,33 +71,14 @@
                                         <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                         </svg>
-                                        تتبع طلباتك
+                                        تتبع طلباتك وطلبات الإرجاع
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <svg class="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                         </svg>
-                                        قائمة المفضلة
+                                        قائمة المفضلة والتنبيهات
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-rose" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                        </svg>
-                                        إضافة وإدارة المنتجات
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-rose" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                        </svg>
-                                        متابعة المبيعات
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-rose" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                        </svg>
-                                        لوحة تحكم خاصة
-                                    </div>
-                                </div>
                             </div>
                         </label>
 
@@ -226,6 +206,14 @@
                                         </svg>
                                     </button>
                                 </div>
+                                <!-- Password Strength Indicator -->
+                                <div class="mt-2 flex gap-1 h-1" id="passwordStrength">
+                                    <div class="flex-1 bg-border-sand rounded-full transition-all duration-300"></div>
+                                    <div class="flex-1 bg-border-sand rounded-full transition-all duration-300"></div>
+                                    <div class="flex-1 bg-border-sand rounded-full transition-all duration-300"></div>
+                                    <div class="flex-1 bg-border-sand rounded-full transition-all duration-300"></div>
+                                </div>
+                                <p class="text-[10px] text-text-placeholder mt-1" id="strengthText">أدخل كلمة مرور قوية</p>
                             </div>
                             <div>
                                 <label class="block text-sm text-text-secondary mb-2">تأكيد كلمة المرور <span class="text-rose">*</span></label>
@@ -384,12 +372,13 @@
                                 
                                 Google
                         </a>
-                        <button type="button" class="flex items-center justify-center gap-2 px-4 py-3 bg-page-bg border border-border-sand rounded-xl text-text-secondary hover:bg-surface hover:border-sage transition-all">
+                        <a href="/accounts/facebook/login/"
+                            class="flex items-center justify-center gap-2 px-4 py-3 bg-page-bg border border-border-sand rounded-xl text-text-secondary hover:bg-surface hover:border-sage transition-all">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/>
                             </svg>
                             Facebook
-                        </button>
+                        </a>
                     </div>
                 </div>
                 <div class="mt-6 text-center">
@@ -600,6 +589,45 @@ function showInputError(input, message) {
     errorDiv.textContent = message;
     input.parentNode.appendChild(errorDiv);
 }
+
+    // Password Strength Indicator
+    const passwordInput = document.getElementById('password1');
+    const strengthDots = document.querySelectorAll('#passwordStrength > div');
+    const strengthText = document.getElementById('strengthText');
+
+    if (passwordInput && strengthDots.length > 0) {
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let score = 0;
+            if (password.length >= 8) score++;
+            if (/[A-Z]/.test(password)) score++;
+            if (/[0-9]/.test(password)) score++;
+            if (/[^a-zA-Z0-9]/.test(password)) score++;
+
+            strengthDots.forEach((dot, index) => {
+                if (index < score) {
+                    if (score <= 2) {
+                        dot.classList.add('bg-rose');
+                        dot.classList.remove('bg-border-sand', 'bg-amber-400', 'bg-sage');
+                    } else if (score === 3) {
+                        dot.classList.add('bg-amber-400');
+                        dot.classList.remove('bg-border-sand', 'bg-rose', 'bg-sage');
+                    } else {
+                        dot.classList.add('bg-sage');
+                        dot.classList.remove('bg-border-sand', 'bg-rose', 'bg-amber-400');
+                    }
+                } else {
+                    dot.classList.add('bg-border-sand');
+                    dot.classList.remove('bg-rose', 'bg-amber-400', 'bg-sage');
+                }
+            });
+
+            if (score === 0) strengthText.textContent = 'أدخل كلمة مرور قوية';
+            else if (score <= 2) strengthText.textContent = 'كلمة مرور ضعيفة';
+            else if (score === 3) strengthText.textContent = 'كلمة مرور متوسطة';
+            else strengthText.textContent = 'كلمة مرور قوية جداً';
+        });
+    }
 
 function clearInputError(input) {
     input.classList.remove('border-rose');

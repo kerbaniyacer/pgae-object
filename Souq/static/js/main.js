@@ -25,7 +25,8 @@ const Souq = {
     // ============================================
 
     // Add item to cart (SERVER ONLY)
-    async addToCart(product) {
+    async addToCart(product, buttonElement = null) {
+        if (buttonElement) this.setLoading(buttonElement, true);
         try {
             const response = await fetch('/cart/add/', {
                 method: 'POST',
@@ -59,6 +60,8 @@ const Souq = {
             console.error('Add to cart error:', error);
             this.showToast('حدث خطأ في الاتصال', 'error');
             return { success: false };
+        } finally {
+            if (buttonElement) this.setLoading(buttonElement, false);
         }
     },
 
@@ -173,6 +176,7 @@ const Souq = {
 
     // ✅ Toggle wishlist - تم إصلاحها بالكامل
     async toggleWishlist(productId, buttonElement) {
+        if (buttonElement) this.setLoading(buttonElement, true);
         try {
             const response = await fetch('/wishlist/toggle/', {
                 method: 'POST',
@@ -220,6 +224,8 @@ const Souq = {
             console.error('Toggle wishlist error:', error);
             this.showToast('يرجى تسجيل الدخول أولاً', 'error');
             return { success: false };
+        } finally {
+            if (buttonElement) this.setLoading(buttonElement, false);
         }
     },
 
@@ -347,6 +353,59 @@ const Souq = {
     },
 
     // ============================================
+    // CONFIRMATION DIALOG (CUSTOM MODAL)
+    // ============================================
+
+    showConfirm(message, onConfirm) {
+        // Remove existing if any
+        const existing = document.getElementById('customConfirmModal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'customConfirmModal';
+        modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity duration-300';
+        modal.innerHTML = `
+            <div class="bg-surface dark:bg-dark-secondary rounded-2xl shadow-2xl p-6 max-w-sm w-full transform scale-95 opacity-0 transition-all duration-300">
+                <div class="w-12 h-12 bg-sage-light dark:bg-sage/20 rounded-full flex items-center justify-center text-sage mx-auto mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-text-primary dark:text-dark-text text-center mb-2">تأكيد الإجراء</h3>
+                <p class="text-text-secondary dark:text-dark-text-secondary text-center mb-6">${message}</p>
+                <div class="flex gap-3">
+                    <button id="confirmCancel" class="flex-1 px-4 py-2 bg-page-bg dark:bg-dark-tertiary text-text-primary dark:text-dark-text rounded-xl font-medium hover:bg-surface-dark transition-colors">إلغاء</button>
+                    <button id="confirmOk" class="flex-1 px-4 py-2 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors shadow-lg shadow-sage/20">تأكيد</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            modal.querySelector('div').classList.remove('scale-95', 'opacity-0');
+        });
+
+        const close = () => {
+            modal.querySelector('div').classList.add('scale-95', 'opacity-0');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.remove(), 300);
+        };
+
+        modal.getElementById('confirmCancel').onclick = close;
+        modal.getElementById('confirmOk').onclick = () => {
+            close();
+            onConfirm();
+        };
+
+        // Close on overlay click
+        modal.onclick = (e) => {
+            if (e.target === modal) close();
+        };
+    },
+
+    // ============================================
     // TOAST NOTIFICATION
     // ============================================
 
@@ -355,7 +414,7 @@ const Souq = {
         existingToasts.forEach(t => t.remove());
 
         const toast = document.createElement('div');
-        toast.className = `toast-notification fixed bottom-4 left-4 z-50 px-6 py-3 rounded-xl shadow-lg text-white transition-all duration-300 translate-y-full opacity-0`;
+        toast.className = `toast-notification fixed bottom-4 right-4 z-50 px-6 py-3 rounded-xl shadow-lg text-white transition-all duration-300 translate-y-full opacity-0`;
         
         if (type === 'success') toast.classList.add('bg-sage');
         else if (type === 'error') toast.classList.add('bg-rose');
@@ -389,6 +448,27 @@ const Souq = {
     // ============================================
     // INITIALIZATION
     // ============================================
+
+    // Helper: Set button loading state
+    setLoading(btn, isLoading) {
+        if (!btn) return;
+        if (isLoading) {
+            btn.classList.add('pointer-events-none', 'opacity-70');
+            const originalContent = btn.innerHTML;
+            btn.dataset.originalContent = originalContent;
+            btn.innerHTML = `
+                <svg class="animate-spin h-4 w-4 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            `;
+        } else {
+            btn.classList.remove('pointer-events-none', 'opacity-70');
+            if (btn.dataset.originalContent) {
+                btn.innerHTML = btn.dataset.originalContent;
+            }
+        }
+    },
 
     init() {
         // ✅ مسح أي بيانات قديمة - تم إصلاح الأسماء
@@ -426,29 +506,29 @@ async function toggleWishlist(productId, buttonElement) {
 }
 
 async function removeCartItem(productId) {
-    if (confirm('هل تريد إزالة هذا المنتج من السلة؟')) {
+    Souq.showConfirm('هل تريد إزالة هذا المنتج من السلة؟', async () => {
         const result = await Souq.removeFromCart(productId);
         if (result.success) {
             window.location.reload();
         }
-    }
+    });
 }
 
 async function removeWishlistItem(productId) {
-    if (confirm('هل تريد إزالة هذا المنتج من قائمة المفضلة؟')) {
+    Souq.showConfirm('هل تريد إزالة هذا المنتج من قائمة المفضلة؟', async () => {
         const result = await Souq.removeFromWishlist(productId);
         if (result.success) {
             window.location.reload();
         }
-    }
+    });
 }
 
 async function updateCartItemQuantity(productId, quantity) {
     if (quantity < 1) {
-        if (confirm('هل تريد إزالة هذا المنتج من السلة؟')) {
+        Souq.showConfirm('هل تريد إزالة هذا المنتج من السلة؟', async () => {
             await Souq.removeFromCart(productId);
             window.location.reload();
-        }
+        });
         return;
     }
     
@@ -460,10 +540,10 @@ async function updateCartItemQuantity(productId, quantity) {
 
 async function updateWishlistItemQuantity(productId, quantity) {
     if (quantity < 1) {
-        if (confirm('هل تريد إزالة هذا المنتج من قائمة المفضلة؟')) {
+        Souq.showConfirm('هل تريد إزالة هذا المنتج من قائمة المفضلة؟', async () => {
             await Souq.removeFromWishlist(productId);
             window.location.reload();
-        }
+        });
         return;
     }
     
