@@ -18,7 +18,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
 from django.core.files.base import ContentFile
-from .models import Profile
+from .models import Profile, UserIP
 from store.models import Category
 from .forms import LoginForm, CompleteProfileForm, UserTypeForm, RegisterForm, ProfileForm
 import requests
@@ -138,12 +138,37 @@ def login_view(request):
                     request.session.pop('login_user_id', None)
                     request.session.pop('login_user_email', None)
                     request.session.pop('login_timestamp', None)
+                    request.session.pop('login_remember_me', None)
                     
                     # Login the user
                     if not is_google_user(user):
                         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                     else:
                         login(request, user, backend='allauth.account.auth_backends.AuthenticationBackend')
+                    
+                    # Set Session Expiry
+                    remember_me = request.session.get('login_remember_me', False)
+                    if remember_me:
+                        request.session.set_expiry(1209600)  # 2 weeks
+                    else:
+                        request.session.set_expiry(0)  # Browser close
+
+                    # Check IP and notify if new
+                    current_ip = get_client_ip(request)
+                    user_ip_exists = UserIP.objects.filter(user=user, ip_address=current_ip).exists()
+                    
+                    if not user_ip_exists:
+                        # New IP login - notify user
+                        messages.warning(request, 'تم تسجيل الدخول من جهاز أو موقع جديد. إذا لم تكن أنت، يرجى تغيير كلمة المرور فوراً.')
+                        send_security_alert_email(user, current_ip)
+                    
+                    # Update/Create UserIP record
+                    UserIP.objects.update_or_create(
+                        user=user, 
+                        ip_address=current_ip,
+                        defaults={'user': user, 'ip_address': current_ip}
+                    )
+                    
                     messages.success(request, 'تم تسجيل الدخول بنجاح')
                     # Redirect based on user type
                     if hasattr(user, 'profile') and user.profile.is_seller:
@@ -184,13 +209,38 @@ def login_view(request):
                     pass
             
             if user is not None:
-
                 # Check if user is active
                 if not user.is_active:
                     messages.error(request, 'حسابك غير مفعل، يرجى التواصل مع الدعم')
                     return render(request, 'accounts/login.html', {'form': form})
                 
-                # Check rate limiting for OTP
+                # Check if this IP is already trusted
+                current_ip = get_client_ip(request)
+                remember_me = request.POST.get('remember') == 'on'
+                is_trusted_ip = UserIP.objects.filter(user=user, ip_address=current_ip).exists()
+                
+                if is_trusted_ip:
+                    # Known IP - direct login
+                    if not is_google_user(user):
+                        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                    else:
+                        login(request, user, backend='allauth.account.auth_backends.AuthenticationBackend')
+                    
+                    # Apply Session Expiry
+                    if remember_me:
+                        request.session.set_expiry(1209600)  # 2 weeks
+                    else:
+                        request.session.set_expiry(0)  # Browser close
+                    
+                    # Update UserIP timestamp
+                    UserIP.objects.filter(user=user, ip_address=current_ip).update(ip_address=current_ip) # Trigger auto_now update
+                        
+                    messages.success(request, 'تم تسجيل الدخول بنجاح')
+                    if hasattr(user, 'profile') and user.profile.is_seller:
+                        return redirect('store:merchant_dashboard')
+                    return redirect('store:home')
+
+                # New IP - proceed to OTP step
                 cache_key = f'otp_rate_limit_{user.email}'
                 if cache.get(cache_key):
                     messages.warning(request, 'يرجى الانتظار 60 ثانية قبل طلب رمز جديد')
@@ -207,12 +257,13 @@ def login_view(request):
                 # Set rate limit
                 cache.set(cache_key, True, 60)
                 
-                # Store user info in session
+                # Store user info in session for Phase 2
                 request.session['login_user_id'] = user.id
                 request.session['login_user_email'] = mask_email(user.email)
+                request.session['login_remember_me'] = remember_me
                 request.session['login_timestamp'] = int(time.time())
                 
-                messages.info(request, 'تم إرسال رمز التحقق إلى بريدك الإلكتروني')
+                messages.info(request, 'تم إرسال رمز التحقق إلى بريدك الإلكتروني كإجراء أمني لجهاز جديد')
                 
                 return render(request, 'accounts/login.html', {
                     'form': form,
@@ -1045,3 +1096,36 @@ def handler403_view(request, exception=None):
 
 def handler400_view(request, exception=None):
     return error_view(request, 400)
+
+
+def send_security_alert_email(user, ip):
+    """Send security alert email for login from new IP"""
+    from django.template.loader import render_to_string
+    from django.utils.html import strip_tags
+    
+    subject = 'تنبيه أمني: تسجيل دخول جديد - سوق'
+    html_message = render_to_string('emails/security_alert.html', {
+        'username': user.username,
+        'ip_address': ip,
+        'time': time.strftime('%Y-%m-%d %H:%M:%S'),
+    })
+    plain_message = strip_tags(html_message)
+    
+    kwargs = {
+        'subject': subject,
+        'message': plain_message,
+        'from_email': settings.DEFAULT_FROM_EMAIL,
+        'recipient_list': [user.email],
+        'html_message': html_message,
+    }
+    import threading
+    threading.Thread(target=send_mail, kwargs=kwargs, daemon=True).start()
+
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip

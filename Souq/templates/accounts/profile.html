@@ -97,14 +97,13 @@
                         <!-- Profile Photo -->
                         <div class="flex items-center gap-6 mb-8">
                             <div class="relative">
-                                <div
+                                <div id="avatar-container"
                                     class="w-24 h-24 bg-sage-light rounded-full flex items-center justify-center overflow-hidden">
                                     {% if user.profile.photo %}
                                     <img src="{{ user.profile.photo.url }}" alt="{{ user.username }}"
-                                        class="w-full h-full object-cover">
+                                        id="avatar-preview" class="w-full h-full object-cover">
                                     {% else %}
-                                    <span class="text-sage font-bold text-3xl">{{ user.username|slice:":1"|upper
-                                        }}</span>
+                                    <span id="avatar-placeholder" class="text-sage font-bold text-3xl">{{ user.username|slice:":1"|upper }}</span>
                                     {% endif %}
                                 </div>
                                 <label for="photo"
@@ -282,15 +281,25 @@
             if (!response.ok) throw new Error("ملف JSON غير موجود");
             allPostalData = await response.json();
 
-            const uniqueWilayas = [...new Set(allPostalData.map(item => item.wilaya_name))].sort();
+            // Extract unique wilayas with their codes
+            const wilayaMap = new Map();
+            allPostalData.forEach(item => {
+                if (!wilayaMap.has(item.wilaya_code)) {
+                    wilayaMap.set(item.wilaya_code, item.wilaya_name);
+                }
+            });
+
+            // Sort by code and convert to array
+            const sortedWilayas = Array.from(wilayaMap.entries())
+                .sort((a, b) => a[0].localeCompare(b[0], undefined, {numeric: true}));
             
             if (wilayaSelect) {
                 wilayaSelect.innerHTML = '<option value="" disabled>اختر الولاية</option>';
-                uniqueWilayas.forEach(wilaya => {
+                sortedWilayas.forEach(([code, name]) => {
                     const option = document.createElement('option');
-                    option.value = wilaya;
-                    option.textContent = wilaya;
-                    if (savedWilaya === wilaya) option.selected = true;
+                    option.value = name;
+                    option.textContent = `${code} - ${name}`;
+                    if (savedWilaya === name || savedWilaya === code) option.selected = true;
                     wilayaSelect.appendChild(option);
                 });
             }
@@ -403,6 +412,33 @@
                         postalError.textContent = 'يرجى اختيار رمز بريدي صحيح من القائمة المقترحة.';
                         postalError.classList.remove('hidden');
                     }
+                }
+            });
+        }
+
+        // --- Image Preview Logic ---
+        const photoInput = document.getElementById('photo');
+        const avatarContainer = document.getElementById('avatar-container');
+        const avatarPlaceholder = document.getElementById('avatar-placeholder');
+
+        if (photoInput && avatarContainer) {
+            photoInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        let img = document.getElementById('avatar-preview');
+                        if (!img) {
+                            img = document.createElement('img');
+                            img.id = 'avatar-preview';
+                            img.className = 'w-full h-full object-cover';
+                            avatarContainer.appendChild(img);
+                        }
+                        img.src = e.target.result;
+                        if (avatarPlaceholder) avatarPlaceholder.classList.add('hidden');
+                        img.classList.remove('hidden');
+                    }
+                    reader.readAsDataURL(file);
                 }
             });
         }

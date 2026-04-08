@@ -174,9 +174,11 @@ const Souq = {
     // WISHLIST FUNCTIONS
     // ============================================
 
-    // ✅ Toggle wishlist - تم إصلاحها بالكامل
+    // ✅ Toggle wishlist - تم إصلاحها بالكامل ومعالجة مشكلة الـ Spinner
     async toggleWishlist(productId, buttonElement) {
-        if (buttonElement) this.setLoading(buttonElement, true);
+        if (buttonElement) {
+            buttonElement.classList.add('pointer-events-none', 'opacity-50');
+        }
         try {
             const response = await fetch('/wishlist/toggle/', {
                 method: 'POST',
@@ -192,13 +194,13 @@ const Souq = {
             const data = await response.json();
 
             if (data.success) {
-                // ✅ رسالة مختلفة حسب الإجراء
+                // ✅ تحديث الحالات فوراً قبل أي عملية أخرى
                 if (data.action === 'added') {
-                    this.showToast(data.message || 'تمت إضافة المنتج للمفضلة', 'success');
                     this.activateWishlistIcon(buttonElement);
+                    this.showToast(data.message || 'تمت إضافة المنتج للمفضلة', 'success');
                 } else if (data.action === 'removed') {
-                    this.showToast(data.message || 'تم إزالة المنتج من المفضلة', 'success');
                     this.deactivateWishlistIcon(buttonElement);
+                    this.showToast(data.message || 'تم إزالة المنتج من المفضلة', 'success');
                 }
                 
                 // ✅ تحديث شارة المفضلة
@@ -208,7 +210,6 @@ const Souq = {
                     this.fetchWishlistCountFromServer();
                 }
             } else {
-                // ✅ التعامل مع حالة عدم تسجيل الدخول
                 if (data.redirect) {
                     this.showToast(data.message || 'يرجى تسجيل الدخول', 'error');
                     setTimeout(() => {
@@ -225,7 +226,9 @@ const Souq = {
             this.showToast('يرجى تسجيل الدخول أولاً', 'error');
             return { success: false };
         } finally {
-            if (buttonElement) this.setLoading(buttonElement, false);
+            if (buttonElement) {
+                buttonElement.classList.remove('pointer-events-none', 'opacity-50');
+            }
         }
     },
 
@@ -330,11 +333,14 @@ const Souq = {
         const svg = btn.querySelector('svg');
         if (svg) {
             svg.setAttribute('fill', 'currentColor');  // ✅ ملء القلب
+            svg.setAttribute('stroke', 'currentColor');
+            // تأكد من عدم وجود fill none
+            svg.classList.remove('fill-none');
         }
         
         // تحديث كلاسات الزر
         btn.classList.add('text-rose');
-        btn.classList.remove('text-gray-400', 'text-text-placeholder');
+        btn.classList.remove('text-gray-500', 'text-gray-400', 'text-text-placeholder');
     },
 
     // ✅ NEW: إلغاء تفعيل أيقونة المفضلة (قلب فارغ)
@@ -345,11 +351,13 @@ const Souq = {
         const svg = btn.querySelector('svg');
         if (svg) {
             svg.setAttribute('fill', 'none');  // ✅ إفراغ القلب
+            svg.setAttribute('stroke', 'currentColor');
         }
         
         // تحديث كلاسات الزر
         btn.classList.remove('text-rose');
-        btn.classList.add('text-gray-400', 'text-text-placeholder');
+        btn.classList.add('text-gray-500'); // الاسترجاع للون الرمادي المتعارف عليه
+        btn.classList.remove('text-gray-400', 'text-text-placeholder');
     },
 
     // ============================================
@@ -585,17 +593,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================
     // USER DROPDOWN MENU ✅
     // ============================================
-    const userMenuBtn = document.getElementById('userMenuBtn');
+    const userMenuBtns = document.querySelectorAll('#userMenuBtn');
     const userDropdown = document.getElementById('userDropdown');
 
-    if (userMenuBtn && userDropdown) {
-        userMenuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            userDropdown.classList.toggle('hidden');
+    if (userMenuBtns.length > 0 && userDropdown) {
+        userMenuBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userDropdown.classList.toggle('hidden');
+                // Optional: Add animation class
+                userDropdown.classList.add('animate-dropdown');
+            });
         });
 
+        // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
-            if (!userDropdown.contains(e.target) && !userMenuBtn.contains(e.target)) {
+            let isClickInside = false;
+            userMenuBtns.forEach(btn => {
+                if (btn.contains(e.target)) isClickInside = true;
+            });
+            
+            if (!isClickInside && !userDropdown.contains(e.target)) {
                 userDropdown.classList.add('hidden');
             }
         });
@@ -604,29 +622,58 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================
     // MOBILE MENU ✅
     // ============================================
-    const mobileMenuBtns = document.querySelectorAll('#mobileMenuBtn');
+    const mobileMenuBtns = document.querySelectorAll('.mobile-menu-toggle');
     const mobileMenu = document.getElementById('mobileMenu');
     const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
     const closeMobileMenu = document.getElementById('closeMobileMenu');
 
-    mobileMenuBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
+    if (mobileMenu && !mobileMenu.dataset.initialized) {
+        mobileMenu.dataset.initialized = 'true';
+
+        const openHandler = (e) => {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
             mobileMenu.classList.add('open');
-            mobileMenuOverlay.classList.remove('hidden');
-        });
-    });
+            if (mobileMenuOverlay) {
+                mobileMenuOverlay.classList.remove('hidden');
+                mobileMenuOverlay.style.display = 'block';
+                mobileMenuOverlay.style.opacity = '1';
+                mobileMenuOverlay.style.pointerEvents = 'auto';
+            }
+        };
 
-    if (closeMobileMenu) {
-        closeMobileMenu.addEventListener('click', () => {
+        const closeHandler = (e) => {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
             mobileMenu.classList.remove('open');
-            mobileMenuOverlay.classList.add('hidden');
-        });
-    }
+            if (mobileMenuOverlay) {
+                mobileMenuOverlay.classList.add('hidden');
+                mobileMenuOverlay.style.display = 'none';
+                mobileMenuOverlay.style.opacity = '0';
+                mobileMenuOverlay.style.pointerEvents = 'none';
+            }
+        };
 
-    if (mobileMenuOverlay) {
-        mobileMenuOverlay.addEventListener('click', () => {
-            mobileMenu.classList.remove('open');
-            mobileMenuOverlay.classList.add('hidden');
+        mobileMenuBtns.forEach(btn => {
+            btn.onclick = openHandler;
+        });
+
+        if (closeMobileMenu) {
+            closeMobileMenu.onclick = closeHandler;
+        }
+        if (mobileMenuOverlay) {
+            mobileMenuOverlay.onclick = closeHandler;
+        }
+
+        // إغلاق عند الضغط على مفتاح Esc
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mobileMenu.classList.contains('open')) {
+                closeHandler();
+            }
         });
     }
 

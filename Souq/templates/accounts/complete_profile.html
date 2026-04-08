@@ -428,15 +428,25 @@
             if (!response.ok) throw new Error("ملف JSON غير موجود");
             allPostalData = await response.json();
 
-            const uniqueWilayas = [...new Set(allPostalData.map(item => item.wilaya_name))].sort();
+            // Extract unique wilayas with their codes
+            const wilayaMap = new Map();
+            allPostalData.forEach(item => {
+                if (!wilayaMap.has(item.wilaya_code)) {
+                    wilayaMap.set(item.wilaya_code, item.wilaya_name);
+                }
+            });
+
+            // Sort by code and convert to array
+            const sortedWilayas = Array.from(wilayaMap.entries())
+                .sort((a, b) => a[0].localeCompare(b[0], undefined, {numeric: true}));
             
             if (wilayaSelect) {
                 wilayaSelect.innerHTML = '<option value="" >اختر الولاية</option>';
-                uniqueWilayas.forEach(wilaya => {
+                sortedWilayas.forEach(([code, name]) => {
                     const option = document.createElement('option');
-                    option.value = wilaya;
-                    option.textContent = wilaya;
-                    if (savedWilaya === wilaya) option.selected = true;
+                    option.value = name;
+                    option.textContent = `${code} - ${name}`;
+                    if (savedWilaya === name || savedWilaya === code) option.selected = true;
                     wilayaSelect.appendChild(option);
                 });
             }

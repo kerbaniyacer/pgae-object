@@ -276,6 +276,9 @@
     // ============================================
 
     function init() {
+        if (window.SouqUIInitialized) return;
+        window.SouqUIInitialized = true;
+        
         console.log('SouqUI initializing...');
         TruckLoader.init();
         HelpModal.init();

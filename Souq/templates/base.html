@@ -43,7 +43,7 @@
 
         /* Glassmorphism Navigation */
         .nav-glass {
-            background: rgba(255, 255, 255, 0.8);
+            z-index: 9990;background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
@@ -209,7 +209,7 @@
             opacity: 0 !important;
             visibility: hidden !important;
             pointer-events: none;
-            z-index: 1000;
+            z-index: 10002;
         }
 
         .dark .mobile-menu {
@@ -221,7 +221,7 @@
             opacity: 1 !important;
             visibility: visible !important;
             pointer-events: auto;
-            z-index: 1000;
+            z-index: 10002;
         }
 
         /* LTR Support */
@@ -502,7 +502,7 @@
     </a>
 
     <!-- Navigation -->
-    <nav class="nav-glass fixed top-0 left-0 right-0 z-[60] border-b border-border-sand">
+    <nav class="nav-glass fixed top-0 left-0 right-0 z-[9990] border-b border-border-sand">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <!-- Logo -->
@@ -581,7 +581,7 @@
 
                     {% if user.is_authenticated %}
                     <!-- User Menu (Desktop Only) -->
-                    <div class="relative hidden md:block" id="userMenu">
+                    <div class="relative hidden md:block h-full flex items-center" id="userMenu">
                         <button id="userMenuBtn"
                             class="flex items-center gap-2 p-2 rounded-lg hover:bg-surface dark:hover:bg-dark-tertiary transition-colors" aria-label="قائمة المستخدم">
                             <div
@@ -597,7 +597,7 @@
 
                         <!-- Dropdown -->
                         <div id="userDropdown"
-                            class="absolute right-0 mt-2 w-48 bg-surface rounded-xl shadow-lg border border-border-sand py-2 hidden z-50">
+                            class="absolute right-0 top-[calc(100%-10px)] mt-0 w-48 bg-surface rounded-xl shadow-lg border border-border-sand py-2 hidden z-[10000]">
                             <div class="px-4 py-2 border-b border-border-sand">
                                 <p class="font-medium text-text-primary dark:text-dark-text">{{ user.username }}</p>
                                 <p class="text-sm text-text-secondary">{{ user.email }}</p>
@@ -643,15 +643,15 @@
 
                     <!-- User Avatar (Mobile Only - Opens Menu) -->
                     {% if user.is_authenticated %}
-                    <button id="mobileMenuBtn" class="md:hidden p-2" aria-label="فتح القائمة">
+                    <button id="mobileMenuBtnPrimary" class="mobile-menu-toggle md:hidden p-2" aria-label="فتح القائمة">
                         <div
                             class="w-8 h-8 rounded-full bg-sage-light dark:bg-sage/20 flex items-center justify-center">
                             <span class="text-sage font-medium text-sm">{{ user.username|slice:":1"|upper }}</span>
                         </div>
                     </button>
                     {% else %}
-                    <button id="mobileMenuBtn"
-                        class="md:hidden p-2 text-text-secondary hover:text-sage transition-colors" aria-label="فتح القائمة">
+                    <button id="mobileMenuBtnSecondary"
+                        class="mobile-menu-toggle md:hidden p-2 text-text-secondary hover:text-sage transition-colors" aria-label="فتح القائمة">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 6h16M4 12h16M4 18h16" />
@@ -663,138 +663,6 @@
         </div>
     </nav>
 
-    <!-- Mobile Menu -->
-    <div id="mobileMenu" class="mobile-menu fixed inset-y-0 right-0 w-72 shadow-2xl md:hidden">
-        <div class="flex flex-col h-full">
-            <!-- Mobile Menu Header -->
-            <div class="p-4 border-b border-border-sand flex items-center justify-between bg-page-bg">
-                <span class="font-headline text-xl font-bold text-text-primary dark:text-dark-text">سوق</span>
-                <button id="closeMobileMenu" class="p-2 text-text-secondary hover:text-sage transition-colors rounded-lg" aria-label="إغلاق القائمة">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Scrollable Content -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-6">
-                <!-- Mobile Search -->
-                <div class="bg-page-bg rounded-2xl p-4 border border-border-sand">
-                    <form method="get" action="{% url 'store:products' %}" class="relative">
-                        <input type="text" name="search" placeholder="ابحث عن منتج..."
-                            class="w-full pl-10 pr-4 py-2 bg-surface border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm">
-                        <button type="submit" class="absolute left-3 top-1/2 -translate-y-1/2 text-text-placeholder" aria-label="بحث">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </button>
-                    </form>
-                </div>
-
-                <!-- User Profile Section -->
-                {% if user.is_authenticated %}
-                <div class="bg-page-bg rounded-2xl p-4 border border-border-sand">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-12 h-12 rounded-full bg-sage-light dark:bg-sage/20 flex items-center justify-center border-2 border-white shadow-sm">
-                            <span class="text-sage font-bold text-lg">{{ user.username|slice:":1"|upper }}</span>
-                        </div>
-                        <div class="overflow-hidden">
-                            <p class="font-bold text-text-primary dark:text-dark-text truncate">{{ user.username }}</p>
-                            <p class="text-xs text-text-secondary truncate">{{ user.email }}</p>
-                            {% if user.profile.is_seller %}
-                            <span class="inline-flex px-2 py-0.5 bg-rose-light text-rose text-[10px] rounded-full mt-1">تاجر</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Navigation Links -->
-                <div class="space-y-1">
-                    <p class="text-[10px] font-bold text-text-placeholder uppercase tracking-wider mb-2 px-2">التنقل</p>
-                    <a href="{% url 'store:home' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-page-bg hover:text-sage transition-colors {% if request.path == '/' %}bg-page-bg text-sage{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                        الرئيسية
-                    </a>
-                    <a href="{% url 'store:products' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-page-bg hover:text-sage transition-colors {% if '/products/' in request.path %}bg-page-bg text-sage{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                        المنتجات
-                    </a>
-                    <a href="{% url 'store:track_order' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-page-bg hover:text-sage transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                        تتبع الطلب
-                    </a>
-                </div>
-
-                <!-- Account / Merchant Actions -->
-                <div class="space-y-1">
-                    <p class="text-[10px] font-bold text-text-placeholder uppercase tracking-wider mb-2 px-2">حسابي</p>
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'accounts:profile' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-page-bg hover:text-sage transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                            الملف الشخصي
-                        </a>
-                        
-                        {% if user.profile.is_seller %}
-                            <a href="{% url 'store:merchant_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-rose font-medium bg-rose-light hover:bg-rose-light/70 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                                لوحة التحكم التاجر
-                            </a>
-                            <a href="{% url 'store:merchant_orders' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-page-bg hover:text-sage transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                                إدارة الطلبات
-                            </a>
-                        {% else %}
-                            <a href="{% url 'store:orders' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-page-bg hover:text-sage transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                                طلباتي
-                            </a>
-                            <a href="{% url 'store:wishlist' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-page-bg hover:text-sage transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                                المفضلة
-                            </a>
-                        {% endif %}
-                    {% else %}
-                        <a href="{% url 'accounts:login' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-page-bg hover:text-sage transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                            تسجيل الدخول
-                        </a>
-                        <a href="{% url 'accounts:register' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-white bg-sage hover:bg-sage-dark transition-colors shadow-sm">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-                            إنشاء حساب
-                        </a>
-                    {% endif %}
-                </div>
-
-                <!-- Theme Toggle Mobile -->
-                <div class="px-4 py-4 bg-page-bg rounded-2xl border border-border-sand">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <svg class="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                            <span class="text-sm font-medium text-text-primary">الوضع الليلي</span>
-                        </div>
-                        <div class="dark-toggle-container">
-                            <input type="checkbox" id="darkModeToggleMobile" class="dark-toggle-input">
-                            <label for="darkModeToggleMobile" class="dark-toggle-label mobile">
-                                <svg class="dark-toggle-icon sun-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                                <svg class="dark-toggle-icon moon-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                {% if user.is_authenticated %}
-                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 text-rose hover:bg-rose-light rounded-xl transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                    تسجيل الخروج
-                </a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Mobile Menu Overlay -->
-    <div id="mobileMenuOverlay" class="fixed inset-0 bg-black/50 z-[999] hidden md:hidden"></div>
 
     <!-- Search Modal -->
     <div id="searchModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
@@ -916,137 +784,7 @@
             </div>
         </div>
     </footer>
-    <!-- Dark Mode JavaScript -->
-     <!-- UI Components JS -->
-    <script src="{% static 'js/ui-components.js' %}"></script>
-    <!-- ✅ Select2 محلي -->
-    <script src="{% static 'vendor/select2/select2.min.js' %}"></script>
-    <!-- Tailwind Config -->
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script>
-        /**
-         * Dark Mode Toggle - متجرنا
-         * Handles dark/light theme switching with localStorage persistence
-         */
-        (function () {
-            'use strict';
-
-            // Get elements
-            const html = document.documentElement;
-            const darkModeToggle = document.getElementById('darkModeToggle');
-            const darkModeToggleMobile = document.getElementById('darkModeToggleMobile');
-
-            // Check for saved preference or system preference
-            function getThemePreference() {
-                const savedTheme = localStorage.getItem('theme');
-                if (savedTheme) {
-                    return savedTheme;
-                }
-                // Check system preference
-                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    return 'dark';
-                }
-                return 'light';
-            }
-
-            // Apply theme
-            function applyTheme(theme) {
-                if (theme === 'dark') {
-                    html.classList.add('dark');
-                    updateToggleState(true);
-                } else {
-                    html.classList.remove('dark');
-                    updateToggleState(false);
-                }
-
-                // Update meta theme-color
-                const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-                if (metaThemeColor) {
-                    metaThemeColor.setAttribute('content', theme === 'dark' ? '#1a1a1a' : '#5C8A6E');
-                }
-            }
-
-            // Update toggle checkbox state
-            function updateToggleState(isDark) {
-                if (darkModeToggle) {
-                    darkModeToggle.checked = isDark;
-                }
-                if (darkModeToggleMobile) {
-                    darkModeToggleMobile.checked = isDark;
-                }
-            }
-
-            // Toggle theme
-            function toggleTheme() {
-                const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-                localStorage.setItem('theme', newTheme);
-
-                // Add animation class
-                document.body.classList.add('theme-transition');
-                applyTheme(newTheme);
-
-                setTimeout(() => {
-                    document.body.classList.remove('theme-transition');
-                }, 300);
-            }
-
-            // Initialize
-            function init() {
-                // Apply saved theme immediately to prevent flash
-                const theme = getThemePreference();
-                applyTheme(theme);
-
-                // Add event listeners to toggles
-                if (darkModeToggle) {
-                    darkModeToggle.addEventListener('change', toggleTheme);
-                }
-                if (darkModeToggleMobile) {
-                    darkModeToggleMobile.addEventListener('change', toggleTheme);
-                }
-
-                // Listen for system theme changes
-                if (window.matchMedia) {
-                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                        if (!localStorage.getItem('theme')) {
-                            applyTheme(e.matches ? 'dark' : 'light');
-                        }
-                    });
-                }
-            }
-
-            // Run on DOM ready or immediately if DOM is already loaded
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', init);
-            } else {
-                init();
-            }
-
-            // Expose toggle function globally
-            window.toggleDarkMode = toggleTheme;
-            window.getCurrentTheme = () => html.classList.contains('dark') ? 'dark' : 'light';
-        })();
-    </script>
-
-    <!-- Main JavaScript -->
-    <script src="{% static 'js/main.js' %}?v=2"></script>
-
-    <!-- Page-specific JavaScript -->
-    {% block extra_js %}{% endblock %}
-
-    <!-- Django Messages -->
-    <!-- Django Messages - Display Toast -->
-{% if messages %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        {% for message in messages %}
-            showToast('{{ message|escapejs }}', '{{ message.tags|escapejs|default:"info" }}');
-        {% endfor %}
-    });
-</script>
-{% endif %}
     <!-- Help Button -->
     <div class="help-btn-container">
         <button class="help-btn" id="helpBtn" title="طلب المساعدة">
@@ -1112,6 +850,218 @@
             <span class="cart-tooltip">السلة</span>
         </a>
     </div>
+    
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu fixed inset-y-0 right-0 w-72 shadow-2xl md:hidden">
+        <div class="flex flex-col h-full">
+            <!-- Mobile Menu Header -->
+            <div class="p-4 border-b border-border-sand flex items-center justify-between bg-page-bg">
+                <span class="font-headline text-xl font-bold text-text-primary dark:text-dark-text">سوق</span>
+                <button id="closeMobileMenu" class="p-2 text-text-secondary hover:text-sage transition-colors rounded-lg" aria-label="إغلاق القائمة">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-6">
+                <!-- Mobile Search -->
+                <div class="bg-page-bg rounded-2xl p-4 border border-border-sand">
+                    <form method="get" action="{% url 'store:products' %}" class="relative">
+                        <input type="text" name="search" placeholder="ابحث عن منتج..."
+                            class="w-full pl-10 pr-4 py-2 bg-surface border border-border-sand rounded-xl focus:border-sage focus:ring-2 focus:ring-sage/10 outline-none transition-all text-sm">
+                        <button type="submit" class="absolute left-3 top-1/2 -translate-y-1/2 text-text-placeholder" aria-label="بحث">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- User Profile Section -->
+                {% if user.is_authenticated %}
+                <div class="bg-page-bg rounded-2xl p-4 border border-border-sand">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-sage-light dark:bg-sage/20 flex items-center justify-center border-2 border-white shadow-sm">
+                            <span class="text-sage font-bold text-lg">{{ user.username|slice:":1"|upper }}</span>
+                        </div>
+                        <div>
+                            <p class="text-text-primary dark:text-dark-text font-bold">{{ user.username }}</p>
+                            <p class="text-xs text-text-secondary">{{ user.email }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Navigation Links -->
+                <div class="space-y-1">
+                    <a href="{% url 'store:home' %}" class="flex items-center gap-3 px-4 py-3 text-text-secondary hover:bg-surface dark:hover:bg-dark-tertiary rounded-xl transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        الرئيسية
+                    </a>
+                    <a href="{% url 'store:products' %}" class="flex items-center gap-3 px-4 py-3 text-text-secondary hover:bg-surface dark:hover:bg-dark-tertiary rounded-xl transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        المنتجات
+                    </a>
+                    <a href="{% url 'store:track_order' %}" class="flex items-center gap-3 px-4 py-3 text-text-secondary hover:bg-surface dark:hover:bg-dark-tertiary rounded-xl transition-colors {% block mobile_nav_track_order %}{% endblock %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                        تتبع الطلب
+                    </a>
+                    
+                    {% if user.is_authenticated %}
+                        <div class="pt-4 mt-4 border-t border-border-sand">
+                            <p class="px-4 text-xs font-bold text-text-placeholder uppercase tracking-wider mb-2">حسابي</p>
+                            <a href="{% url 'accounts:profile' %}" class="flex items-center gap-3 px-4 py-3 text-text-secondary hover:bg-surface dark:hover:bg-dark-tertiary rounded-xl transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                الملف الشخصي
+                            </a>
+                            <a href="{% url 'store:orders' %}" class="flex items-center gap-3 px-4 py-3 text-text-secondary hover:bg-surface dark:hover:bg-dark-tertiary rounded-xl transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                طلباتي
+                            </a>
+                            {% if user.profile.is_seller %}
+                                <a href="{% url 'store:merchant_dashboard' %}" class="flex items-center gap-3 px-4 py-3 text-sage hover:bg-sage/10 rounded-xl transition-colors font-medium">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                    لوحة التحكم
+                                </a>
+                            {% endif %}
+                            {% if user.is_superuser %}
+                                <a href="{% url 'store:admin_dashboard' %}" class="flex items-center gap-3 px-4 py-3 text-amber-600 hover:bg-amber-50 rounded-xl transition-colors font-medium">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    لوحة تحكم الإدارة
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="pt-4 mt-4 border-t border-border-sand flex flex-col gap-2">
+                            <a href="{% url 'accounts:login' %}" class="flex items-center justify-center gap-2 px-4 py-3 text-text-primary bg-surface border border-border-sand rounded-xl hover:bg-border-sand transition-colors font-medium">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                تسجيل الدخول
+                            </a>
+                            <a href="{% url 'accounts:register' %}" class="flex items-center justify-center gap-2 px-4 py-3 text-white bg-sage rounded-xl hover:bg-sage-dark transition-colors font-medium shadow-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                                إنشاء حساب جديد
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Settings/Appearance -->
+                <div class="pt-4 border-t border-border-sand">
+                    <div class="px-4 py-2">
+                        <p class="text-xs font-bold text-text-placeholder uppercase tracking-wider mb-4">المظهر</p>
+                        <div class="flex items-center justify-between p-3 bg-surface rounded-xl">
+                            <span class="text-sm text-text-secondary">الوضع الليلي</span>
+                            <label class="dark-toggle-label relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="darkModeToggleMobile" class="dark-toggle-input sr-only">
+                                <div class="w-11 h-6 bg-border-sand dark:bg-sage rounded-full transition-colors"></div>
+                                <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform dark:translate-x-5 flex items-center justify-center">
+                                    <svg class="dark-toggle-icon sun-icon dark:hidden w-3 h-3 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                    <svg class="dark-toggle-icon moon-icon hidden dark:block w-3 h-3 text-sage" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                {% if user.is_authenticated %}
+                <a href="{% url 'accounts:logout' %}" class="flex items-center gap-3 px-4 py-3 text-rose hover:bg-rose-light rounded-xl transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    تسجيل الخروج
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobileMenuOverlay" class="fixed inset-0 bg-black/60 z-[10001] hidden md:hidden" style="display: none;"></div>
+
+    <!-- Merchant Floating Menu -->
+    {% include 'includes/merchant_floating_actions.html' %}
+
+    <!-- Core Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="{% static 'vendor/select2/select2.min.js' %}"></script>
+    
+    <!-- Theme Toggle Helper -->
+    <script>
+        (function () {
+            'use strict';
+            const html = document.documentElement;
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const darkModeToggleMobile = document.getElementById('darkModeToggleMobile');
+            
+            function getThemePreference() {
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme) return savedTheme;
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+                return 'light';
+            }
+
+            function applyTheme(theme) {
+                if (theme === 'dark') {
+                    html.classList.add('dark');
+                    updateToggleState(true);
+                } else {
+                    html.classList.remove('dark');
+                    updateToggleState(false);
+                }
+                const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+                if (metaThemeColor) metaThemeColor.setAttribute('content', theme === 'dark' ? '#1a1a1a' : '#5C8A6E');
+            }
+
+            function updateToggleState(isDark) {
+                if (darkModeToggle) darkModeToggle.checked = isDark;
+                if (darkModeToggleMobile) darkModeToggleMobile.checked = isDark;
+            }
+
+            function toggleTheme() {
+                const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                localStorage.setItem('theme', newTheme);
+                document.body.classList.add('theme-transition');
+                applyTheme(newTheme);
+                setTimeout(() => document.body.classList.remove('theme-transition'), 300);
+            }
+
+            function initTheme() {
+                applyTheme(getThemePreference());
+                if (darkModeToggle) darkModeToggle.addEventListener('change', toggleTheme);
+                if (darkModeToggleMobile) darkModeToggleMobile.addEventListener('change', toggleTheme);
+                if (window.matchMedia) {
+                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                        if (!localStorage.getItem('theme')) applyTheme(e.matches ? 'dark' : 'light');
+                    });
+                }
+            }
+
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initTheme);
+            else initTheme();
+
+            window.toggleDarkMode = toggleTheme;
+            window.getCurrentTheme = () => html.classList.contains('dark') ? 'dark' : 'light';
+        })();
+    </script>
+
+    <!-- UI Components & Main Logic -->
+    <script src="{% static 'js/ui-components.js' %}"></script>
+    <script src="{% static 'js/main.js' %}?v=2"></script>
+    
+    <!-- Page-specific JavaScript -->
+    {% block extra_js %}{% endblock %}
+
+    <!-- Django Messages -->
+    {% if messages %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            {% for message in messages %}
+                showToast('{{ message|escapejs }}', '{{ message.tags|escapejs|default:"info" }}');
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
 </body>
 
 </html>

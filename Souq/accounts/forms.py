@@ -107,25 +107,32 @@ class RegisterForm(UserCreationForm):
             user_type = self.cleaned_data.get('user_type', 'customer')
             is_seller = user_type == 'seller'
 
-            # Create profile
-            Profile.objects.create(
-                user=user,
-                is_seller=is_seller,
-                phone=self.cleaned_data.get('phone', ''),
-                wilaya=self.cleaned_data.get('wilaya', ''),
-                baladia=self.cleaned_data.get('baladia', ''),
-                store_name=self.cleaned_data.get('store_name', '') if is_seller else '',
-                store_description=self.cleaned_data.get('store_description', '') if is_seller else '',
-                store_category=self.cleaned_data.get('store_category', '') if is_seller else '',
-                store_logo=self.cleaned_data.get('store_logo') if is_seller else None,
-                commercial_register=self.cleaned_data.get('commercial_register', '') if is_seller else '',
-            )
+        if commit:
+            user.save()
+            user_type = self.cleaned_data.get('user_type', 'customer')
+            is_seller = user_type == 'seller'
+
+            # Update the profile (created by the post_save signal)
+            profile, created = Profile.objects.get_or_create(user=user)
+            profile.is_seller = is_seller
+            profile.phone = self.cleaned_data.get('phone', '')
+            profile.wilaya = self.cleaned_data.get('wilaya', '')
+            profile.baladia = self.cleaned_data.get('baladia', '')
+            
+            if is_seller:
+                profile.store_name = self.cleaned_data.get('store_name', '')
+                profile.store_description = self.cleaned_data.get('store_description', '')
+                profile.store_category = self.cleaned_data.get('store_category', '')
+                profile.store_logo = self.cleaned_data.get('store_logo')
+                profile.commercial_register = self.cleaned_data.get('commercial_register', '')
+            profile.save()
         return user
 
 
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=150, label='اسم المستخدم')
     password = forms.CharField(widget=forms.PasswordInput, label='كلمة المرور')
+    remember = forms.BooleanField(required=False, label='تذكرني')
 
 
 class ProfileForm(forms.ModelForm):

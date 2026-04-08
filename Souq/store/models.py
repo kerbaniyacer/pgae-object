@@ -230,6 +230,18 @@ class ProductVariant(models.Model):
         verbose_name = 'متغير المنتج'
         verbose_name_plural = 'متغيرات المنتجات'
 
+    def save(self, *args, **kwargs):
+        # 1. إذا كان هذا المتغير هو الرئيسي، نقوم بإلغاء "الرئيسي" عن باقي المتغيرات
+        if self.is_main:
+            ProductVariant.objects.filter(product=self.product, is_main=True).exclude(pk=self.pk).update(is_main=False)
+        else:
+            # 2. إذا لم يكن رئيسياً، نتحقق إذا كان هناك أي متغير رئيسي آخر للمنتج
+            # إذا لم يوجد، نجعل هذا المتغير هو الرئيسي تلقائياً
+            if not ProductVariant.objects.filter(product=self.product, is_main=True).exclude(pk=self.pk).exists():
+                self.is_main = True
+                
+        super().save(*args, **kwargs)
+
     def __str__(self):
         if self.name:
             return f"{self.product.name} - {self.name}"
@@ -445,6 +457,7 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='الحالة')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES, default='cod', verbose_name='طريقة الدفع')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending', verbose_name='حالة الدفع')
+    stock_deducted = models.BooleanField(default=False, verbose_name='تم خصم المخزن')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الطلب')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
 
@@ -477,6 +490,7 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items', verbose_name='الطلب')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, verbose_name='المنتج')
+    variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True, verbose_name='المتغير')
     product_name = models.CharField(max_length=255, verbose_name='اسم المنتج')
     product_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='سعر المنتج')
     quantity = models.PositiveIntegerField(verbose_name='الكمية')

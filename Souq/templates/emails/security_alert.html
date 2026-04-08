@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تنبيه أمني - سوق</title>
+</head>
+<body style="margin:0; padding:0; background-color:#F8F6F2; font-family: Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F8F6F2; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:16px; border:1px solid #E8E2D9; overflow:hidden;">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="background:#B57A6A; padding: 30px 40px;">
+                            <h1 style="margin:0; color:#ffffff; font-size:32px; letter-spacing:2px;">سوق</h1>
+                            <p style="margin:8px 0 0 0; color:#EBD9D4; font-size:14px;">تنبيه أمني هام</p>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <p style="margin:0 0 10px 0; color:#2D2D2D; font-size:16px;">مرحباً <strong>{{ username }}</strong>،</p>
+                            <p style="margin:0 0 30px 0; color:#7A7169; font-size:15px; line-height:1.7;">
+                                تم اكتشاف محاولة تسجيل دخول ناجحة إلى حسابك في متجر "سوق" من عنوان IP جديد أو لم يسبق استخدامه من قبل.
+                            </p>
+
+                            <!-- Alert Box -->
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="right" style="background:#FDF2F0; border-radius:12px; padding: 25px; border: 1px solid #F1D4CE;">
+                                        <h3 style="margin:0 0 15px 0; color:#B57A6A; font-size:16px;">تفاصيل تسجيل الدخول:</h3>
+                                        <p style="margin:5px 0; color:#4A4A4A; font-size:14px;"><strong>عنوان الـ IP:</strong> {{ ip_address }}</p>
+                                        <p style="margin:5px 0; color:#4A4A4A; font-size:14px;"><strong>الوقت:</strong> {{ time }}</p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Instruction -->
+                            <p style="margin:25px 0 10px 0; color:#2D2D2D; font-size:15px; line-height:1.7;">
+                                <strong>هل كنت أنت من قام بهذا الدخول؟</strong>
+                            </p>
+                            <p style="margin:0 0 20px 0; color:#7A7169; font-size:14px; line-height:1.7;">
+                                إذا كنت أنت من قام بذلك، فلا داعي لاتخاذ أي إجراء إضافي. لقد قمنا بإضافة هذا العنوان إلى قائمة العناوين الموثوقة الخاصة بك.
+                            </p>
+
+                            <!-- Warning -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:25px;">
+                                <tr>
+                                    <td style="background:#FFF8E7; border-right:4px solid #F0A500; border-radius:8px; padding:15px 20px;">
+                                        <p style="margin:0; color:#7A5C00; font-size:14px; line-height:1.7;">
+                                            🚨 <strong>إذا لم تكن أنت:</strong><br>
+                                            يرجى القيام بتغيير كلمة المرور الخاصة بك فوراً عبر إعدادات الحساب، والتأكد من عدم وجود نشاط غير مصرح به في حسابك.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <div align="center" style="margin-top: 35px;">
+                                <a href="{{ settings.SITE_URL }}/accounts/profile/" style="background:#5C8A6E; color:#ffffff; padding: 12px 30px; border-radius:8px; text-decoration:none; font-weight:bold; font-size:14px;">تأمين حسابي الآن</a>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="background:#F8F6F2; padding:20px 40px; border-top:1px solid #E8E2D9;">
+                            <p style="margin:0; color:#B5AFA8; font-size:12px;">© 2024 سوق — جميع الحقوق محفوظة</p>
+                            <p style="margin:6px 0 0 0; color:#B5AFA8; font-size:11px;">هذا بريد أمني تلقائي، يرجى عدم الرد عليه.</p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

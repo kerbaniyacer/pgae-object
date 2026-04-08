@@ -1,0 +1,95 @@
+{% if request.user.is_authenticated and request.user.profile.is_seller %}
+<!-- Merchant Floating Quick Actions Panel -->
+<div id="merchantFloatingPanel" class="merchant-floating-panel fixed bottom-[100px] left-7 flex flex-col items-start pointer-events-none z-[990]">
+    <!-- Toggle Button -->
+    <button id="toggleMerchantMenu" class="merchant-active-btn w-14 h-14 rounded-full bg-rose text-white shadow-lg flex items-center justify-center pointer-events-auto hover:scale-105 transition-transform group relative" aria-label="قائمة التاجر">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+        </svg>
+        <span class="absolute right-full ml-3 px-2 py-1 bg-rose text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">خيارات التاجر</span>
+    </button>
+
+    <!-- The Menu (Hidden Initially) -->
+    <div id="merchantActionsMenu" class="merchant-actions-menu flex flex-col gap-3 mb-4 opacity-0 scale-95 translate-y-4 pointer-events-none transition-all duration-300 ease-out">
+        <a href="{% url 'store:product_create' %}" class="merchant-action-item w-12 h-12 rounded-full bg-surface border border-border-sand shadow-sm flex items-center justify-center text-text-secondary hover:bg-sage hover:text-white hover:border-sage transition-all group relative pointer-events-auto" title="إضافة منتج">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span class="absolute left-full ml-3 px-2 py-1 bg-surface text-text-primary text-xs rounded border border-border-sand opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">إضافة منتج</span>
+        </a>
+        <a href="{% url 'store:merchant_dashboard' %}" class="merchant-action-item w-12 h-12 rounded-full bg-surface border border-border-sand shadow-sm flex items-center justify-center text-text-secondary hover:bg-sage hover:text-white hover:border-sage transition-all group relative pointer-events-auto" title="لوحة التحكم">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span class="absolute left-full ml-3 px-2 py-1 bg-surface text-text-primary text-xs rounded border border-border-sand opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">لوحة التحكم</span>
+        </a>
+        <a href="{% url 'store:merchant_orders' %}" class="merchant-action-item w-12 h-12 rounded-full bg-surface border border-border-sand shadow-sm flex items-center justify-center text-text-secondary hover:bg-sage hover:text-white hover:border-sage transition-all group relative pointer-events-auto" title="الطلبات">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            <span class="absolute left-full ml-3 px-2 py-1 bg-surface text-text-primary text-xs rounded border border-border-sand opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">الطلبات</span>
+        </a>
+        <a href="{% url 'store:merchant_products' %}" class="merchant-action-item w-12 h-12 rounded-full bg-surface border border-border-sand shadow-sm flex items-center justify-center text-text-secondary hover:bg-sage hover:text-white hover:border-sage transition-all group relative pointer-events-auto" title="منتجاتي">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            <span class="absolute left-full ml-3 px-2 py-1 bg-surface text-text-primary text-xs rounded border border-border-sand opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">منتجاتي</span>
+        </a>
+    </div>
+</div>
+
+<style>
+    .merchant-actions-menu.active {
+        opacity: 1;
+        scale: 1;
+        translate-y: 0;
+        pointer-events: auto;
+        margin-bottom: 1rem;
+    }
+    [dir="rtl"] .merchant-floating-panel {
+        left: 28px;
+        right: auto;
+    }
+    /* تحسين العرض في الشاشات الصغيرة */
+    @media (max-width: 640px) {
+        .merchant-floating-panel {
+            left: 20px;
+            bottom: 85px;
+        }
+        .merchant-active-btn {
+            width: 50px;
+            height: 50px;
+        }
+        .merchant-actions-menu {
+            gap: 2;
+        }
+        .merchant-action-item {
+            width: 44px;
+            height: 44px;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggleBtn = document.getElementById('toggleMerchantMenu');
+        const menu = document.getElementById('merchantActionsMenu');
+        const panel = document.getElementById('merchantFloatingPanel');
+
+        if (toggleBtn && menu) {
+            toggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('active');
+                
+                // تدوير الأيقونة عند الفتح
+                const svg = toggleBtn.querySelector('svg');
+                if (menu.classList.contains('active')) {
+                    svg.style.transform = 'rotate(180deg)';
+                } else {
+                    svg.style.transform = 'rotate(0deg)';
+                }
+            });
+
+            // إغلاق عند الضغط في أي مكان آخر
+            document.addEventListener('click', (e) => {
+                if (!panel.contains(e.target)) {
+                    menu.classList.remove('active');
+                    toggleBtn.querySelector('svg').style.transform = 'rotate(0deg)';
+                }
+            });
+        }
+    });
+</script>
+{% endif %}

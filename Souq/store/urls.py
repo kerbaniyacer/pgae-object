@@ -55,6 +55,7 @@ urlpatterns = [
     path('wishlist/toggle/', views.toggle_wishlist, name='toggle_wishlist'),
     path('wishlist/update/', views.update_wishlist, name='update_wishlist'),
     path('wishlist/remove/', views.remove_from_wishlist, name='remove_from_wishlist'),
+    path('wishlist/update-variant/', views.update_wishlist_variant, name='wishlist_update_variant'),
 
     # ============================================
     # MERCHANT

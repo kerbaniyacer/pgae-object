@@ -254,6 +254,10 @@ def product_detail(request, slug):
     
     product_attributes = ProductAttribute.objects.filter(product=product)
     
+    wishlist_product_ids = []
+    if request.user.is_authenticated:
+        wishlist_product_ids = list(Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True))
+    
     context = {
         'product': product,
         'is_main': is_main,
@@ -270,6 +274,7 @@ def product_detail(request, slug):
         'is_owner': request.user == product.seller if request.user.is_authenticated else False,
         'all_images': json.dumps(all_images, ensure_ascii=False),
         'variant_images': variant_images,
+        'wishlist_product_ids': wishlist_product_ids,
     }
     
     return render(request, 'store/product_detail.html', context)
@@ -618,13 +623,10 @@ def place_order(request):
     for item in cart_items:
         product = item.variant.product
         OrderItem.objects.create(
-            order=order, product=product, product_name=product.name,
-            product_price=item.variant.price, quantity=item.quantity, subtotal=item.subtotal
+            order=order, product=product, variant=item.variant,
+            product_name=product.name, product_price=item.variant.price,
+            quantity=item.quantity, subtotal=item.subtotal
         )
-        item.variant.stock -= item.quantity
-        item.variant.save()
-        product.sold_count += item.quantity  # ✅ تم التصحيح
-        product.save()
         
         if product.seller and product.seller.email:
             merchants_emails.add(product.seller.email)
@@ -785,6 +787,18 @@ def cancel_order(request, pk):
                 return JsonResponse({'success': False, 'message': 'لا يمكن إلغاء هذا الطلب في حالته الحالية'})
             order.status = 'cancelled'
             order.payment_status = 'refunded' if order.payment_status == 'paid' else 'cancelled'
+            
+            # إرجاع المخزن إذا تم خصمه مسبقاً
+            if order.stock_deducted:
+                for item in order.items.all():
+                    if item.variant:
+                        item.variant.stock += item.quantity
+                        item.variant.save()
+                    if item.product:
+                        item.product.sold_count = max(0, item.product.sold_count - item.quantity)
+                        item.product.save()
+                order.stock_deducted = False
+                
             order.save()
             return JsonResponse({'success': True, 'message': 'تم إلغاء الطلب بنجاح'})
         except Exception as e:
@@ -883,7 +897,33 @@ def merchant_update_order_status(request, pk):
             # حفظ رقم التتبع إذا تم إرساله
             if tracking_number:
                 order.tracking_number = tracking_number
-                
+            
+            # --- منطق خصم وإرجاع المخزن ---
+            active_statuses = ['confirmed', 'processing', 'shipped', 'delivered']
+            inactive_statuses = ['cancelled', 'returned']
+
+            if new_status in active_statuses and not order.stock_deducted:
+                # خصم الكمية من المخزن وزيادة عدد المبيعات
+                for item in order.items.all():
+                    if item.variant:
+                        item.variant.stock = max(0, item.variant.stock - item.quantity)
+                        item.variant.save()
+                    if item.product:
+                        item.product.sold_count += item.quantity
+                        item.product.save()
+                order.stock_deducted = True
+            
+            elif new_status in inactive_statuses and order.stock_deducted:
+                # إرجاع الكمية للمخزن وإنقاص عدد المبيعات
+                for item in order.items.all():
+                    if item.variant:
+                        item.variant.stock += item.quantity
+                        item.variant.save()
+                    if item.product:
+                        item.product.sold_count = max(0, item.product.sold_count - item.quantity)
+                        item.product.save()
+                order.stock_deducted = False
+
             order.save()
             
             if order.email:
@@ -1364,6 +1404,74 @@ def wishlist(request):
             wishlist__user=request.user
         ).select_related('variant__product', 'wishlist__product')
         
+        for item in wishlist_items:
+            variant = item.variant
+            if not variant:
+                continue
+            product = variant.product
+            
+            # جلب كل متغيرات نفس المنتج
+            all_variants = ProductVariant.objects.filter(product=product)
+
+            # === بناء attr_map بنفس طريقة السلة ===
+            attr_map = {}
+            # صورة المتغير الحالي
+            main_img = variant.images.filter(is_main=True).first() or variant.images.first()
+            item.variant_image = main_img.image.url if main_img else (product.image.url if product.image else None)
+            
+            for v in all_variants:
+                raw_attrs = v.attributes if isinstance(v.attributes, dict) else {}
+
+                for attr_name, attr_value in raw_attrs.items():
+                    if isinstance(attr_value, dict):
+                        actual_value = attr_value.get('value', str(attr_value))
+                    else:
+                        actual_value = str(attr_value)
+
+                    if attr_name not in attr_map:
+                        attr_map[attr_name] = {}
+
+                    if actual_value not in attr_map[attr_name]:
+                        v_img = v.images.filter(is_main=True).first() or v.images.first()
+                        attr_map[attr_name][actual_value] = {
+                            'value': actual_value,
+                            'variant_id': v.id,
+                            'price': str(v.price),
+                            'old_price': str(v.old_price) if v.old_price else None,
+                            'discount': v.discount or 0,
+                            'stock': v.stock,
+                            'sku': v.sku,
+                            'image': v_img.image.url if v_img else (product.image.url if product.image else None),
+                        }
+
+            # === استخراج القيم الحالية للمتغير المختار ===
+            current_raw = variant.attributes if isinstance(variant.attributes, dict) else {}
+            clean_current = {}
+            for attr_name, attr_value in current_raw.items():
+                if isinstance(attr_value, dict):
+                    clean_current[attr_name] = attr_value.get('value', str(attr_value))
+                else:
+                    clean_current[attr_name] = str(attr_value)
+
+            # === بناء القائمة النهائية لكل خاصية ===
+            variant_attributes = []
+            for attr_name, values in attr_map.items():
+                current_value = clean_current.get(attr_name, '')
+
+                options = []
+                for val_data in values.values():
+                    option = dict(val_data)
+                    option['current'] = (option['value'] == current_value)
+                    options.append(option)
+
+                variant_attributes.append({
+                    'name': attr_name,
+                    'value': current_value,
+                    'options': options,
+                })
+
+            item.variant_attributes = variant_attributes
+
         context = {
             'wishlist_items': wishlist_items,
         }
@@ -1541,6 +1649,66 @@ def update_wishlist(request):
             return JsonResponse({'success': False, 'message': str(e)})
 
     return JsonResponse({'success': False, 'message': 'طلب غير صالح'})
+
+
+@require_POST
+def update_wishlist_variant(request):
+    """تحديث متغير المنتج في المفضلة (AJAX)"""
+    try:
+        data = json.loads(request.body)
+        current_variant_id = data.get('current_variant_id')
+        new_variant_id = data.get('new_variant_id')
+
+        if not current_variant_id or not new_variant_id:
+            return JsonResponse({'error': 'بيانات ناقصة'}, status=400)
+
+        if str(current_variant_id) == str(new_variant_id):
+            return JsonResponse({'success': True})
+
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'يرجى تسجيل الدخول'}, status=401)
+
+        # عنصر المفضلة الحالي
+        wishlist_item = WishlistItem.objects.filter(
+            wishlist__user=request.user, 
+            variant_id=current_variant_id
+        ).first()
+
+        if not wishlist_item:
+            return JsonResponse({'error': 'العنصر غير موجود في المفضلة'}, status=404)
+
+        # المتغير الجديد
+        new_variant = ProductVariant.objects.select_related('product').get(
+            id=new_variant_id
+        )
+
+        # التحقق أنه نفس المنتج
+        if new_variant.product_id != wishlist_item.variant.product_id:
+            return JsonResponse({'error': 'متغير غير صالح'})
+
+        # هل المتغير الجديد موجود أصلاً في المفضلة؟
+        existing_item = WishlistItem.objects.filter(
+            wishlist__user=request.user, 
+            variant_id=new_variant_id
+        ).first()
+
+        if existing_item:
+            # إذا كان موجوداً، نحذف الحالي لأننا لا نريد تكرار نفس المتغير في المفضلة
+            wishlist_item.delete()
+        else:
+            wishlist_item.variant = new_variant
+            wishlist_item.save(update_fields=['variant'])
+
+        return JsonResponse({'success': True})
+
+    except WishlistItem.DoesNotExist:
+        return JsonResponse({'error': 'العنصر غير موجود'}, status=404)
+    except ProductVariant.DoesNotExist:
+        return JsonResponse({'error': 'المتغير غير موجود'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
 def upload_video(request):
     if request.method == 'POST' and request.FILES.get('video'):
         video = request.FILES['video']

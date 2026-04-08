@@ -61,11 +61,10 @@
                         <div class="bg-surface rounded-2xl border border-border-sand p-4 md:p-6 flex gap-4 md:gap-6" data-item-id="{{ item.variant.id }}">
                             <!-- Product Image -->
                             <div class="w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-[#F0EBE3] flex-shrink-0">
-                                {% if item.get_product.image %}
-                                <img src="{{ item.get_product.image.url }}" alt="{{ item.get_product.name }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product'">
-                                {% else %}
-                                <img src="https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product" alt="{{ item.get_product.name }}" class="w-full h-full object-contain">
-                                {% endif %}
+                                <img src="{{ item.variant_image }}" 
+                                     alt="{{ item.get_product.name }}" 
+                                     class="w-full h-full object-contain wishlist-item-image" 
+                                     onerror="this.src='https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product'">
                             </div>
 
                             <!-- Product Info -->
@@ -77,7 +76,54 @@
                                         <a href="{% url 'store:product_detail' item.get_product.slug %}" class="font-medium text-text-primary hover:text-sage transition-colors">
                                             {{ item.get_product.name }}
                                         </a>
-                                        <p class="text-sm text-text-secondary mt-1">السعر: <span class="font-price text-sage">{{ item.variant.price }} د.ج</span></p>
+                                        <p class="text-sm text-text-secondary mt-1">السعر: <span class="font-price text-sage wishlist-item-price">{{ item.variant.price }} د.ج</span></p>
+
+                                        <!-- ويدج اختيار المتغيرات -->
+                                        <div class="variant-selector mt-3 space-y-2 relative" data-current-variant="{{ item.variant.id }}">
+                                            {% for attr in item.variant_attributes %}
+                                            <div class="relative inline-block ml-2">
+                                                <button type="button" 
+                                                        onclick="toggleVariantDropdown(this)"
+                                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-page-bg border border-border-sand rounded-lg text-xs hover:border-sage hover:bg-sage-light/50 transition-all group">
+                                                    <span class="text-text-secondary">{{ attr.name }}:</span>
+                                                    <span class="font-medium text-text-primary group-hover:text-sage transition-colors current-attr-value">{{ attr.value }}</span>
+                                                    <svg class="w-3 h-3 text-text-placeholder group-hover:text-sage transition-colors transform group-hover:rotate-180 duration-200" 
+                                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                                    </svg>
+                                                </button>
+
+                                                <div class="variant-dropdown hidden absolute top-full right-0 mt-2 z-50 bg-white border border-border-sand rounded-xl shadow-lg shadow-black/5 min-w-[200px] py-1.5 overflow-hidden animate-dropdown">
+                                                    {% for option in attr.options %}
+                                                    <button type="button" 
+                                                            onclick="changeWishlistVariant('{{ item.variant.id|escapejs }}', '{{ option.variant_id|default:0 }}', this, '{{ option.price|escapejs }}', '{{ option.image|escapejs }}')"
+                                                            class="w-full text-right px-4 py-2.5 text-xs transition-colors flex items-center justify-between gap-3
+                                                            {% if option.current %}bg-sage-light/60 text-sage font-medium{% else %}text-text-primary hover:bg-sage-light/30 hover:text-sage{% endif %}
+                                                            {% if option.stock <= 0 and not option.current %}opacity-40 cursor-not-allowed{% endif %}"
+                                                            {% if option.stock <= 0 and not option.current %}disabled{% endif %}>
+                                                        <div class="flex flex-col">
+                                                            <span>{{ option.value }}</span>
+                                                            {% if not option.current %}
+                                                                <span class="text-[10px] {% if option.stock > 0 %}text-text-placeholder{% else %}text-rose/70{% endif %}">
+                                                                    {% if option.stock > 0 %}
+                                                                        {{ option.price }} د.ج
+                                                                    {% else %}
+                                                                        نفذ المخزن
+                                                                    {% endif %}
+                                                                </span>
+                                                            {% endif %}
+                                                        </div>
+                                                        {% if option.current %}
+                                                            <svg class="w-3 h-3 text-sage flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                        {% endif %}
+                                                    </button>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
                                     </div>
                                     
                                     <!-- زر الإزالة من المفضلة (قلب) -->
@@ -90,14 +136,18 @@
 
                                 <div class="mt-auto flex items-center justify-between pt-4">
                                     <!-- حالة المخزون -->
-                                    {% if item.get_product.is_in_stock %}
-                                    <span class="text-xs text-sage bg-sage-light px-2 py-1 rounded-full">متوفر</span>
-                                    {% else %}
-                                    <span class="text-xs text-rose bg-rose-light px-2 py-1 rounded-full">غير متوفر</span>
-                                    {% endif %}
+                                    <div class="wishlist-stock-status">
+                                        {% if item.variant.stock > 0 %}
+                                        <span class="text-xs text-sage bg-sage-light px-2 py-1 rounded-full">متوفر</span>
+                                        {% else %}
+                                        <span class="text-xs text-rose bg-rose-light px-2 py-1 rounded-full">غير متوفر</span>
+                                        {% endif %}
+                                    </div>
 
                                     <!-- زر الإضافة للسلة -->
-                                    <button onclick="addToCartFromWishlist('{{ item.variant.id }}')" class="px-4 py-2 bg-sage text-white rounded-xl text-sm font-medium hover:bg-sage-dark transition-colors flex items-center gap-2">
+                                    <button onclick="addToCartFromWishlist('{{ item.variant.id }}')" 
+                                            class="wishlist-add-to-cart-btn px-4 py-2 bg-sage text-white rounded-xl text-sm font-medium hover:bg-sage-dark transition-colors flex items-center gap-2"
+                                            {% if item.variant.stock <= 0 %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
                                         </svg>
@@ -318,5 +368,104 @@
     // تحديث الشارات عند تحميل الصفحة
     updateWishlistBadgeNow();
     updateCartBadgeNow();
+
+    // دالة فتح/إغلاق القوائم المنسدلة للمتغيرات (مشابهة للسلة)
+    function toggleVariantDropdown(button) {
+        const dropdown = button.nextElementSibling;
+        const isHidden = dropdown.classList.contains('hidden');
+
+        // إغلاق كل القوائم المنسدلة الأخرى
+        document.querySelectorAll('.variant-dropdown').forEach(d => {
+            d.classList.add('hidden');
+        });
+
+        if (isHidden) {
+            dropdown.classList.remove('hidden');
+        }
+    }
+
+    // إغلاق القوائم عند الضغط في أي مكان آخر
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.variant-selector')) {
+            document.querySelectorAll('.variant-dropdown').forEach(d => {
+                d.classList.add('hidden');
+            });
+        }
+    });
+
+    // دالة الإضافة للسلة من المفضلة
+    async function addToCartFromWishlist(variantId) {
+        if (typeof Souq === 'undefined') {
+            alert('تعذر تحميل مكتبة Souq');
+            return;
+        }
+
+        const btn = document.querySelector(`button[onclick*="addToCartFromWishlist('${variantId}')"]`);
+        const result = await Souq.addToCart({ id: null, variant_id: variantId, quantity: 1 }, btn);
+        
+        if (result.success) {
+            // تحديث شارة السلة
+            updateCartBadgeNow();
+        }
+    }
+
+    // دالة تغيير المتغير في المفضلة (مشابهة للسلة مع تحديث الصورة)
+    async function changeWishlistVariant(currentVariantId, newVariantId, buttonEl, price, imageUrl) {
+        if (buttonEl.disabled) return;
+        if (String(currentVariantId) === String(newVariantId)) return;
+
+        const itemContainer = buttonEl.closest('[data-item-id]');
+        
+        try {
+            const response = await fetch('/wishlist/update-variant/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    current_variant_id: parseInt(currentVariantId),
+                    new_variant_id: parseInt(newVariantId)
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // تحديث واجهة المنتج فوراً بدون إعادة تحميل الصفحة
+                
+                // 1. تحديث الصور
+                if (imageUrl) {
+                    const imgEl = itemContainer.querySelector('.wishlist-item-image');
+                    if (imgEl) imgEl.src = imageUrl;
+                }
+                
+                // 2. تحديث السعر
+                if (price) {
+                    const priceEl = itemContainer.querySelector('.wishlist-item-price');
+                    if (priceEl) priceEl.textContent = price + ' د.ج';
+                }
+                
+                // 3. تحديث معرف العنصر (data-item-id) والبيانات المرتبطة
+                itemContainer.setAttribute('data-item-id', newVariantId);
+                
+                // تحديث مرجع الأزرار (إزالة وإضافة للسلة)
+                const removeBtn = itemContainer.querySelector('button[onclick*="removeWishlistItem"]');
+                if (removeBtn) removeBtn.setAttribute('onclick', `removeWishlistItem('${newVariantId}')`);
+                
+                const addToCartBtn = itemContainer.querySelector('button[onclick*="addToCartFromWishlist"]');
+                if (addToCartBtn) addToCartBtn.setAttribute('onclick', `addToCartFromWishlist('${newVariantId}')`);
+
+                // 4. إعادة تحميل المحتوى جزئياً أو كلياً لضمان صحة المتغيرات المختارة (Dropdowns)
+                // الأفضل إعادة التحميل لتبسيط الأمور وضمان تزامن كل المتغيرات
+                window.location.reload();
+            } else {
+                alert(data.error || 'حدث خطأ أثناء تحديث المتغير');
+            }
+        } catch (error) {
+            console.error('Variant update error:', error);
+            alert('تعذر الاتصال بالخادم');
+        }
+    }
 </script>
 {% endblock %}

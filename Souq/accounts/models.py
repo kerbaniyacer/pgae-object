@@ -42,3 +42,17 @@ def save_user_profile(sender, instance, **kwargs):
         instance.profile.save()
     except Profile.DoesNotExist:
         Profile.objects.create(user=instance)
+
+class UserIP(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ips', verbose_name='المستخدم')
+    ip_address = models.GenericIPAddressField(verbose_name='عنوان IP')
+    last_login = models.DateTimeField(auto_now=True, verbose_name='آخر تسجيل دخول من هذا IP')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإضافة')
+
+    class Meta:
+        verbose_name = 'عنوان IP للمستخدم'
+        verbose_name_plural = 'عناوين IP للمستخدم'
+        unique_together = ('user', 'ip_address')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.ip_address}"
