@@ -42,22 +42,11 @@
         left: 28px;
         right: auto;
     }
-    /* تحسين العرض في الشاشات الصغيرة */
-    @media (max-width: 640px) {
-        .merchant-floating-panel {
-            left: 20px;
-            bottom: 85px;
-        }
-        .merchant-active-btn {
-            width: 50px;
-            height: 50px;
-        }
-        .merchant-actions-menu {
-            gap: 2;
-        }
-        .merchant-action-item {
-            width: 44px;
-            height: 44px;
+
+    /* Hide merchant floating panel on mobile - desktop only */
+    @media (max-width: 768px) {
+        #merchantFloatingPanel {
+            display: none !important;
         }
     }
 </style>

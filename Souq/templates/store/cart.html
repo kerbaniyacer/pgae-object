@@ -29,7 +29,7 @@
                 <div class="bg-surface rounded-2xl border border-border-sand p-4 md:p-6 flex gap-4 md:gap-6" data-item-id="{{ item.get_product.id }}">
                     <!-- Product Image -->
                     <div class="w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-[#F0EBE3] flex-shrink-0">
-                        <img src="{{ item.variant.image.url }}" alt="{{ item.get_product.name }}" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product'">
+                        <img src="{% if item.variant.image %}{{ item.variant.image.url }}{% else %}https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product{% endif %}" alt="{{ item.get_product.name }}" class="w-full h-full object-contain" loading="lazy" onerror="this.src='https://placehold.co/128x128/F0EBE3/5C8A6E?text=Product'">
                     </div>
 
                     <!-- Product Info -->
@@ -183,13 +183,15 @@
         </div>
         {% else %}
         <!-- Empty Cart State -->
-        <div class="text-center py-16">
-            <svg class="w-32 h-32 mx-auto text-text-placeholder mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-            </svg>
-            <h2 class="font-headline text-2xl font-bold text-text-primary mb-2">سلة المشتريات فارغة</h2>
-            <p class="text-text-secondary mb-6">لم تقم بإضافة أي منتجات بعد</p>
-            <a href="{% url 'store:products' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors">
+        <div class="text-center py-20">
+            <div class="w-40 h-40 mx-auto bg-sage-light rounded-full flex items-center justify-center mb-8">
+                <svg class="w-20 h-20 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+            </div>
+            <h2 class="font-headline text-2xl font-bold text-text-primary mb-3">سلة المشتريات فارغة</h2>
+            <p class="text-text-secondary mb-8 max-w-sm mx-auto">لم تقم بإضافة أي منتجات بعد. استكشف منتجاتنا المتنوعة وأضف ما يعجبك!</p>
+            <a href="{% url 'store:products' %}" class="inline-flex items-center gap-2 px-8 py-3 bg-sage text-white rounded-xl font-medium hover:bg-sage-dark transition-colors">
                 <svg class="w-5 h-5 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                 </svg>

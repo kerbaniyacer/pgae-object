@@ -585,6 +585,36 @@ const removeItem = removeCartItem;
 const updateQuantity = updateCartItemQuantity;
 
 // ============================================
+// SCROLL TO TOP BUTTON ✅
+// ============================================
+window.addEventListener('scroll', () => {
+    const scrollBtn = document.getElementById('scrollToTop');
+    if (scrollBtn) {
+        if (window.scrollY > 400) {
+            scrollBtn.classList.add('visible');
+        } else {
+            scrollBtn.classList.remove('visible');
+        }
+    }
+});
+
+// ============================================
+// MOBILE MENU BACKDROP CLOSE (global) ✅
+// ============================================
+window.closeMobileMenuFn = function() {
+    const mobileMenu = document.getElementById('mobileMenu');
+    const backdrop = document.getElementById('mobileMenuBackdrop');
+    const overlay = document.getElementById('mobileMenuOverlay');
+    if (mobileMenu) mobileMenu.classList.remove('open');
+    if (backdrop) backdrop.classList.add('hidden');
+    if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.style.display = 'none';
+    }
+    document.body.style.overflow = '';
+};
+
+// ============================================
 // INITIALIZE ON DOM READY
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -625,6 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mobileMenuBtns = document.querySelectorAll('.mobile-menu-toggle');
     const mobileMenu = document.getElementById('mobileMenu');
     const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+    const mobileMenuBackdrop = document.getElementById('mobileMenuBackdrop');
     const closeMobileMenu = document.getElementById('closeMobileMenu');
 
     if (mobileMenu && !mobileMenu.dataset.initialized) {
@@ -636,11 +667,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
             }
             mobileMenu.classList.add('open');
+            document.body.style.overflow = 'hidden';
             if (mobileMenuOverlay) {
                 mobileMenuOverlay.classList.remove('hidden');
                 mobileMenuOverlay.style.display = 'block';
                 mobileMenuOverlay.style.opacity = '1';
                 mobileMenuOverlay.style.pointerEvents = 'auto';
+            }
+            if (mobileMenuBackdrop) {
+                mobileMenuBackdrop.classList.remove('hidden');
             }
         };
 
@@ -650,11 +685,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
             }
             mobileMenu.classList.remove('open');
+            document.body.style.overflow = '';
             if (mobileMenuOverlay) {
                 mobileMenuOverlay.classList.add('hidden');
                 mobileMenuOverlay.style.display = 'none';
                 mobileMenuOverlay.style.opacity = '0';
                 mobileMenuOverlay.style.pointerEvents = 'none';
+            }
+            if (mobileMenuBackdrop) {
+                mobileMenuBackdrop.classList.add('hidden');
             }
         };
 
@@ -667,6 +706,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (mobileMenuOverlay) {
             mobileMenuOverlay.onclick = closeHandler;
+        }
+        if (mobileMenuBackdrop) {
+            mobileMenuBackdrop.onclick = closeHandler;
         }
 
         // إغلاق عند الضغط على مفتاح Esc

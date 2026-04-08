@@ -15,6 +15,7 @@
                 <div class="relative z-10">
                     <img src="{% static 'images/hero-product.png' %}" alt="Featured Product"
                         class="w-full max-w-md mx-auto drop-shadow-2xl"
+                        loading="eager"
                         onerror="this.src='https://placehold.co/500x500/F8F6F2/5C8A6E?text=Product'">
                 </div>
                 <!-- Decorative Elements -->
@@ -171,6 +172,11 @@
             </a>
             {% endfor %}
         </div>
+
+        <!-- Swipe Hint (Mobile Only) -->
+        <p class="text-center text-xs text-text-placeholder mt-4 sm:hidden animate-pulse">
+            ← اسحب للمزيد
+        </p>
     </div>
 </section>
 
@@ -183,7 +189,7 @@
                 <p class="text-text-secondary">اكتشف أفضل المنتجات المختارة لك</p>
             </div>
             <a href="{% url 'store:products' %}"
-                class="hidden sm:flex items-center gap-2 text-sage hover:text-sage-dark transition-colors">
+                class="flex items-center gap-2 text-sage hover:text-sage-dark transition-colors">
                 عرض الكل
                 <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -194,21 +200,21 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {% for product in featured_products %}
-            {% for variant in variants %}
-            {% if variant.product_id == product.id %}
+            {% with first_variant=product.variants.first %}
+            {% if first_variant %}
             <div class="product-card bg-page-bg rounded-2xl border border-border-sand overflow-hidden group"
                 data-animate>
                 <!-- Product Image -->
                 <div class="relative aspect-square overflow-hidden bg-[#F0EBE3]">
-                    <img src="{% if variant.image %}{{ variant.image.url }}{% else %}https://placehold.co/400x400{% endif %}"
+                    <img src="{% if first_variant.image %}{{ first_variant.image.url }}{% else %}https://placehold.co/400x400{% endif %}"
                         alt="{{ product.name }}"
-                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy"
                         onerror="this.src='https://placehold.co/400x400/F0EBE3/5C8A6E?text=Product'">
 
                     <!-- Discount Badge -->
-                    {% if variant.discount %}
+                    {% if first_variant.discount %}
                     <span class="absolute top-3 right-3 px-2 py-1 bg-rose text-white text-xs font-medium rounded-lg">
-                        -{{ variant.discount }}%
+                        -{{ first_variant.discount }}%
                     </span>
                     {% endif %}
 
@@ -251,7 +257,7 @@
                         {% if request.user.is_authenticated and product.seller_id == request.user.id %}
                         disabled
                         {% else %}
-                        onclick="Souq.addToCart({id: '{{ product.id|default:''|escapejs }}', variant_id: '{{ variant.id|default:''|escapejs }}', name: '{{ product.name|default:''|escapejs }}', price: {{ variant.price|default:0 }}, image: '{% if variant.image %}{{ variant.image.url|escapejs }}{% else %}https://placehold.co/400x400{% endif %}'})"
+                        onclick="Souq.addToCart({id: '{{ product.id|default:''|escapejs }}', variant_id: '{{ first_variant.id|default:''|escapejs }}', name: '{{ product.name|default:''|escapejs }}', price: {{ first_variant.price|default:0 }}, image: '{% if first_variant.image %}{{ first_variant.image.url|escapejs }}{% else %}https://placehold.co/400x400{% endif %}'})"
                         {% endif %}
                         class="absolute bottom-3 left-3 right-3 py-2 bg-sage text-white rounded-lg text-sm font-medium transition-all transform translate-y-0 opacity-100 sm:translate-y-2 sm:group-hover:translate-y-0 {% if request.user.is_authenticated and product.seller_id == request.user.id %}opacity-50 cursor-not-allowed translate-y-0{% else %}sm:opacity-0 sm:group-hover:opacity-100{% endif %}">
                         إضافة للسلة
@@ -277,15 +283,15 @@
 
                     <!-- Price -->
                     <div class="flex items-center gap-2 mt-3">
-                        <span class="font-price text-lg font-semibold text-sage">{{ variant.price }} د.ج</span>
-                        {% if variant.old_price %}
-                        <span class="font-price text-sm text-text-placeholder line-through">{{ variant.old_price }} د.ج</span>
+                        <span class="font-price text-lg font-semibold text-sage">{{ first_variant.price }} د.ج</span>
+                        {% if first_variant.old_price %}
+                        <span class="font-price text-sm text-text-placeholder line-through">{{ first_variant.old_price }} د.ج</span>
                         {% endif %}
                     </div>
                 </div>
             </div>
             {% endif %}
-            {% endfor %}
+            {% endwith %}
             {% empty %}
             <!-- Placeholder Products -->
             {% for i in "1234" %}
@@ -329,17 +335,6 @@
             {% endfor %}
             {% endfor %}
         </div>
-
-        <div class="text-center mt-8 sm:hidden">
-            <a href="{% url 'store:products' %}"
-                class="inline-flex items-center gap-2 text-sage hover:text-sage-dark transition-colors">
-                عرض الكل
-                <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-            </a>
-        </div>
     </div>
 </section>
 
@@ -375,7 +370,7 @@
                 <div class="relative z-10">
                     <span class="inline-block px-3 py-1 bg-white/20 rounded-full text-sm mb-4">جديد</span>
                     <h3 class="font-headline text-2xl md:text-3xl font-bold mb-2">توصيل مجاني</h3>
-                    <p class="text-white/80 mb-6">للطلبات فوق 200 ريال</p>
+                    <p class="text-white/80 mb-6">للطلبات فوق 200 د.ج</p>
                     <a href="{% url 'store:products' %}" class="shiny-btn bg-white text-rose hover:bg-page-bg"
                         style="box-shadow: none;">
                         اكتشف المزيد
@@ -499,9 +494,10 @@
                 messageDiv.classList.add('hidden');
 
                 try {
-                    // Simulate AJAX call (you should replace with actual endpoint)
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                    
+                    // Call actual newsletter endpoint
+                    const response = await fetch('{% url "store:home" %}?subscriptEmail=' + encodeURIComponent(email));
+                    if (!response.ok) throw new Error();
+
                     messageDiv.textContent = 'تم الاشتراك بنجاح! شكراً لك.';
                     messageDiv.className = 'mt-4 p-3 rounded-xl text-sm font-medium border bg-sage-light text-sage border-sage/20';
                     messageDiv.classList.remove('hidden');

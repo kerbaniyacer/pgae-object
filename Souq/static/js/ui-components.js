@@ -49,19 +49,26 @@
 
         show: function(message = 'جاري معالجة طلبك') {
             if (!this.overlay) this.init();
+            if (this.overlay.classList.contains('active')) return;
             
             const messageEl = document.getElementById('loaderMessage');
             if (messageEl) messageEl.textContent = message;
             
             this.overlay.classList.add('active');
             document.body.style.overflow = 'hidden';
+            // Safety timeout to ensure overflow is restored if something goes wrong
+            setTimeout(() => {
+                if (this.overlay && !this.overlay.classList.contains('active')) {
+                    document.body.style.overflow = '';
+                }
+            }, 5000);
         },
 
         hide: function() {
             if (this.overlay) {
                 this.overlay.classList.remove('active');
-                document.body.style.overflow = '';
             }
+            document.body.style.overflow = '';
         },
 
         showFor: function(duration = 3000, message = 'جاري معالجة طلبك') {

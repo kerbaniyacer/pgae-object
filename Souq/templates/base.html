@@ -5,10 +5,18 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="format-detection" content="telephone=no">
     <meta name="theme-color" content="#5C8A6E">
     <title>{% block title %}متجر سوق{% endblock %}</title>
     <meta name="description" content="سوق - وجهتكم الأولى للتسوق الإلكتروني في الجزائر. جودة عالية وأسعار منافسة.">
+    <meta property="og:title" content="{% block og_title %}سوق - متجر إلكتروني{% endblock %}">
+    <meta property="og:description" content="سوق - وجهتكم الأولى للتسوق الإلكتروني في الجزائر. جودة عالية وأسعار منافسة.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="سوق">
+    <meta property="og:locale" content="ar_DZ">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta name="twitter:card" content="summary_large_image">
     {{ form.media }}
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -477,6 +485,21 @@
             color: #ffffff;
         }
 
+        /* Scroll to Top Button */
+        #scrollToTop {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        #scrollToTop.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        #scrollToTop:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(92, 138, 110, 0.3);
+        }
+
         /* Dark Mode Messages */
         .dark .bg-sage-light {
             background-color: rgba(92, 138, 110, 0.2) !important;
@@ -488,6 +511,68 @@
 
         .dark .bg-taupe-light {
             background-color: rgba(168, 152, 128, 0.2) !important;
+        }
+
+        /* Remove 300ms tap delay on mobile for interactive elements */
+        a, button, [role="button"], label[for], select, input[type="checkbox"], input[type="radio"], .product-card {
+            touch-action: manipulation;
+        }
+
+        /* ===== Mobile Viewport Fixes ===== */
+        html {
+            overflow-x: hidden;
+            overscroll-behavior-x: none; /* Prevent horizontal swipe-to-back only */
+        }
+
+        body {
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Prevent pull-to-refresh and overscroll bounce where unwanted */
+        .no-overscroll {
+            overscroll-behavior-y: contain;
+        }
+
+        /* Remove bottom scrollbar on mobile */
+        @media (max-width: 768px) {
+            html, body {
+                overflow-x: hidden;
+                width: 100%;
+                position: relative;
+            }
+
+            /* Hide unnecessary scrollbars on mobile but allow scrolling */
+            ::-webkit-scrollbar {
+                display: none;
+            }
+
+            html {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        }
+
+        /* ===== Scroll to Top Mobile Positioning ===== */
+        @media (max-width: 768px) {
+            #scrollToTop {
+                bottom: 80px !important;
+                right: 16px !important;
+                width: 44px !important;
+                height: 44px !important;
+                z-index: 996 !important;
+            }
+            #scrollToTop svg {
+                width: 20px !important;
+                height: 20px !important;
+            }
+        }
+
+        /* ===== Merchant Floating Panel: Desktop Only ===== */
+        @media (max-width: 768px) {
+            #merchantFloatingPanel {
+                display: none !important;
+            }
         }
     </style>
 
@@ -780,10 +865,18 @@
             </div>
 
             <div class="border-t border-border-sand mt-8 pt-8 text-center text-sm text-text-secondary">
-                <p>&copy; 2024 سوق. جميع الحقوق محفوظة.</p>
+                <p>&copy; {% now "Y" %} سوق. جميع الحقوق محفوظة.</p>
             </div>
         </div>
     </footer>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="العودة للأعلى"
+        class="fixed bottom-20 right-4 z-40 w-12 h-12 bg-sage text-white rounded-full shadow-lg flex items-center justify-center hover:bg-sage-dark transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+        </svg>
+    </button>
 
     <!-- Help Button -->
     <div class="help-btn-container">
@@ -851,6 +944,8 @@
         </a>
     </div>
     
+    <!-- Mobile Menu Backdrop Overlay -->
+    <div id="mobileMenuBackdrop" class="fixed inset-0 bg-black/50 z-[10001] hidden transition-opacity" onclick="closeMobileMenuFn()"></div>
     <!-- Mobile Menu -->
     <div id="mobileMenu" class="mobile-menu fixed inset-y-0 right-0 w-72 shadow-2xl md:hidden">
         <div class="flex flex-col h-full">
@@ -1062,6 +1157,47 @@
         });
     </script>
     {% endif %}
+
+    <!-- Scroll to Top & Mobile Menu Backdrop Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Scroll to top button visibility
+            const scrollBtn = document.getElementById('scrollToTop');
+            if (scrollBtn) {
+                window.addEventListener('scroll', function() {
+                    if (window.scrollY > 400) {
+                        scrollBtn.classList.add('visible');
+                    } else {
+                        scrollBtn.classList.remove('visible');
+                    }
+                });
+            }
+
+            // Mobile menu backdrop helper
+            const mobileMenu = document.getElementById('mobileMenu');
+            const backdrop = document.getElementById('mobileMenuBackdrop');
+            window.closeMobileMenuFn = function() {
+                if (mobileMenu) mobileMenu.classList.remove('open');
+                if (backdrop) backdrop.classList.add('hidden');
+                document.body.style.overflow = '';
+            };
+
+            // Open mobile menu: also show backdrop
+            const menuToggles = document.querySelectorAll('.mobile-menu-toggle');
+            menuToggles.forEach(function(toggle) {
+                toggle.addEventListener('click', function() {
+                    if (backdrop) backdrop.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                });
+            });
+
+            // Close menu buttons: also hide backdrop
+            const closeBtn = document.getElementById('closeMobileMenu');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', window.closeMobileMenuFn);
+            }
+        });
+    </script>
 </body>
 
 </html>
