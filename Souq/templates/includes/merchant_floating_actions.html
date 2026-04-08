@@ -1,8 +1,8 @@
 {% if request.user.is_authenticated and request.user.profile.is_seller %}
 <!-- Merchant Floating Quick Actions Panel -->
-<div id="merchantFloatingPanel" class="merchant-floating-panel fixed bottom-[100px] left-7 flex flex-col items-start pointer-events-none z-[990]">
+<div id="merchantFloatingPanel" class="merchant-floating-panel">
     <!-- Toggle Button -->
-    <button id="toggleMerchantMenu" class="merchant-active-btn w-14 h-14 rounded-full bg-rose text-white shadow-lg flex items-center justify-center pointer-events-auto hover:scale-105 transition-transform group relative" aria-label="قائمة التاجر">
+    <button id="toggleMerchantMenu" class="merchant-active-btn group relative" aria-label="قائمة التاجر">
         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
         </svg>
@@ -10,7 +10,7 @@
     </button>
 
     <!-- The Menu (Hidden Initially) -->
-    <div id="merchantActionsMenu" class="merchant-actions-menu flex flex-col gap-3 mb-4 opacity-0 scale-95 translate-y-4 pointer-events-none transition-all duration-300 ease-out">
+    <div id="merchantActionsMenu" class="merchant-actions-menu flex flex-col gap-3 mb-4 opacity-0 scale-95 pointer-events-none transition-all duration-300 ease-out">
         <a href="{% url 'store:product_create' %}" class="merchant-action-item w-12 h-12 rounded-full bg-surface border border-border-sand shadow-sm flex items-center justify-center text-text-secondary hover:bg-sage hover:text-white hover:border-sage transition-all group relative pointer-events-auto" title="إضافة منتج">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             <span class="absolute left-full ml-3 px-2 py-1 bg-surface text-text-primary text-xs rounded border border-border-sand opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">إضافة منتج</span>
@@ -31,21 +31,59 @@
 </div>
 
 <style>
+    .merchant-floating-panel {
+        position: fixed;
+        bottom: 100px;
+        left: 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        pointer-events: none;
+        z-index: 10005 !important;
+        transition: all 0.3s ease;
+    }
+
+    .merchant-active-btn {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background-color: #E11D48; /* rose-600 */
+        color: white;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;
+        transition: transform 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .merchant-active-btn:hover {
+        transform: scale(1.05);
+        background-color: #BE123C; /* rose-700 */
+    }
+
+    .merchant-actions-menu {
+        transform: translateY(16px);
+    }
+
     .merchant-actions-menu.active {
         opacity: 1;
         scale: 1;
-        translate-y: 0;
+        transform: translateY(0);
         pointer-events: auto;
         margin-bottom: 1rem;
     }
+
     [dir="rtl"] .merchant-floating-panel {
-        left: 28px;
+        left: 32px;
         right: auto;
     }
 
     /* Hide merchant floating panel on mobile - desktop only */
     @media (max-width: 768px) {
-        #merchantFloatingPanel {
+        .merchant-floating-panel {
             display: none !important;
         }
     }
@@ -56,6 +94,10 @@
         const toggleBtn = document.getElementById('toggleMerchantMenu');
         const menu = document.getElementById('merchantActionsMenu');
         const panel = document.getElementById('merchantFloatingPanel');
+
+        if (panel) {
+            console.log('Merchant Floating Panel Initialized');
+        }
 
         if (toggleBtn && menu) {
             toggleBtn.addEventListener('click', (e) => {
